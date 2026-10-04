@@ -381,7 +381,7 @@ thead th{color:var(--muted); font-weight:500}
   </div>
   <div class="panel" id="chEditor" style="margin-top:14px" hidden></div>
   <div class="panel" style="margin-top:14px"><details class="more"><summary>データの引っ越し（別の端末やブラウザへ移す）</summary>
-    <p class="note" style="margin-top:8px">キャラのデータは、開いている場所（端末・ブラウザ・ページ）ごとに保存されます。別の場所へ移すときは、ここで書き出した文字を、移した先の「読み込む」に貼り付けてください。</p>
+    <p class="note" style="margin-top:8px">キャラのデータは、開いている場所（端末・ブラウザ・ページ）ごとに保存されます。別の場所へ移すときは、ここで書き出した文字を、移した先の「読み込む」に貼り付けてください。同じキャラ（同じ名前、または同じ「〇〇装備済」の切り抜き）は1人にまとめ、日付の新しいほうを「いま」の装備に、もう片方は版として残します。控えとして、書き出した文字をどこかに保存しておくこともできます。</p>
     <div class="btns"><button class="btn" id="mvOut">いまのデータを書き出す</button><button class="btn" id="mvCopy" hidden>コピー</button><button class="btn" id="mvFile" hidden>ファイルに保存</button></div>
     <textarea id="mvText" rows="4" aria-label="引っ越し用のデータ" placeholder="書き出したデータがここに出ます。読み込むときは、ここに貼り付けます" style="width:100%;margin-top:8px;font:12px/1.4 ui-monospace,monospace;color:var(--ink);background:var(--inset);border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
     <div class="btns"><button class="btn primary" id="mvIn">貼り付けたデータを読み込む</button><label class="btn" style="cursor:pointer">ファイルから読み込む<input type="file" id="mvPick" accept=".json,application/json,text/plain" hidden></label></div>
@@ -1624,6 +1624,295 @@ function panoSVG(rows,zoom,rate,slot){ // rate=true：横軸を「上限に対�
   return `<svg class="tl" viewBox="0 0 ${W} ${H}" role="img" aria-label="山の全景：${what}">${g}</svg>`;
 }
 
+/* ---------- カード（ラフ）：SNS用の横長1枚。4案を切り替えて見比べる。立ち絵は自分で選んだ画像を入れる枠 ---------- */
+let CARD_FONT=false; // カード用の書体を読み込んだか（このページを開いている間だけ。ファイルは保存も送信もしない）
+const CARD_IMG={}; // キャラid → 選んだ画像（このページを開いている間だけ。保存しない）
+const CARD_VARIANTS={X3G:'ゲージ：発光',X3L:'ゲージ：LED',X3:'ゲージ：平ら',PR:'【前の1位】行',X1:'（前の案）太い棒',X2:'（前の案）定規',PT:'（前の案）柱',PS:'（前の案）聖遺物つき＋譜面',PM:'（前の案）聖遺物つき＋山',B:'（前の案）B 譜面',C:'（前の案）C 山'};
+// 聖遺物つきのカード：下に5部位（画像・レベル・メインOP・サブOP4つ）、上に名前と数字、右上に山か譜面
+const CARD_SHORT={'ER':'チャージ効率','CD':'会心ダメージ','CR':'会心率','EM':'元素熟知','HP':'HP','ATK':'攻撃力','DEF':'防御力','HP%':'HP','ATK%':'攻撃力','DEF%':'防御力'};
+function rollBlocks(d,x0,y0,pc,on,ch,cw0,bg0){ // 1回ぶん＝細い4マス。塗り4つ＝最大、1つ＝最小。左端が初期値
+  const U=Math.max(7*d.n,Math.min(10*d.n,Math.round(d.u))), ex=U-7*d.n, base=Math.floor(ex/d.n), rem=ex-base*d.n, cw=cw0||3.2, cg=1.3, bg=bg0||4.5, bwid=4*cw+3*cg; let o='';
+  for(let j=0;j<d.n;j++){ const fill=1+base+(j<rem?1:0), bx0=x0+j*(bwid+bg); for(let q=0;q<4;q++) o+=`<rect x="${(bx0+q*(cw+cg)).toFixed(1)}" y="${y0}" width="${cw}" height="${ch}" rx=".8" fill="${q<fill?pc:'none'}" stroke="${pc}" stroke-width=".7" opacity="${q<fill?(on?1:.85):.55}"/>`; }
+  return o; }
+// 行の案：上に立ち絵（小さめ）と名前・数字・山。下は部位ごとに1行で、左に聖遺物の中身を横に並べ、右へ長い棒（共通の時間の目盛り）
+function cardRowsSVG(c,st){
+  const W=1200,H=675, tr=tierOf(st.age), col=paint(tr), img=CARD_IMG[c.id], effS=new Set(c.eff), HL='#f2d78a';
+  const disp='"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif', mono='"IBM Plex Mono",ui-monospace,monospace';
+  const age=fmtAge(st.age), mm=age.match(/^([\d.,]+)(.*)$/), num=mm?mm[1]:age, unit=mm?mm[2]:'', nm=c.name||'';
+  const TH=372, AW=330, X0=AW+36;
+  let g=`<defs>${SLOT_ICON_DEFS}
+    <linearGradient id="crBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b111b"/><stop offset="1" stop-color="#141d2c"/></linearGradient>
+    <radialGradient id="crGlow" cx="0.75" cy="0.02" r="0.8"><stop offset="0" stop-color="${col}" stop-opacity=".24"/><stop offset=".6" stop-color="${col}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="crFadeR" x1="0" x2="1"><stop offset="0" stop-color="#0d131d" stop-opacity="0"/><stop offset=".6" stop-color="#0d131d" stop-opacity="0"/><stop offset="1" stop-color="#101825" stop-opacity="1"/></linearGradient>
+    <linearGradient id="crFadeB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d131d" stop-opacity="0"/><stop offset=".7" stop-color="#0d131d" stop-opacity="0"/><stop offset="1" stop-color="#0e1521" stop-opacity="1"/></linearGradient>
+    <clipPath id="crArt"><rect x="0" y="0" width="${AW+20}" height="${TH+14}"/></clipPath>
+    ${SLOTS.map((s,k)=>`<clipPath id="crP${k}"><circle cx="0" cy="0" r="18"/></clipPath>`).join('')}
+    <filter id="crG" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="crGs" x="-10%" y="-300%" width="120%" height="700%"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  g+=`<rect width="${W}" height="${H}" fill="url(#crBg)"/><rect width="${W}" height="${H}" fill="url(#crGlow)"/>`;
+  g+=img?`<image href="${img}" x="0" y="0" width="${AW+20}" height="${TH+14}" preserveAspectRatio="xMidYMin slice" clip-path="url(#crArt)"/><rect x="0" y="0" width="${AW+20}" height="${TH+14}" fill="url(#crFadeR)"/><rect x="0" y="0" width="${AW+20}" height="${TH+14}" fill="url(#crFadeB)"/>`
+    :`<rect x="20" y="22" width="${AW-20}" height="${TH-22}" rx="12" fill="#fff" fill-opacity=".03" stroke="${col}" stroke-opacity=".45" stroke-dasharray="8 8"/><text x="${AW/2+10}" y="${TH/2+6}" text-anchor="middle" font-size="20" font-weight="700" fill="${col}" opacity=".8">立ち絵</text><text x="${AW/2+10}" y="${TH/2+30}" text-anchor="middle" font-size="12" fill="${C.muted}">「立ち絵を選ぶ」で入れる</text>`;
+  g+=`<rect x="0" y="0" width="${W}" height="6" fill="${col}"/><rect x="0.5" y="0.5" width="${W-1}" height="${H-1}" fill="none" stroke="${col}" stroke-opacity=".5"/>`;
+  // 上段
+  g+=(nm?`<text x="${X0}" y="84" font-family='${disp}' font-size="52" font-weight="800" fill="${C.ink}">${esc(nm)}</text>`:(c.face?`<image href="${c.face}" x="${X0}" y="40" height="50" width="420" preserveAspectRatio="xMinYMid meet"/>`:''))
+    +`<g transform="translate(${X0},106)"><rect width="86" height="32" rx="7" fill="${col}" fill-opacity=".16" stroke="${col}"/><text x="43" y="23" text-anchor="middle" font-size="20" font-weight="800" letter-spacing=".08em" fill="${col}">${tr[1]}</text><text x="100" y="22" font-size="13" fill="${C.muted}">有効OP：${c.eff.map(s=>JP[s]).join('・')}</text></g>`
+    +`<text x="${X0}" y="196" font-size="14" letter-spacing=".3em" fill="${col}" opacity=".85">秘境レベル</text><text x="${X0}" y="296" fill="${col}" filter="url(#crG)"><tspan font-family='${mono}' font-size="108" font-weight="800">${num}</tspan><tspan font-size="38" font-weight="800" dx="8">${unit}</tspan></text>`
+    +[['有効RV',Math.round(st.tot)+'%'],['スコア',st.score.toFixed(1)]].map(([l,val],i)=>`<text x="${X0+i*150}" y="330" font-size="12" letter-spacing=".1em" fill="${C.muted}">${l}</text><text x="${X0+i*150}" y="362" font-family='${mono}' font-size="28" font-weight="700" fill="${C.ink}">${val}</text>`).join('')
+    +`<text x="${X0+150+92}" y="362" font-size="11" fill="${col}" opacity=".9">${STYPES[st.stype][0]}</text>`;
+  // 右上：山
+  { const bw=400, bh=TH-36, bx=W-30-bw, by=26, yMax=3.65e6, PX=r=>bx+12+r/100*(bw-24), PY=d=>by+bh-12-(Math.log(Math.max(1,Math.min(d,yMax)))/Math.log(yMax))*(bh-26); const pts=[]; for(let d=0.5;d<=yMax*1.3;d*=1.3){ const r=st.meanTot(d)/st.ceil*100; pts.push([PX(r),PY(d)]); if(r>=99.5) break; }
+    const rate=st.ceil>0?st.tot/st.ceil*100:0, cx=PX(rate), cy=PY(isFinite(st.age)?st.age:yMax), cut=pts.filter(p=>p[0]<=cx);
+    g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="10" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".25"/>`;
+    TIERS.forEach((t,k)=>{ const d0=Math.max(1,t[0]), d1=k+1<TIERS.length?TIERS[k+1][0]:yMax, ya=PY(d1), yb=PY(d0); g+=`<rect x="${bx+12}" y="${ya}" width="${bw-24}" height="${yb-ya}" fill="${paint(t)}" opacity="${k%2?0.06:0.11}"/>`; });
+    if(cut.length) g+=`<path d="M${PX(0)},${PY(1)}L${cut.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}L${cx},${cy}L${cx},${PY(1)}Z" fill="${col}" opacity=".25"/>`;
+    g+=`<path d="M${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}" fill="none" stroke="#e9eef7" stroke-opacity=".9" stroke-width="2.2"/><circle cx="${cx}" cy="${cy}" r="8" fill="${col}" stroke="#0a0f18" stroke-width="2.5" filter="url(#crG)"/>`; }
+  // 下段：部位ごとに1行
+  const RY=TH+34, RH=(H-RY-44)/5, LX=24, IMG=46, MW=104, SW=146, GX=LX+IMG+MW+4*SW+16, GW=W-30-GX-62;
+  const ages=SLOTS.map(s=>st.slots[s].age||0).filter(a=>a>0&&isFinite(a)), x1=Math.max(3650,...ages.map(a=>a*1.6),(isFinite(st.age)?st.age:0)*1.6), GXP=d=>GX+(Math.log(Math.max(1,Math.min(d,x1)))/Math.log(x1))*GW;
+  // 目盛り（5行に共通）
+  g+=`<rect x="${GX-8}" y="${RY-4}" width="${GW+66}" height="${RH*5+8}" rx="8" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".22"/>`;
+  TIERS.forEach((t,k)=>{ const a=GXP(Math.max(1,t[0])), b=GXP(k+1<TIERS.length?TIERS[k+1][0]:x1); if(b-a<2) return; g+=`<rect x="${a}" y="${RY}" width="${b-a}" height="${RH*5}" fill="${paint(t)}" opacity="${k%2?0.05:0.1}"/><rect x="${a}" y="${RY-4}" width="${b-a}" height="3" fill="${paint(t)}" opacity=".9"/><text x="${(a+b)/2}" y="${RY-10}" text-anchor="middle" font-size="12" font-weight="700" letter-spacing=".08em" fill="${paint(t)}">${t[1]}</text>`; });
+  [[1,'1日'],[7,'1週'],[30,'1か月'],[90,'3か月'],[365,'1年'],[1095,'3年'],[3650,'10年'],[36500,'100年']].filter(t=>t[0]<=x1).forEach(([d,l])=>{ g+=`<line x1="${GXP(d)}" x2="${GXP(d)}" y1="${RY}" y2="${RY+RH*5}" stroke="#fff" stroke-opacity=".08"/><text x="${GXP(d)}" y="${RY+RH*5+17}" text-anchor="middle" font-size="11" fill="${C.muted}">${l}</text>`; });
+  SLOTS.forEach((s,k)=>{ const y=RY+k*RH, yc=y+RH/2, sl=st.slots[s], p=c.pieces[s], has=sl.rv!=null&&p, tc=has&&sl.age>0?paint(tierOf(sl.age)):'#3a4458', pim=c.pimg&&c.pimg[s];
+    if(k>0) g+=`<line x1="${LX}" x2="${GX+GW+58}" y1="${y}" y2="${y}" stroke="#fff" stroke-opacity=".07"/>`;
+    g+=`<g transform="translate(${LX+21},${yc})">${pim?`<image href="${pim}" x="-18" y="-18" width="36" height="36" preserveAspectRatio="xMidYMid slice" clip-path="url(#crP${k})"/>`:`<circle r="18" fill="#141d2c"/>${slotIcon(s,0,0,19,'#5a6478')}`}<circle r="18" fill="none" stroke="${tc}" stroke-width="2"/></g>`;
+    if(!has){ g+=`<text x="${LX+IMG+8}" y="${yc+5}" font-size="13" fill="${C.muted}">${SLOT_JP[s]}：未入力</text>`; return; }
+    const mx=LX+IMG+6, det=sl.est&&sl.est.ok?sl.est.det:null;
+    g+=`<text x="${mx}" y="${yc-4}" font-size="11.5" fill="${C.ink}">${esc((MAIN_JP[p.main]||'').replace('元素ダメージ','元素ダメ'))}</text><text x="${mx}" y="${yc+13}" font-family='${mono}' font-size="14" font-weight="700" fill="${C.ink}">${MAIN_VAL20[p.main]||''}</text>`;
+    p.subs.slice().sort((a,b)=>(effS.has(b.s)?1:0)-(effS.has(a.s)?1:0)).forEach((q,i)=>{ const x=LX+IMG+MW+i*SW, on=effS.has(q.s), d=det?det.find(z=>z.s===q.s):null, pct=!FLAT.has(q.s), ch=RH-8;
+      g+=`<rect x="${x}" y="${y+4}" width="${SW-6}" height="${ch}" rx="5" fill="${on?HL:'#fff'}" fill-opacity="${on?.2:.025}" ${on?`stroke="${HL}" stroke-opacity=".45"`:''}/><text x="${x+8}" y="${y+20}" font-size="11.5" font-weight="${on?700:400}" fill="${on?C.ink:C.muted}">${CARD_SHORT[q.s]||JP[q.s]}</text><text x="${x+SW-13}" y="${y+21}" text-anchor="end" font-family='${mono}' font-size="14" font-weight="700" fill="${on?C.ink:C.muted}">+${esc(q.v)}${pct?'%':''}</text>`;
+      if(d) g+=rollBlocks(d,x+8,y+ch-6,on?HL:'#8a93a6',on,4.5,3.4,3); });
+    // 棒
+    if(sl.age>0){ const xx=GXP(isFinite(sl.age)?sl.age:x1);
+      g+=`<linearGradient id="crB${k}" x1="0" x2="1"><stop offset="0" stop-color="${tc}" stop-opacity=".06"/><stop offset=".6" stop-color="${tc}" stop-opacity=".5"/><stop offset="1" stop-color="${tc}"/></linearGradient><rect x="${GX}" y="${yc-6}" width="${Math.max(2,xx-GX)}" height="12" rx="3" fill="url(#crB${k})" opacity=".3"/><rect x="${GX}" y="${yc-2}" width="${Math.max(2,xx-GX)}" height="4" rx="2" fill="url(#crB${k})" filter="url(#crGs)"/><path d="M${xx},${yc-6} L${xx+5},${yc} L${xx},${yc+6} L${xx-5},${yc} Z" fill="${tc}" stroke="#0a0f18" stroke-width="1.5" filter="url(#crGs)"/><text x="${xx+11}" y="${yc+5.5}" font-family='${mono}' font-size="15" font-weight="800" fill="${tc}" paint-order="stroke" stroke="#0a0f18" stroke-width="4">${fmtAge(sl.age)}</text>`; } });
+  if(st.age>0){ const xa=GXP(isFinite(st.age)?st.age:x1); g+=`<line x1="${xa}" x2="${xa}" y1="${RY}" y2="${RY+RH*5}" stroke="${col}" stroke-width="2" stroke-dasharray="6 5" opacity=".9"/><text x="${xa}" y="${RY+RH*5-6}" text-anchor="middle" font-size="11" font-weight="700" fill="${col}" paint-order="stroke" stroke="#0a0f18" stroke-width="3.5">合計 ${fmtAge(st.age)}</text>`; }
+  g+=`<text x="${LX}" y="${H-12}" font-size="11" fill="${C.muted}">※ 伸び幅（細い4マス）は合計からの推定です。1回ごとの内訳はゲームに表示されないため、均等に割り振って描いています</text><text x="${W-30}" y="${H-12}" text-anchor="end" font-size="12" letter-spacing=".12em" fill="${C.muted}">聖遺物ラボ${c.date?'　'+c.date:''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="カードのラフ：${esc(nm||'キャラ')}" style="display:block;width:100%;height:auto;border-radius:10px">${g}</svg>`;
+}
+// 帯の案：上＝立ち絵・名前・数字・山、中＝棒グラフ（主役。見た目は3種）、下＝部位ごとに1行まるごと使った内訳（低く）
+function cardWideSVG(c,st,style){
+  const W=1200,H=675, tr=tierOf(st.age), col=paint(tr), img=CARD_IMG[c.id], effS=new Set(c.eff), HL='#f2d78a';
+  const disp=CARD_FONT?'"CardFont",sans-serif':'"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif', mono=CARD_FONT?'"CardFont",sans-serif':'"IBM Plex Mono",ui-monospace,monospace';
+  const age=fmtAge(st.age), mm=age.match(/^([\d.,]+)(.*)$/), num=mm?mm[1]:age, unit=mm?mm[2]:'', nm=c.name||'';
+  const GAUGE=style.startsWith('X3'), TH=GAUGE?250:268, AW=300, X0=AW+34, GY=TH+22, GH=style==='X2'?150:GAUGE?182:168, RY=GY+GH+22, RH=(H-RY-28)/5, LX=24, RX=W-24;
+  let g=`<defs>${SLOT_ICON_DEFS}
+    <linearGradient id="cwBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b111b"/><stop offset="1" stop-color="#141d2c"/></linearGradient>
+    <radialGradient id="cwGlow" cx="0.75" cy="0.02" r="0.8"><stop offset="0" stop-color="${col}" stop-opacity=".24"/><stop offset=".6" stop-color="${col}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cwFadeR" x1="0" x2="1"><stop offset="0" stop-color="#0d131d" stop-opacity="0"/><stop offset=".6" stop-color="#0d131d" stop-opacity="0"/><stop offset="1" stop-color="#101825" stop-opacity="1"/></linearGradient>
+    <linearGradient id="cwFadeB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d131d" stop-opacity="0"/><stop offset=".7" stop-color="#0d131d" stop-opacity="0"/><stop offset="1" stop-color="#0e1521" stop-opacity="1"/></linearGradient>
+    <clipPath id="cwArt"><rect x="0" y="0" width="${AW+20}" height="${TH+10}"/></clipPath>
+    ${SLOTS.map((s,k)=>`<clipPath id="cwP${k}"><circle cx="0" cy="0" r="12"/></clipPath><clipPath id="cwQ${k}"><circle cx="0" cy="0" r="17"/></clipPath>`).join('')}
+    <filter id="cwG" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="cwGs" x="-10%" y="-200%" width="120%" height="500%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  g+=`<rect width="${W}" height="${H}" fill="url(#cwBg)"/><rect width="${W}" height="${H}" fill="url(#cwGlow)"/>`;
+  g+=img?`<image href="${img}" x="0" y="0" width="${AW+20}" height="${TH+10}" preserveAspectRatio="xMidYMin slice" clip-path="url(#cwArt)"/><rect x="0" y="0" width="${AW+20}" height="${TH+10}" fill="url(#cwFadeR)"/><rect x="0" y="0" width="${AW+20}" height="${TH+10}" fill="url(#cwFadeB)"/>`
+    :`<rect x="20" y="22" width="${AW-20}" height="${TH-26}" rx="12" fill="#fff" fill-opacity=".03" stroke="${col}" stroke-opacity=".45" stroke-dasharray="8 8"/><text x="${AW/2+10}" y="${TH/2+4}" text-anchor="middle" font-size="20" font-weight="700" fill="${col}" opacity=".8">立ち絵</text><text x="${AW/2+10}" y="${TH/2+28}" text-anchor="middle" font-size="12" fill="${C.muted}">「立ち絵を選ぶ」で入れる</text>`;
+  g+=`<rect x="0" y="0" width="${W}" height="6" fill="${col}"/><rect x="0.5" y="0.5" width="${W-1}" height="${H-1}" fill="none" stroke="${col}" stroke-opacity=".5"/>`;
+  // 上段
+  g+=`<g transform="translate(0,${GAUGE?-12:0})">`+(nm?`<text x="${X0}" y="76" font-family='${disp}' font-size="48" font-weight="800" fill="${C.ink}">${esc(nm)}</text>`:(c.face?`<image href="${c.face}" x="${X0}" y="34" height="46" width="400" preserveAspectRatio="xMinYMid meet"/>`:''))
+    +`<g transform="translate(${X0},94)"><rect width="86" height="32" rx="7" fill="${col}" fill-opacity=".16" stroke="${col}"/><text x="43" y="23" text-anchor="middle" font-size="20" font-weight="800" letter-spacing=".08em" fill="${col}">${tr[1]}</text><text x="100" y="22" font-size="13" fill="${C.muted}">有効OP：${c.eff.map(s=>JP[s]).join('・')}</text></g>`
+    +`<text x="${X0}" y="160" font-size="13" letter-spacing=".3em" fill="${col}" opacity=".85">秘境レベル</text><text x="${X0}" y="246" fill="${col}" filter="url(#cwG)"><tspan font-family='${mono}' font-size="92" font-weight="800">${num}</tspan><tspan font-size="33" font-weight="800" dx="7">${unit}</tspan></text>`
+    +[['有効RV',Math.round(st.tot)+'%'],['スコア',st.score.toFixed(1)]].map(([l,val],i)=>`<text x="${X0+300+i*130}" y="206" font-size="12" letter-spacing=".1em" fill="${C.muted}">${l}</text><text x="${X0+300+i*130}" y="240" font-family='${mono}' font-size="27" font-weight="700" fill="${C.ink}">${val}</text>`).join('')
+    +`<text x="${X0+300+130}" y="258" font-size="10.5" fill="${col}" opacity=".9">${STYPES[st.stype][0]}</text></g>`;
+  { const bw=300, bh=TH-34, bx=W-24-bw, by=22, yMax=3.65e6, PX=r=>bx+12+r/100*(bw-24), PY=d=>by+bh-12-(Math.log(Math.max(1,Math.min(d,yMax)))/Math.log(yMax))*(bh-26); const pts=[]; for(let d=0.5;d<=yMax*1.3;d*=1.3){ const r=st.meanTot(d)/st.ceil*100; pts.push([PX(r),PY(d)]); if(r>=99.5) break; }
+    const rate=st.ceil>0?st.tot/st.ceil*100:0, cx=PX(rate), cy=PY(isFinite(st.age)?st.age:yMax), cut=pts.filter(p=>p[0]<=cx);
+    g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="10" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".25"/>`;
+    TIERS.forEach((t,k)=>{ const d0=Math.max(1,t[0]), d1=k+1<TIERS.length?TIERS[k+1][0]:yMax, ya=PY(d1), yb=PY(d0); g+=`<rect x="${bx+12}" y="${ya}" width="${bw-24}" height="${yb-ya}" fill="${paint(t)}" opacity="${k%2?0.06:0.11}"/>`; });
+    if(cut.length) g+=`<path d="M${PX(0)},${PY(1)}L${cut.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}L${cx},${cy}L${cx},${PY(1)}Z" fill="${col}" opacity=".25"/>`;
+    g+=`<path d="M${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}" fill="none" stroke="#e9eef7" stroke-opacity=".9" stroke-width="2.2"/><circle cx="${cx}" cy="${cy}" r="8" fill="${col}" stroke="#0a0f18" stroke-width="2.5" filter="url(#cwG)"/>`; }
+  // 中段：棒グラフ（主役）
+  const ages=SLOTS.map(s=>st.slots[s].age||0).filter(a=>a>0&&isFinite(a)), x1=Math.max(3650,...ages.map(a=>a*1.6),(isFinite(st.age)?st.age:0)*1.6);
+  const AX=LX+(style==='X2'?16:GAUGE?58:44), AW2=RX-AX-(style==='X2'?16:GAUGE?176:96), GXP=d=>AX+(Math.log(Math.max(1,Math.min(d,x1)))/Math.log(x1))*AW2;
+  g+=`<rect x="${LX}" y="${GY}" width="${RX-LX}" height="${GH}" rx="10" fill="#0a0f18" fill-opacity=".74" stroke="${col}" stroke-opacity=".3"/>`;
+  const ticks=[[1,'1日'],[7,'1週'],[30,'1か月'],[90,'3か月'],[365,'1年'],[1095,'3年'],[3650,'10年'],[36500,'100年']].filter(t=>t[0]<=x1);
+  const info=SLOTS.map(s=>{ const sl=st.slots[s], has=sl.rv!=null&&sl.age>0; return {s,has,a:has?(isFinite(sl.age)?sl.age:x1):0,tc:has?paint(tierOf(sl.age)):'#3a4458',pim:c.pimg&&c.pimg[s]}; });
+  if(style==='X1'){ // 太い光る棒（譜面を太く）
+    const ty=GY+24, th=GH-48, lane=th/5;
+    TIERS.forEach((t,k)=>{ const a=GXP(Math.max(1,t[0])), b=GXP(k+1<TIERS.length?TIERS[k+1][0]:x1); if(b-a<2) return; g+=`<rect x="${a}" y="${ty}" width="${b-a}" height="${th}" fill="${paint(t)}" opacity="${k%2?0.06:0.12}"/><rect x="${a}" y="${ty-4}" width="${b-a}" height="3" fill="${paint(t)}"/><text x="${(a+b)/2}" y="${ty-9}" text-anchor="middle" font-size="12" font-weight="800" letter-spacing=".08em" fill="${paint(t)}">${t[1]}</text>`; });
+    ticks.forEach(([d,l])=>{ g+=`<line x1="${GXP(d)}" x2="${GXP(d)}" y1="${ty}" y2="${ty+th}" stroke="#fff" stroke-opacity=".09"/><text x="${GXP(d)}" y="${ty+th+16}" text-anchor="middle" font-size="11" fill="${C.muted}">${l}</text>`; });
+    info.forEach((o,k)=>{ const yc=ty+lane*(k+0.5), xx=GXP(o.a); g+=slotIcon(o.s,LX+22,yc,18,o.has?'#c9d0dd':'#3a4458'); if(!o.has) return;
+      g+=`<linearGradient id="cwB${k}" x1="0" x2="1"><stop offset="0" stop-color="${o.tc}" stop-opacity=".1"/><stop offset=".7" stop-color="${o.tc}" stop-opacity=".75"/><stop offset="1" stop-color="${o.tc}"/></linearGradient><rect x="${AX}" y="${yc-lane*0.34}" width="${Math.max(3,xx-AX)}" height="${lane*0.68}" rx="3" fill="url(#cwB${k})" opacity=".32"/><rect x="${AX}" y="${yc-4}" width="${Math.max(3,xx-AX)}" height="8" rx="4" fill="url(#cwB${k})" filter="url(#cwGs)"/><path d="M${xx},${yc-10} L${xx+8},${yc} L${xx},${yc+10} L${xx-8},${yc} Z" fill="${o.tc}" stroke="#0a0f18" stroke-width="2" filter="url(#cwGs)"/><text x="${xx+16}" y="${yc+7}" font-family='${mono}' font-size="19" font-weight="800" fill="${o.tc}" paint-order="stroke" stroke="#0a0f18" stroke-width="4">${fmtAge(st.slots[o.s].age)}</text>`; });
+    if(st.age>0){ const xa=GXP(isFinite(st.age)?st.age:x1); g+=`<line x1="${xa}" x2="${xa}" y1="${ty-2}" y2="${ty+th+2}" stroke="${col}" stroke-width="2.5" stroke-dasharray="7 5"/><text x="${xa+7}" y="${ty+12}" font-size="11.5" font-weight="800" fill="${col}" paint-order="stroke" stroke="#0a0f18" stroke-width="3.5">合計</text>`; } }
+  else if(style==='X2'){ // 1本の定規：5部位を同じ線の上に、聖遺物つきのピンで
+    const yl=GY+GH/2+2, bh=22;
+    TIERS.forEach((t,k)=>{ const a=GXP(Math.max(1,t[0])), b=GXP(k+1<TIERS.length?TIERS[k+1][0]:x1); if(b-a<2) return; g+=`<rect x="${a}" y="${yl-bh/2}" width="${b-a}" height="${bh}" fill="${paint(t)}" opacity="${k%2?0.3:0.45}"/><text x="${(a+b)/2}" y="${yl+5}" text-anchor="middle" font-size="12.5" font-weight="800" letter-spacing=".1em" fill="#0a0f18" opacity=".85">${t[1]}</text>`; });
+    ticks.forEach(([d,l])=>{ g+=`<line x1="${GXP(d)}" x2="${GXP(d)}" y1="${yl-bh/2-4}" y2="${yl+bh/2+4}" stroke="#fff" stroke-opacity=".3"/>`; });
+    const srt=info.filter(o=>o.has).sort((a,b)=>a.a-b.a); let lastUp=-1e9, lastDn=-1e9;
+    srt.forEach((o,i)=>{ const k=SLOTS.indexOf(o.s), xx=GXP(o.a); let up=i%2===0; if(up&&xx-lastUp<92&&xx-lastDn>=92) up=false; else if(!up&&xx-lastDn<92&&xx-lastUp>=92) up=true; if(up) lastUp=xx; else lastDn=xx;
+      const py=up?yl-bh/2-34:yl+bh/2+34, ly=up?py-24:py+33;
+      g+=`<line x1="${xx}" x2="${xx}" y1="${yl}" y2="${py}" stroke="${o.tc}" stroke-width="2"/><circle cx="${xx}" cy="${yl}" r="4.5" fill="${o.tc}" stroke="#0a0f18" stroke-width="1.5"/><g transform="translate(${xx},${py})">${o.pim?`<image href="${o.pim}" x="-17" y="-17" width="34" height="34" preserveAspectRatio="xMidYMid slice" clip-path="url(#cwQ${k})"/>`:`<circle r="17" fill="#141d2c"/>${slotIcon(o.s,0,0,18,'#aab3c4')}`}<circle r="17" fill="none" stroke="${o.tc}" stroke-width="2.5" filter="url(#cwGs)"/></g><text x="${xx+23}" y="${py+6}" font-family='${mono}' font-size="18" font-weight="800" fill="${o.tc}" paint-order="stroke" stroke="#0a0f18" stroke-width="4">${fmtAge(st.slots[o.s].age)}</text>`; });
+    if(st.age>0){ const xa=GXP(isFinite(st.age)?st.age:x1); g+=`<path d="M${xa},${yl-bh/2-3} L${xa+9},${yl} L${xa},${yl+bh/2+3} L${xa-9},${yl} Z" fill="#fff" stroke="${col}" stroke-width="3" filter="url(#cwG)"/>`; }
+    ticks.forEach(([d,l])=>{ g+=`<text x="${GXP(d)}" y="${GY+GH-8}" text-anchor="middle" font-size="10.5" fill="${C.muted}">${l}</text>`; }); }
+  else { // マス目のゲージ：ランク1つ＝マス1つ。届いたところまで塗る。いちばん上の太い段が合計。見た目は3種（X3：平ら／X3G：発光／X3L：LED）
+    const mixc=(h,t)=>{ const n=parseInt(h.slice(1),16), r=n>>16, gg=(n>>8)&255, bb=n&255, m=v=>Math.round(v+(255-v)*t); return `rgb(${m(r)},${m(gg)},${m(bb)})`; }, dark=(h,t)=>{ const n=parseInt(h.slice(1),16), m=v=>Math.round(v*(1-t)); return `rgb(${m(n>>16)},${m((n>>8)&255)},${m(n&255)})`; };
+    const ty=GY+28, th=GH-40, lt=12, lane=(th-lt)/5, cells=TIERS.map((t,k)=>[Math.max(1,t[0]),k+1<TIERS.length?TIERS[k+1][0]:x1,t]).filter(c=>c[0]<x1), n=cells.length, gw=(AW2-(n-1)*6)/n, glow=style==='X3G', led=style==='X3L';
+    cells.forEach((cc,j)=>{ const pc=paint(cc[2]); g+=`<text x="${AX+j*(gw+6)+gw/2}" y="${ty-9}" text-anchor="middle" font-size="13" font-weight="800" letter-spacing=".1em" fill="${pc}" ${glow||led?'filter="url(#cwGs)"':''}>${cc[2][1]}</text><linearGradient id="cwGr${j}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${mixc(pc,.62)}"/><stop offset=".42" stop-color="${pc}"/><stop offset="1" stop-color="${dark(pc,.38)}"/></linearGradient>`; });
+    const drawLane=(key,yc,hh,a,has)=>{ let o=''; const sk=hh*0.3;
+      cells.forEach((cc,j)=>{ const x=AX+j*(gw+6), fr_=!has?0:a>=cc[1]?1:a<=cc[0]?0:(Math.log(a)-Math.log(cc[0]))/(Math.log(cc[1])-Math.log(cc[0])), pc=paint(cc[2]), shape=`M${x+sk},${yc-hh/2} H${x+gw} L${x+gw-sk},${yc+hh/2} H${x} Z`;
+        if(led){ const m=10, sw=(gw-sk)/m, lit=fr_<=0?0:Math.max(1,Math.round(fr_*m));
+          for(let q=0;q<m;q++){ const sx=x+q*sw, on=q<lit; o+=`<path d="M${(sx+sk).toFixed(1)},${yc-hh/2} h${(sw-2.2).toFixed(1)} l${-sk},${hh} h${-(sw-2.2).toFixed(1)} Z" fill="${on?`url(#cwGr${j})`:pc}" fill-opacity="${on?1:.09}" ${on?'':`stroke="${pc}" stroke-opacity=".22" stroke-width=".6"`} ${on&&q===lit-1&&fr_<1?'filter="url(#cwG)"':on?'filter="url(#cwGs)"':''}/>`; } return; }
+        o+=`<path d="${shape}" fill="${pc}" fill-opacity=".09" stroke="${pc}" stroke-opacity="${glow?.5:.35}"/>`;
+        if(fr_>0){ const w=sk+(gw-sk)*fr_, cid=`cwC${key}_${j}`;
+          o+=`<clipPath id="${cid}"><path d="M${x},${yc-hh/2-2} H${x+w} l${-sk},${hh+4} H${x-sk} Z"/></clipPath><g clip-path="url(#${cid})"><path d="${shape}" fill="${glow?`url(#cwGr${j})`:pc}" ${glow?'filter="url(#cwGs)"':''}/>${glow?`<path d="M${x+sk+2},${yc-hh/2+2} H${x+gw-2}" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/>`:''}</g>`;
+          if(glow&&fr_<1){ const ex=x+w; o+=`<path d="M${ex},${yc-hh/2-1} l${-sk},${hh+2}" stroke="#fff" stroke-width="2.4" filter="url(#cwG)"/>`; } } });
+      return o; };
+    g+=`<text x="${AX+AW2+14}" y="${ty-9}" font-size="10" letter-spacing=".1em" fill="${C.muted}">秘境Lv</text><text x="${RX-12}" y="${ty-9}" text-anchor="end" font-size="10" letter-spacing=".1em" fill="${C.muted}">有効RV</text>`;
+    info.forEach((o,k)=>{ const yc=ty+lt+lane*(k+0.5); g+=slotIcon(o.s,LX+24,yc,17,o.has?'#c9d0dd':'#3a4458')+drawLane(k,yc,lane*0.62,o.a,o.has);
+      if(o.has) g+=`<text x="${AX+AW2+14}" y="${yc+6}" font-family='${mono}' font-size="17" font-weight="800" fill="${o.tc}">${fmtAge(st.slots[o.s].age)}</text><text x="${RX-12}" y="${yc+5}" text-anchor="end" font-family='${mono}' font-size="13.5" fill="${C.ink}" opacity=".85">${Math.round(st.slots[o.s].rv)}%</text>`; });
+    { // 合計：いちばん上に、細い横の線を1本。届いたところまで濃く、その先は薄く
+      const a=isFinite(st.age)?st.age:x1, has=st.age>0, yl=ty+3;
+      g+=`<text x="${LX+12}" y="${yl+4}" font-size="11" font-weight="800" fill="${col}">合計</text>`;
+      cells.forEach((cc,j)=>{ const x=AX+j*(gw+6), frT=!has?0:a>=cc[1]?1:a<=cc[0]?0:(Math.log(a)-Math.log(cc[0]))/(Math.log(cc[1])-Math.log(cc[0])), pc=paint(cc[2]);
+        g+=`<rect x="${x}" y="${yl-1.5}" width="${gw}" height="3" rx="1.5" fill="${pc}" opacity=".2"/>`;
+        if(frT>0){ g+=`<rect x="${x}" y="${yl-2}" width="${gw*frT}" height="4" rx="2" fill="${pc}" filter="url(#cwGs)"/>`; if(frT<1) g+=`<circle cx="${x+gw*frT}" cy="${yl}" r="4" fill="#fff" stroke="${pc}" stroke-width="2" filter="url(#cwGs)"/>`; } });
+      if(has) g+=`<text x="${AX+AW2+14}" y="${yl+5}" font-family='${mono}' font-size="13" font-weight="800" fill="${col}">${fmtAge(st.age)}</text><text x="${RX-12}" y="${yl+4.5}" text-anchor="end" font-family='${mono}' font-size="12" fill="${C.ink}" opacity=".85">${Math.round(st.tot)}%</text>`; } }
+  // 下段：部位ごとに1行まるごと
+  SLOTS.forEach((s,k)=>{ const y=RY+k*RH, yc=y+RH/2, sl=st.slots[s], p=c.pieces[s], has=sl.rv!=null&&p, tc=has&&sl.age>0?paint(tierOf(sl.age)):'#3a4458', pim=c.pimg&&c.pimg[s];
+    g+=`<rect x="${LX}" y="${y+1}" width="${RX-LX}" height="${RH-2}" rx="5" fill="#0a0f18" fill-opacity="${k%2?.35:.6}"/><rect x="${LX}" y="${y+1}" width="3" height="${RH-2}" fill="${tc}"/>`;
+    g+=`<g transform="translate(${LX+22},${yc})">${pim?`<image href="${pim}" x="-12" y="-12" width="24" height="24" preserveAspectRatio="xMidYMid slice" clip-path="url(#cwP${k})"/>`:slotIcon(s,0,0,17,'#8a93a6')}<circle r="12" fill="none" stroke="${tc}" stroke-width="1.5"/></g>`;
+    if(!has){ g+=`<text x="${LX+44}" y="${yc+4.5}" font-size="12" fill="${C.muted}">${SLOT_JP[s]}：未入力</text>`; return; }
+    const det=sl.est&&sl.est.ok?sl.est.det:null, MX=LX+44, MW=GAUGE?104:178, SW=(RX-MX-MW-6)/4;
+    g+=`<text x="${MX}" y="${yc+4.5}" font-size="12" fill="${s==='flower'||s==='plume'?C.muted:C.ink}">${esc((MAIN_JP[p.main]||'').replace('元素ダメージ','元素ダメ'))}</text>${GAUGE?'':`<text x="${MX+MW-14}" y="${yc+5}" text-anchor="end" font-family='${mono}' font-size="14" font-weight="700" fill="${C.ink}">${MAIN_VAL20[p.main]||''}</text>`}`;
+    p.subs.slice().sort((a,b)=>(effS.has(b.s)?1:0)-(effS.has(a.s)?1:0)).forEach((q,i)=>{ const x=MX+MW+i*SW, on=effS.has(q.s), d=det?det.find(z=>z.s===q.s):null, pct=!FLAT.has(q.s);
+      g+=`<rect x="${x}" y="${y+3}" width="${SW-6}" height="${RH-6}" rx="4" fill="${on?HL:'#fff'}" fill-opacity="${on?.2:.03}" ${on?`stroke="${HL}" stroke-opacity=".45"`:''}/><text x="${x+8}" y="${yc+4.5}" font-size="${GAUGE?12.5:11.5}" font-weight="${on?700:400}" fill="${on?C.ink:C.muted}">${CARD_SHORT[q.s]||JP[q.s]}</text><text x="${x+(GAUGE?146:136)}" y="${yc+5}" text-anchor="end" font-family='${mono}' font-size="${GAUGE?15:14}" font-weight="700" fill="${on?C.ink:C.muted}">+${esc(q.v)}${pct?'%':''}</text>`;
+      if(d) g+=GAUGE?rollBlocks(d,x+156,yc-4,on?HL:'#8a93a6',on,8,3,3.2):rollBlocks(d,x+144,yc-3,on?HL:'#8a93a6',on,6,2.6,2.6); }); });
+  g+=`<text x="${LX}" y="${H-10}" font-size="10.5" fill="${C.muted}">※ 伸び幅（細い4マス）は合計からの推定です。1回ごとの内訳はゲームに表示されないため、均等に割り振って描いています</text><text x="${RX}" y="${H-10}" text-anchor="end" font-size="12" letter-spacing=".12em" fill="${C.muted}">聖遺物ラボ${c.date?'　'+c.date:''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="カードのラフ：${esc(nm||'キャラ')}" style="display:block;width:100%;height:auto;border-radius:10px${CARD_FONT?';font-family:CardFont,sans-serif':''}">${g}</svg>`;
+}
+function cardPiecesSVG(c,st,v){
+  const W=1200,H=675, tr=tierOf(st.age), col=paint(tr), img=CARD_IMG[c.id], AW=330, X0=AW+36, RW=W-X0-36, effS=new Set(c.eff);
+  const disp='"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif', mono='"IBM Plex Mono",ui-monospace,monospace';
+  const age=fmtAge(st.age), mm=age.match(/^([\d.,]+)(.*)$/), num=mm?mm[1]:age, unit=mm?mm[2]:'', rate=st.ceil>0?Math.round(st.tot/st.ceil*100):0, nm=c.name||'';
+  let g=`<defs>${SLOT_ICON_DEFS}
+    <linearGradient id="cpBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b111b"/><stop offset="1" stop-color="#141d2c"/></linearGradient>
+    <radialGradient id="cpGlow" cx="0.8" cy="0.05" r="0.9"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset=".6" stop-color="${col}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cpFade" x1="0" x2="1"><stop offset="0" stop-color="#0d131d" stop-opacity="0"/><stop offset=".6" stop-color="#0d131d" stop-opacity="0"/><stop offset="1" stop-color="#0f1723" stop-opacity="1"/></linearGradient>
+    <clipPath id="cpArt"><rect x="0" y="0" width="${AW+30}" height="${H}"/></clipPath>
+    ${SLOTS.map((s,k)=>`<clipPath id="cpP${k}"><circle cx="0" cy="0" r="30"/></clipPath>`).join('')}
+    <filter id="cpG" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="cpGs" x="-10%" y="-300%" width="120%" height="700%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  g+=`<rect width="${W}" height="${H}" fill="url(#cpBg)"/><rect width="${W}" height="${H}" fill="url(#cpGlow)"/>`;
+  g+=img?`<image href="${img}" x="0" y="0" width="${AW+30}" height="${H}" preserveAspectRatio="xMidYMin slice" clip-path="url(#cpArt)"/>`
+    :`<rect x="22" y="22" width="${AW-26}" height="${H-44}" rx="14" fill="#fff" fill-opacity=".03" stroke="${col}" stroke-opacity=".45" stroke-dasharray="8 8"/><text x="${AW/2+9}" y="${H/2-6}" text-anchor="middle" font-size="22" font-weight="700" fill="${col}" opacity=".8">立ち絵</text><text x="${AW/2+9}" y="${H/2+22}" text-anchor="middle" font-size="13" fill="${C.muted}">「立ち絵を選ぶ」で入れる</text>`;
+  g+=`<rect x="0" y="0" width="${AW+30}" height="${H}" fill="url(#cpFade)"/><rect x="0" y="0" width="${W}" height="6" fill="${col}"/><rect x="0.5" y="0.5" width="${W-1}" height="${H-1}" fill="none" stroke="${col}" stroke-opacity=".5"/>`;
+  // 上段：名前・ランク・秘境レベル・数字
+  g+=(nm?`<text x="${X0}" y="72" font-family='${disp}' font-size="44" font-weight="800" fill="${C.ink}">${esc(nm)}</text>`:(c.face?`<image href="${c.face}" x="${X0}" y="34" height="44" width="380" preserveAspectRatio="xMinYMid meet"/>`:''))
+    +`<g transform="translate(${X0},92)"><rect width="86" height="32" rx="7" fill="${col}" fill-opacity=".16" stroke="${col}"/><text x="43" y="23" text-anchor="middle" font-size="20" font-weight="800" letter-spacing=".08em" fill="${col}">${tr[1]}</text><text x="100" y="22" font-size="13" fill="${C.muted}">有効OP：${c.eff.map(s=>JP[s]).join('・')}</text></g>`
+    +`<text x="${X0}" y="158" font-size="13" letter-spacing=".3em" fill="${col}" opacity=".85">秘境レベル</text><text x="${X0}" y="232" fill="${col}" filter="url(#cpG)"><tspan font-family='${mono}' font-size="78" font-weight="800">${num}</tspan><tspan font-size="28" font-weight="800" dx="6">${unit}</tspan></text>`
+    +[['有効RV',Math.round(st.tot)+'%'],['スコア',st.score.toFixed(1)]].map(([l,val],i)=>`<text x="${X0+250+i*104}" y="196" font-size="12" letter-spacing=".1em" fill="${C.muted}">${l}</text><text x="${X0+250+i*104}" y="228" font-family='${mono}' font-size="25" font-weight="700" fill="${C.ink}">${val}</text>`).join('')
+    +`<text x="${X0+250+104}" y="246" font-size="10.5" fill="${col}" opacity=".9">${STYPES[st.stype][0]}</text>`;
+  // 右上：山 か 譜面
+  const bx=X0+RW-236, by=28, bw=236, bh=222;
+  g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="10" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".25"/>`;
+  if(v==='PM'||v==='PT'){ const yMax=3.65e6, PX=r=>bx+12+r/100*(bw-24), PY=d=>by+bh-14-(Math.log(Math.max(1,Math.min(d,yMax)))/Math.log(yMax))*(bh-30); const pts=[]; for(let d=0.5;d<=yMax*1.3;d*=1.3){ const r=st.meanTot(d)/st.ceil*100; pts.push([PX(r),PY(d)]); if(r>=99.5) break; }
+    TIERS.forEach((t,k)=>{ const d0=Math.max(1,t[0]), d1=k+1<TIERS.length?TIERS[k+1][0]:yMax, ya=PY(d1), yb=PY(d0); g+=`<rect x="${bx+12}" y="${ya}" width="${bw-24}" height="${yb-ya}" fill="${paint(t)}" opacity="${k%2?0.06:0.11}"/>`; });
+    const cx=PX(rate), cy=PY(isFinite(st.age)?st.age:yMax), cut=pts.filter(p=>p[0]<=cx);
+    if(cut.length) g+=`<path d="M${PX(0)},${PY(1)}L${cut.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}L${cx},${cy}L${cx},${PY(1)}Z" fill="${col}" opacity=".25"/>`;
+    g+=`<path d="M${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}" fill="none" stroke="#e9eef7" stroke-opacity=".9" stroke-width="2.2"/><circle cx="${cx}" cy="${cy}" r="8" fill="${col}" stroke="#0a0f18" stroke-width="2.5" filter="url(#cpG)"/>`; }
+  else { const x1=Math.max(3650,...SLOTS.map(s=>st.slots[s].age||0).filter(isFinite).map(a=>a*1.6)), lx=d=>bx+30+(Math.log(Math.max(1,Math.min(d,x1)))/Math.log(x1))*(bw-44), gap=(bh-34)/5;
+    TIERS.forEach((t,k)=>{ const a=lx(Math.max(1,t[0])), b=lx(k+1<TIERS.length?TIERS[k+1][0]:x1); if(b-a<2) return; g+=`<rect x="${a}" y="${by+24}" width="${b-a}" height="${bh-32}" fill="${paint(t)}" opacity="${k%2?0.06:0.11}"/><text x="${(a+b)/2}" y="${by+18}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${paint(t)}">${t[1]}</text>`; });
+    SLOTS.forEach((s,k)=>{ const yy=by+28+gap*(k+0.5), a=st.slots[s].age, has=st.slots[s].rv!=null&&a>0, tc=has?paint(tierOf(a)):'#3a4458'; g+=slotIcon(s,bx+16,yy,15,has?'#aab3c4':'#3a4458');
+      if(has){ const xx=lx(isFinite(a)?a:x1); g+=`<rect x="${bx+30}" y="${yy-1.4}" width="${Math.max(2,xx-bx-30)}" height="2.8" rx="1.4" fill="${tc}" filter="url(#cpGs)"/>`; } });
+    if(st.age>0){ const xa=lx(isFinite(st.age)?st.age:x1); g+=`<line x1="${xa}" x2="${xa}" y1="${by+26}" y2="${by+bh-8}" stroke="${col}" stroke-width="2.5" filter="url(#cpG)"/>`; } }
+  const HL='#f2d78a'; // 有効OPの帯の色（ランクに関係なく同じ）
+  if(v==='PT'){ // 柱：5部位のレベルを、共通の時間の目盛りの上に柱として立てる。柱のてっぺんに聖遺物
+    const zy=262, zh=214, ax=46, cwid=(RW-ax)/5, ages=SLOTS.map(s=>st.slots[s].age||0).filter(a=>a>0&&isFinite(a)), yMax=Math.max(1095,...ages.map(a=>a*4),(isFinite(st.age)?st.age:0)*4);
+    const ZY=d=>zy+zh-34-(Math.log(Math.max(1,Math.min(d,yMax)))/Math.log(yMax))*(zh-34-36);
+    g+=`<rect x="${X0}" y="${zy}" width="${RW}" height="${zh}" rx="10" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".25"/>`;
+    TIERS.forEach((t,k)=>{ const d0=Math.max(1,t[0]), d1=Math.min(k+1<TIERS.length?TIERS[k+1][0]:yMax,yMax); if(d0>=d1) return; const ya=Math.max(zy+4,ZY(d1)-(k+1<TIERS.length&&TIERS[k+1][0]<yMax?0:36)), yb=Math.min(zy+zh-4,ZY(d0)+(k===0?34:0));
+      g+=`<rect x="${X0+ax}" y="${ya}" width="${RW-ax-6}" height="${yb-ya}" fill="${paint(t)}" opacity="${k%2?0.06:0.11}"/><rect x="${X0+ax-4}" y="${ya}" width="3" height="${yb-ya}" fill="${paint(t)}" opacity=".9"/>${yb-ya>15?`<text x="${X0+ax-9}" y="${(ya+yb)/2+4}" text-anchor="end" font-size="11" font-weight="700" fill="${paint(t)}">${t[1]}</text>`:''}`; });
+    if(st.age>0){ const ty=ZY(isFinite(st.age)?st.age:yMax); g+=`<line x1="${X0+ax}" x2="${X0+RW-6}" y1="${ty}" y2="${ty}" stroke="${col}" stroke-width="1.4" stroke-dasharray="6 5" opacity=".9"/><text x="${X0+ax+8}" y="${ty-6}" font-size="11" font-weight="700" fill="${col}" paint-order="stroke" stroke="#0a0f18" stroke-width="3">合計 ${fmtAge(st.age)}</text>`; }
+    SLOTS.forEach((s,k)=>{ const cx=X0+ax+cwid*(k+0.5), sl=st.slots[s], has=sl.rv!=null&&sl.age>0, tc=has?paint(tierOf(sl.age)):'#3a4458', pim=c.pimg&&c.pimg[s], base=zy+zh-30, ty=has?ZY(isFinite(sl.age)?sl.age:yMax):base;
+      g+=`<linearGradient id="cpPil${k}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${tc}" stop-opacity=".08"/><stop offset="1" stop-color="${tc}" stop-opacity=".95"/></linearGradient>`;
+      g+=`<line x1="${cx}" x2="${cx}" y1="${zy+10}" y2="${base}" stroke="#fff" stroke-opacity=".07"/>`+slotIcon(s,cx,zy+zh-15,17,has?'#aab3c4':'#3a4458');
+      if(has) g+=`<rect x="${cx-17}" y="${ty}" width="34" height="${Math.max(2,base-ty)}" fill="url(#cpPil${k})" opacity=".55"/><rect x="${cx-2.5}" y="${ty}" width="5" height="${Math.max(2,base-ty)}" rx="2.5" fill="url(#cpPil${k})" filter="url(#cpGs)"/>`;
+      g+=`<g transform="translate(${cx},${ty})">${pim?`<image href="${pim}" x="-25" y="-25" width="50" height="50" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpP${k})"/>`:`<circle r="25" fill="#141d2c"/>${slotIcon(s,0,0,26,'#5a6478')}`}<circle r="25" fill="none" stroke="${tc}" stroke-width="2.5" ${has?'filter="url(#cpG)"':''}/></g>`;
+      g+=`<text x="${cx}" y="${ty-33<zy+16?ty+46:ty-33}" text-anchor="middle" font-family='${mono}' font-size="20" font-weight="800" fill="${has?tc:C.muted}" paint-order="stroke" stroke="#0a0f18" stroke-width="4" ${has?'filter="url(#cpGs)"':''}>${has?fmtAge(sl.age):'—'}</text>`; });
+    // 内訳（控えめ）：メインOPと、サブOP4つ
+    const py=zy+zh+8, pw=(RW-ax-4*8)/5, phh=H-py-30, rh=(phh-26)/4;
+    SLOTS.forEach((s,k)=>{ const x=X0+ax+k*(pw+8), sl=st.slots[s], p=c.pieces[s], has=sl.rv!=null; if(!has||!p) return; const det=sl.est&&sl.est.ok?sl.est.det:null;
+      g+=`<text x="${x+2}" y="${py+13}" font-size="11.5" fill="${C.ink}">${esc((MAIN_JP[p.main]||'').replace('元素ダメージ','元素ダメ'))}</text><text x="${x+pw-2}" y="${py+13}" text-anchor="end" font-family='${mono}' font-size="12.5" font-weight="700" fill="${C.ink}">${MAIN_VAL20[p.main]||''}</text><line x1="${x}" x2="${x+pw}" y1="${py+19}" y2="${py+19}" stroke="#fff" stroke-opacity=".14"/>`;
+      p.subs.forEach((q,i)=>{ const yy=py+23+i*rh, on=effS.has(q.s), d=det?det.find(z=>z.s===q.s):null, pct=!FLAT.has(q.s);
+        g+=`<rect x="${x}" y="${yy}" width="${pw}" height="${rh-3}" rx="4" fill="${on?HL:'#fff'}" fill-opacity="${on?.2:.02}" ${on?`stroke="${HL}" stroke-opacity=".4"`:''}/><text x="${x+6}" y="${yy+12}" font-size="11" font-weight="${on?700:400}" fill="${on?C.ink:C.muted}">${CARD_SHORT[q.s]||JP[q.s]}</text><text x="${x+pw-6}" y="${yy+12}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="${on?C.ink:C.muted}">+${esc(q.v)}${pct?'%':''}</text>`;
+        if(d) g+=rollBlocks(d,x+6,yy+rh-13,on?HL:'#8a93a6',on,7); }); });
+  } else {
+  // 下段：5部位（前の案）
+  const py=266, pw=(RW-4*10)/5, phh=H-py-40;
+  SLOTS.forEach((s,k)=>{ const x=X0+k*(pw+10), sl=st.slots[s], p=c.pieces[s], has=sl.rv!=null, tc=has&&sl.age>0?paint(tierOf(sl.age)):'#3a4458', pim=c.pimg&&c.pimg[s];
+    g+=`<rect x="${x}" y="${py}" width="${pw}" height="${phh}" rx="10" fill="#0a0f18" fill-opacity=".74" stroke="${tc}" stroke-opacity=".5"/><rect x="${x}" y="${py}" width="${pw}" height="4" rx="2" fill="${tc}"/>`;
+    g+=`<g transform="translate(${x+40},${py+44})">${pim?`<image href="${pim}" x="-30" y="-30" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpP${k})"/>`:`<circle r="30" fill="#141d2c"/>${slotIcon(s,0,0,30,'#5a6478')}`}<circle r="30" fill="none" stroke="${tc}" stroke-width="2"/></g>`;
+    if(!has){ g+=`<text x="${x+pw/2}" y="${py+phh/2+20}" text-anchor="middle" font-size="13" fill="${C.muted}">未入力</text>`; return; }
+    g+=slotIcon(s,x+84,py+28,15,'#aab3c4')+`<text x="${x+96}" y="${py+33}" font-size="12" fill="${C.muted}">${SLOT_JP[s]}</text><text x="${x+78}" y="${py+62}" font-family='${mono}' font-size="${fmtAge(sl.age).length>4?15:19}" font-weight="700" fill="${tc}" filter="url(#cpGs)">${fmtAge(sl.age)}</text>`;
+    const mv=MAIN_VAL20[p.main]||'';
+    g+=`<text x="${x+12}" y="${py+100}" font-size="12" fill="${C.ink2||C.ink}">${esc((MAIN_JP[p.main]||'').replace('元素ダメージ','元素ダメ'))}</text><text x="${x+pw-12}" y="${py+100}" text-anchor="end" font-family='${mono}' font-size="15" font-weight="700" fill="${C.ink}">${mv}</text><line x1="${x+10}" x2="${x+pw-10}" y1="${py+110}" y2="${py+110}" stroke="#fff" stroke-opacity=".12"/>`;
+    const det=sl.est&&sl.est.ok?sl.est.det:null;
+    p.subs.forEach((q,i)=>{ const yy=py+118+i*((phh-126)/4), rh=(phh-126)/4-5, on=effS.has(q.s), d=det?det.find(z=>z.s===q.s):null, pct=!FLAT.has(q.s);
+      g+=`<rect x="${x+6}" y="${yy}" width="${pw-12}" height="${rh}" rx="5" fill="${on?HL:'#fff'}" fill-opacity="${on?.2:.025}" ${on?`stroke="${HL}" stroke-opacity=".45"`:''}/>`;
+      g+=`<text x="${x+13}" y="${yy+17}" font-size="12.5" font-weight="${on?700:400}" fill="${on?C.ink:C.muted}">${CARD_SHORT[q.s]||JP[q.s]}</text><text x="${x+pw-13}" y="${yy+17}" text-anchor="end" font-family='${mono}' font-size="14.5" font-weight="700" fill="${on?C.ink:C.muted}">+${esc(q.v)}${pct?'%':''}</text>`;
+      if(d){ // 伸び幅：1回ぶん＝細い4マスのかたまり。塗りが4つ＝最大、1つ＝最小。左端のかたまりが初期値で、あとは伸びた回数ぶん
+        const pc=on?HL:'#8a93a6', U=Math.max(7*d.n,Math.min(10*d.n,Math.round(d.u))), ex=U-7*d.n, base=Math.floor(ex/d.n), rem=ex-base*d.n;
+        const cw=3.2, cg=1.3, bg=4.5, bwid=4*cw+3*cg, tot=d.n*bwid+(d.n-1)*bg, x0=x+13, y0=yy+rh-16;
+        for(let j=0;j<d.n;j++){ const fill=1+base+(j<rem?1:0), bx0=x0+j*(bwid+bg);
+          for(let q=0;q<4;q++) g+=`<rect x="${(bx0+q*(cw+cg)).toFixed(1)}" y="${y0}" width="${cw}" height="12" rx=".8" fill="${q<fill?pc:'none'}" stroke="${pc}" stroke-width=".7" opacity="${q<fill?(on?1:.85):.55}"/>`; } } }); });
+  }
+  g+=`<text x="${X0}" y="${H-16}" font-size="11" fill="${C.muted}">※ 伸び幅は合計からの推定です（1回ごとの内訳はゲームに表示されないため、均等に割り振って描いています）</text><text x="${W-36}" y="${H-16}" text-anchor="end" font-size="12" letter-spacing=".12em" fill="${C.muted}">聖遺物ラボ${c.date?'　'+c.date:''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="カードのラフ：${esc(nm||'キャラ')}" style="display:block;width:100%;height:auto;border-radius:10px">${g}</svg>`;
+}
+
+function cardSVG(c,st,v){ if(v==='X1'||v==='X2'||v.startsWith('X3')) return cardWideSVG(c,st,v); if(v==='PR') return cardRowsSVG(c,st); if(v==='PS'||v==='PM'||v==='PT') return cardPiecesSVG(c,st,v);
+  const W=1200,H=675, tr=tierOf(st.age), col=paint(tr), img=CARD_IMG[c.id], AW=v==='B'?380:470, X0=AW+50, RW=W-X0-50;
+  const disp='"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif', mono='"IBM Plex Mono",ui-monospace,monospace';
+  const age=fmtAge(st.age), mm=age.match(/^([\d.,]+)(.*)$/), num=mm?mm[1]:age, unit=mm?mm[2]:'';
+  const rate=st.ceil>0?Math.round(st.tot/st.ceil*100):0, nm=c.name||'';
+  let g=`<defs>${SLOT_ICON_DEFS}
+    <linearGradient id="cdBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b111b"/><stop offset="1" stop-color="#141d2c"/></linearGradient>
+    <radialGradient id="cdGlow" cx="0.85" cy="0.1" r="0.9"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset=".6" stop-color="${col}" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cdFade" x1="0" x2="1"><stop offset="0" stop-color="#0d131d" stop-opacity="0"/><stop offset=".55" stop-color="#0d131d" stop-opacity="0"/><stop offset="1" stop-color="#101825" stop-opacity="1"/></linearGradient>
+    <linearGradient id="cdBar" x1="0" x2="1"><stop offset="0" stop-color="${col}" stop-opacity=".05"/><stop offset="1" stop-color="${col}" stop-opacity="1"/></linearGradient>
+    <clipPath id="cdArt"><rect x="0" y="0" width="${AW+40}" height="${H}"/></clipPath>
+    <filter id="cdG" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="cdGs" x="-10%" y="-300%" width="120%" height="700%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  g+=`<rect width="${W}" height="${H}" fill="url(#cdBg)"/><rect width="${W}" height="${H}" fill="url(#cdGlow)"/>`;
+  // 立ち絵の枠
+  g+=img?`<image href="${img}" x="0" y="0" width="${AW+40}" height="${H}" preserveAspectRatio="xMidYMin slice" clip-path="url(#cdArt)"/>`
+    :`<rect x="26" y="26" width="${AW-30}" height="${H-52}" rx="14" fill="#fff" fill-opacity=".03" stroke="${col}" stroke-opacity=".45" stroke-dasharray="8 8"/><text x="${AW/2+10}" y="${H/2-6}" text-anchor="middle" font-size="22" font-weight="700" fill="${col}" opacity=".8">立ち絵</text><text x="${AW/2+10}" y="${H/2+24}" text-anchor="middle" font-size="14" fill="${C.muted}">「立ち絵を選ぶ」で自分の画像を入れる</text>`;
+  g+=`<rect x="0" y="0" width="${AW+40}" height="${H}" fill="url(#cdFade)"/><rect x="0" y="0" width="${W}" height="6" fill="${col}"/><rect x="0.5" y="0.5" width="${W-1}" height="${H-1}" fill="none" stroke="${col}" stroke-opacity=".5"/>`;
+  // 見出し（名前・ランク）
+  const head=(y)=>`${nm?`<text x="${X0}" y="${y}" font-family='${disp}' font-size="50" font-weight="800" fill="${C.ink}">${esc(nm)}</text>`:(c.face?`<image href="${c.face}" x="${X0}" y="${y-42}" height="48" width="400" preserveAspectRatio="xMinYMid meet"/>`:'')}
+    <g transform="translate(${W-50},${y-34})"><rect x="-112" y="0" width="112" height="40" rx="8" fill="${col}" fill-opacity=".16" stroke="${col}"/><text x="-56" y="28" text-anchor="middle" font-size="24" font-weight="800" letter-spacing=".08em" fill="${col}" filter="url(#cdGs)">${tr[1]}</text></g>
+    <text x="${X0}" y="${y+30}" font-size="15" fill="${C.muted}">有効OP：${c.eff.map(s=>JP[s]).join('・')}${c.set?'　／　'+esc(c.set):''}</text>`;
+  const stat=(x,y,w,label,val,sub)=>`<g><rect x="${x}" y="${y}" width="${w}" height="92" rx="10" fill="#0a0f18" fill-opacity=".7" stroke="${col}" stroke-opacity=".3"/><text x="${x+16}" y="${y+26}" font-size="13" letter-spacing=".1em" fill="${C.muted}">${label}</text><text x="${x+16}" y="${y+66}" font-family='${mono}' font-size="34" font-weight="700" fill="${C.ink}">${val}</text>${sub?`<text x="${x+w-14}" y="${y+26}" text-anchor="end" font-size="12" fill="${col}">${sub}</text>`:''}</g>`;
+  const stats3=(y)=>{ const w=(RW-24)/3; return stat(X0,y,w,'有効RV',Math.round(st.tot)+'%')+stat(X0+w+12,y,w,'スコア',st.score.toFixed(1),STYPES[st.stype][0])+stat(X0+2*(w+12),y,w,'山の達成率',rate+'%'); };
+  const big=(x,y,size)=>`<text x="${x}" y="${y-size*0.92}" font-size="16" letter-spacing=".3em" fill="${col}" opacity=".85">秘境レベル</text><text x="${x}" y="${y}" fill="${col}" filter="url(#cdG)"><tspan font-family='${mono}' font-size="${size}" font-weight="800">${num}</tspan><tspan font-size="${size*0.36}" font-weight="800" dx="8">${unit}</tspan></text>`;
+  // 譜面（5段の細い棒）
+  const score=(x,y,w,h)=>{ const x1=Math.max(3650,...SLOTS.map(s=>st.slots[s].age||0).filter(isFinite).map(a=>a*1.6),(isFinite(st.age)?st.age:0)*1.6), lx=d=>x+34+(Math.log(Math.max(1,Math.min(d,x1)))/Math.log(x1))*(w-34-70), gap=h/5; let o=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".25"/>`;
+    TIERS.forEach((t,k)=>{ const a=lx(Math.max(1,t[0])), b=lx(k+1<TIERS.length?TIERS[k+1][0]:x1); if(b-a<2) return; o+=`<rect x="${a}" y="${y+4}" width="${b-a}" height="${h-8}" fill="${paint(t)}" opacity="${k%2?0.05:0.09}"/><text x="${(a+b)/2}" y="${y-8}" text-anchor="middle" font-size="12" font-weight="700" fill="${paint(t)}">${t[1]}</text>`; });
+    SLOTS.forEach((s,k)=>{ const yy=y+gap*(k+0.5), a=st.slots[s].age, has=st.slots[s].rv!=null&&a>0, tc=has?paint(tierOf(a)):'#3a4458'; o+=slotIcon(s,x+17,yy,Math.min(20,gap*0.6),has?'#aab3c4':'#3a4458');
+      o+=`<line x1="${x+34}" x2="${x+w-70}" y1="${yy}" y2="${yy}" stroke="#fff" stroke-opacity=".06"/>`;
+      if(has){ const xx=lx(isFinite(a)?a:x1); o+=`<linearGradient id="cdT${k}" x1="0" x2="1"><stop offset="0" stop-color="${tc}" stop-opacity=".05"/><stop offset="1" stop-color="${tc}"/></linearGradient><rect x="${x+34}" y="${yy-1.6}" width="${Math.max(2,xx-x-34)}" height="3.2" rx="1.6" fill="url(#cdT${k})" filter="url(#cdGs)"/><text x="${xx+8}" y="${yy+5}" font-family='${mono}' font-size="14" fill="${tc}">${fmtAge(a)}</text>`; } });
+    if(st.age>0){ const xa=lx(isFinite(st.age)?st.age:x1); o+=`<line x1="${xa}" x2="${xa}" y1="${y+6}" y2="${y+h-6}" stroke="${col}" stroke-width="3" filter="url(#cdG)"/>`; }
+    return o; };
+  // 山（そのキャラ自身の山。横＝達成率、縦＝日数の対数）
+  const mount=(x,y,w,h)=>{ const yMax=3.65e6, PX=r=>x+50+r/100*(w-70), PY=d=>y+h-28-(Math.log(Math.max(1,Math.min(d,yMax)))/Math.log(yMax))*(h-50); const pts=[]; for(let d=0.5;d<=yMax*1.3;d*=1.3){ const r=st.meanTot(d)/st.ceil*100; pts.push([PX(r),PY(d)]); if(r>=99.5) break; }
+    let o=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#0a0f18" fill-opacity=".72" stroke="${col}" stroke-opacity=".25"/>`;
+    TIERS.forEach((t,k)=>{ const d0=Math.max(1,t[0]), d1=k+1<TIERS.length?TIERS[k+1][0]:yMax, ya=PY(d1), yb=PY(d0); o+=`<rect x="${x+50}" y="${ya}" width="${w-70}" height="${yb-ya}" fill="${paint(t)}" opacity="${k%2?0.05:0.09}"/>${yb-ya>16?`<text x="${x+w-26}" y="${(ya+yb)/2+4}" text-anchor="end" font-size="12" font-weight="700" fill="${paint(t)}" opacity=".9">${t[1]}</text>`:''}`; });
+    [[1,'1日'],[30,'1か月'],[365,'1年'],[3650,'10年'],[365000,'1000年']].forEach(([d,l])=>{ o+=`<text x="${x+44}" y="${PY(d)+4}" text-anchor="end" font-size="11" fill="${C.muted}">${l}</text>`; });
+    [0,25,50,75,100].forEach(r=>{ o+=`<text x="${PX(r)}" y="${y+h-9}" text-anchor="middle" font-size="11" fill="${C.muted}">${r}%</text>`; });
+    const cx=PX(rate), cy=PY(isFinite(st.age)?st.age:yMax), cut=pts.filter(p=>p[0]<=cx);
+    if(cut.length) o+=`<path d="M${PX(0)},${PY(1)}L${cut.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}L${cx},${cy}L${cx},${PY(1)}Z" fill="${col}" opacity=".22"/>`;
+    o+=`<path d="M${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}" fill="none" stroke="#e9eef7" stroke-opacity=".85" stroke-width="2.5"/><line x1="${cx}" x2="${cx}" y1="${cy}" y2="${PY(1)}" stroke="${col}" stroke-dasharray="4 4" opacity=".7"/><circle cx="${cx}" cy="${cy}" r="11" fill="${col}" stroke="#0a0f18" stroke-width="3" filter="url(#cdG)"/>`;
+    return o; };
+  if(v==='A'){ g+=head(96)+big(X0,350,150)+stats3(400)+`<g>${SLOTS.map((s,k)=>{ const x=X0+k*(RW/5), a=st.slots[s].age, has=st.slots[s].rv!=null&&a>0, tc=has?paint(tierOf(a)):'#3a4458'; return slotIcon(s,x+16,548,24,tc)+`<text x="${x+36}" y="${554}" font-family='${mono}' font-size="17" fill="${has?tc:C.muted}">${has?fmtAge(a):'—'}</text>`; }).join('')}</g>`; }
+  else if(v==='B'){ g+=head(92)+`<text x="${X0}" y="182" fill="${col}"><tspan font-size="15" letter-spacing=".3em" opacity=".85">秘境レベル </tspan><tspan font-family='${mono}' font-size="54" font-weight="800" dx="10" filter="url(#cdG)">${num}</tspan><tspan font-size="22" font-weight="800" dx="4">${unit}</tspan><tspan font-size="15" fill="${C.muted}" dx="18">有効RV ${Math.round(st.tot)}%　スコア ${st.score.toFixed(1)}　達成率 ${rate}%</tspan></text>`+score(X0,236,RW,340); }
+  else if(v==='C'){ g+=head(92)+mount(X0,150,RW*0.62,430)+`<g transform="translate(${X0+RW*0.62+26},0)"><text x="0" y="196" font-size="15" letter-spacing=".2em" fill="${col}" opacity=".85">山の</text><text x="0" y="290" fill="${col}" filter="url(#cdG)"><tspan font-family='${mono}' font-size="96" font-weight="800">${rate}</tspan><tspan font-size="34" font-weight="800" dx="4">%</tspan></text><text x="0" y="322" font-size="15" fill="${C.muted}">地点まで登った</text>
+      <text x="0" y="392" font-size="13" letter-spacing=".1em" fill="${C.muted}">秘境レベル</text><text x="0" y="430" font-family='${mono}' font-size="34" font-weight="700" fill="${C.ink}">${age}</text>
+      <text x="0" y="476" font-size="13" letter-spacing=".1em" fill="${C.muted}">有効RV</text><text x="0" y="510" font-family='${mono}' font-size="28" font-weight="700" fill="${C.ink}">${Math.round(st.tot)}%</text>
+      <text x="0" y="550" font-size="13" letter-spacing=".1em" fill="${C.muted}">スコア</text><text x="0" y="582" font-family='${mono}' font-size="28" font-weight="700" fill="${C.ink}">${st.score.toFixed(1)}</text></g>`; }
+  else { g+=head(92)+big(X0,268,104)+`<g transform="translate(${X0+RW*0.5},0)">${(()=>{ const w=RW*0.5; return `<text x="0" y="176" font-size="13" letter-spacing=".1em" fill="${C.muted}">有効RV</text><text x="0" y="214" font-family='${mono}' font-size="34" font-weight="700" fill="${C.ink}">${Math.round(st.tot)}%</text><text x="${w*0.36}" y="176" font-size="13" letter-spacing=".1em" fill="${C.muted}">スコア</text><text x="${w*0.36}" y="214" font-family='${mono}' font-size="34" font-weight="700" fill="${C.ink}">${st.score.toFixed(1)}</text><text x="${w*0.72}" y="176" font-size="13" letter-spacing=".1em" fill="${C.muted}">達成率</text><text x="${w*0.72}" y="214" font-family='${mono}' font-size="34" font-weight="700" fill="${C.ink}">${rate}%</text><text x="0" y="246" font-size="12" fill="${col}">スコアは${STYPES[st.stype][0]}</text>`; })()}</g>`+score(X0,330,RW,250); }
+  g+=`<text x="${W-50}" y="${H-24}" text-anchor="end" font-size="13" letter-spacing=".12em" fill="${C.muted}">聖遺物ラボ${c.date?'　'+c.date:''}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="カードのラフ：${esc(nm||'キャラ')}" style="display:block;width:100%;height:auto;border-radius:10px">${g}</svg>`;
+}
+
 /* ---------- 描画 ---------- */
 function renderChars(){
   const rows=CHARS.map(c=>({c,st:charStats(c)}));
@@ -1642,9 +1931,15 @@ function renderChars(){
   $('chList').innerHTML=cur?(({c,st})=>`<div class="chcard open"><div class="chhead" style="cursor:default">
       <span class="chname">${c.face?`<img class="chface${c.name?' ico':''}" src="${c.face}" alt="">`:''}${c.face&&!c.name?'':esc(c.name||'（名前なし）')}<small>${esc(c.set||'')}${c.date?`${c.set?'・':''}${c.date}の版`:''}</small></span>
       <span class="chmeta">秘境 ${fmtAge(st.age)}レベル・有効RV ${Math.round(st.tot)}%・スコア ${st.score.toFixed(1)}（${STYPES[st.stype][0]}）${st.filled<5?`・入力 ${st.filled}/5部位`:''}</span></div>
-      ${charDetailHTML(c,st)}</div>`)(cur):(rows.length?'<div class="empty">年表の行か、上の名前を押すと詳細が開きます。</div>':'');
+      ${charDetailHTML(c,st)}
+      <div class="chdetail" style="border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0;font-size:14px">カード（ラフ）</h3><div class="row" style="gap:8px"><div class="seg" role="group" aria-label="カードの案">${Object.entries(CARD_VARIANTS).map(([k,v])=>`<button data-card="${k}" aria-pressed="${store.get('cardVar','X3G')===k}">${v}</button>`).join('')}</div><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cardImg" accept="image/*" hidden></label><label class="btn" style="cursor:pointer">${CARD_FONT?'書体を選び直す':'書体を選ぶ'}<input type="file" id="cardFont" accept=".ttf,.otf,.woff,.woff2,font/*" hidden></label></div></div>
+        <div id="cardBox">${cardSVG(c,st,CARD_VARIANTS[store.get('cardVar','X3G')]?store.get('cardVar','X3G'):'X3G')}</div>
+        <p class="note" style="margin-top:6px">見た目を決めるためのラフです（まだ画像としては保存できません）。立ち絵は自分で用意した画像を選ぶと左に入ります。選んだ画像はこのページを開いている間だけ使い、保存も送信もしません。「書体を選ぶ」で手元のフォントファイルを選ぶと、カードの文字をその書体で描きます（これも開いている間だけで、保存も送信もしません）。聖遺物の丸い画像は、スクショの中央（キャラが手に持っている聖遺物）を切り抜いたもので、この版以降に取り込んだ部位にだけ付きます。</p></div></div>`)(cur):(rows.length?'<div class="empty">年表の行か、上の名前を押すと詳細が開きます。</div>':'');
   document.querySelectorAll('#chPick [data-open], #chTimeline [data-open], #chPano [data-open]').forEach(b=>{ const go=()=>{ CH_OPEN=CH_OPEN===b.dataset.open?null:b.dataset.open; renderChars(); if(CH_OPEN) $('chList').scrollIntoView({behavior:'smooth',block:'nearest'}); };
     b.addEventListener('click',go); b.addEventListener('keydown',e=>{ if(b.tagName!=='BUTTON'&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); go(); } }); });
+  $('chList').querySelectorAll('[data-card]').forEach(b=>b.addEventListener('click',()=>{ store.set('cardVar',b.dataset.card); renderChars(); }));
+  { const cf=$('cardFont'); if(cf) cf.addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f) return; try{ const ff=new FontFace('CardFont',await f.arrayBuffer()); await ff.load(); document.fonts.add(ff); CARD_FONT=true; }catch(err){ CARD_FONT=false; } renderChars(); }); }
+  { const ci=$('cardImg'); if(ci) ci.addEventListener('change',e=>{ const f=e.target.files[0]; if(!f||!CH_OPEN) return; const rd=new FileReader(); rd.onload=()=>{ CARD_IMG[CH_OPEN]=rd.result; renderChars(); }; rd.readAsDataURL(f); }); }
   $('chList').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>{ openEditor(b.dataset.edit); }));
   $('chList').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{ // 確認ダイアログはアーティファクトで使えないので、ページ内で2段階に
     const c=CHARS.find(x=>x.id===b.dataset.del); if(!c) return;
@@ -1783,6 +2078,7 @@ const SHOT=(function(){
     const d=c0.getImageData(0,0,W,H).data;
     const st=findStars(d,W,H); if(!st) return {ok:false,why:'★5つの並びが見つかりません（★5の聖遺物の詳細が写っていますか）'};
     const P=makePanel(cv0,W,H,st), sb=P.sb, out={ok:true,warn:[],P,raw:{}};
+    { const side=Math.round(H*0.27), ac=document.createElement('canvas'); ac.width=ac.height=96; ac.getContext('2d').drawImage(cv0,W*0.505-side/2,H*0.61-side/2,side,side,0,0,96,96); out.art=ac.toDataURL('image/jpeg',0.8); } // 画面中央の、キャラが手に持っている聖遺物
     // サブOP（4行）
     const pitch=1.29*U, row0=sb+2.33*U; out.subs=[]; const rowsY=[];
     for(let k=0;k<4;k++){ const y=row0+pitch*k; const M=mask(P,PX0-4,y-0.2*U,PX0+15.2*U,y+1.02*U); if(!M||M.empty) break;
@@ -1903,7 +2199,7 @@ function shotToPiece(r){ // SHOT.read の結果 → 取り込み用の1個
   const subs=r.subs.map(x=>({s:x.s&&(x.nsc==null||x.nsc>=0.45)?x.s:null,v:x.v||''}));
   subs.forEach((x,i)=>{ if(!x.s) warn.push(`サブOP${i+1}行目の名前が読めませんでした`); else if(!/^\d+(\.\d)?$/.test(x.v)||!matches(x.s,x.v).some(m=>m&&m.cnt)) warn.push(`サブOP${i+1}行目「${JP[x.s]} ${x.v}」はあり得ない値です。確かめてください`); });
   if(subs.length<4) warn.push(`サブOPが${subs.length}行しか読めませんでした`);
-  return {slot,main,subs,warn:[...new Set(warn.filter(w=>!/読み取りにくい/.test(w)||true))],note,hl:r.subs.filter(x=>x.hl&&x.s).map(x=>x.s),crop:r.crop.toDataURL('image/jpeg',0.8),owner:r.owner||null,face:r.face||''};
+  return {slot,main,subs,warn:[...new Set(warn.filter(w=>!/読み取りにくい/.test(w)||true))],note,hl:r.subs.filter(x=>x.hl&&x.s).map(x=>x.s),crop:r.crop.toDataURL('image/jpeg',0.8),owner:r.owner||null,face:r.face||'',art:r.art||''};
 }
 async function importShots(files){
   const imgs=[...files].filter(f=>f&&/^image\//.test(f.type)); if(!imgs.length) return;
@@ -1957,14 +2253,14 @@ function impRead(recheck){ if(!IMP) return; $('chImport').querySelectorAll('.imp
       if(changed||recheck){ const w=[]; if(!slot) w.push('部位を選んでください'); if(!main) w.push('メインOPを選んでください'); else if(slot&&!MAINS[slot].some(([m])=>m===main)) w.push('メインOPが部位と合いません');
         if(subs.length===4&&subs.every(x=>x.s)&&main){ const e=estPiece(main,subs); if(!e.ok) w.push(e.msg); } else w.push('サブOPを4つ入れてください'); p.warn=w; } }); }); }
 function impSave(){ impRead(); let skipped=0, last=null; IMP.groups.forEach(g=>learnName(g.name));
-  for(const g of IMP.groups){ const pieces={}; for(const p of g.items){ if(!p.slot||!p.main||p.subs.length!==4||p.subs.some(x=>!x.s)){ skipped++; continue; } pieces[p.slot]={main:p.main,subs:p.subs.map(x=>({s:x.s,v:x.v}))}; }
+  for(const g of IMP.groups){ const pieces={}, arts={}; for(const p of g.items){ if(!p.slot||!p.main||p.subs.length!==4||p.subs.some(x=>!x.s)){ skipped++; continue; } pieces[p.slot]={main:p.main,subs:p.subs.map(x=>({s:x.s,v:x.v}))}; if(p.art) arts[p.slot]=p.art; }
     if(!Object.keys(pieces).length) continue;
     let c=(g.charId&&CHARS.find(x=>x.id===g.charId))||(g.name&&CHARS.find(x=>x.name===g.name))||null;
     if(c){ const had=SLOTS.some(s=>c.pieces[s]&&c.pieces[s].subs&&c.pieces[s].subs.some(x=>x.v!==''));
       const same=Object.keys(pieces).every(k=>JSON.stringify(c.pieces[k])===JSON.stringify(pieces[k]));
       if(had&&!same&&c.date!==today()){ c.hist=c.hist||[]; c.hist.push({date:c.date||'',pieces:JSON.parse(JSON.stringify(c.pieces)),eff:c.eff.slice()}); }
-      Object.assign(c.pieces,pieces); c.eff=g.eff.slice(); if(g.stype) c.stype=g.stype; else delete c.stype; if(!same||!c.date) c.date=today(); if(g.name) c.name=g.name; if(!c.sig){ c.sig=g.owner; c.face=g.face; } }
-    else { c=Object.assign(blankChar(),{name:g.name,eff:g.eff.slice(),pieces,face:g.face,sig:g.owner,date:today()}); if(g.stype) c.stype=g.stype; CHARS.push(c); }
+      Object.assign(c.pieces,pieces); c.pimg=Object.assign({},c.pimg,arts); c.eff=g.eff.slice(); if(g.stype) c.stype=g.stype; else delete c.stype; if(!same||!c.date) c.date=today(); if(g.name) c.name=g.name; if(!c.sig){ c.sig=g.owner; c.face=g.face; } }
+    else { c=Object.assign(blankChar(),{name:g.name,eff:g.eff.slice(),pieces,pimg:arts,face:g.face,sig:g.owner,date:today()}); if(g.stype) c.stype=g.stype; CHARS.push(c); }
     last=c.id; }
   saveChars(); IMP=null; renderImport(); if(last) CH_OPEN=last; renderChars();
   if(skipped){ const b=$('chImport'); b.hidden=false; b.innerHTML=`<p class="note"><span class="err">${skipped}個</span>は部位・メインOP・サブOPがそろっていなかったので保存しませんでした。</p>`; }
@@ -1984,10 +2280,22 @@ document.querySelectorAll('[data-pano]').forEach(b=>b.addEventListener('click',(
 function moveExport(){ return JSON.stringify({app:'genshin-lab-chars',v:1,at:new Date().toISOString(),chars:CHARS,nameDict:store.get('nameDict',[])}); }
 function moveImport(txt){ let d; try{ d=JSON.parse(String(txt).trim()); }catch(e){ return '読み込めませんでした（書き出した文字をそのまま貼り付けてください）'; }
   const list=Array.isArray(d)?d:(d&&Array.isArray(d.chars)?d.chars:null); if(!list) return 'キャラのデータが入っていません';
-  let add=0, upd=0; for(const c of list){ if(!c||typeof c!=='object'||!c.id||!c.pieces) continue; if(!Array.isArray(c.eff)) c.eff=S.eff.slice();
-    const i=CHARS.findIndex(x=>x.id===c.id); if(i>=0){ CHARS[i]=c; upd++; } else { CHARS.push(c); add++; } }
+  // 同じキャラの見分け方：id → 名前 → 持ち主の表示の形。見つかったら1人にまとめ、日付の新しいほうを「いま」に、もう片方は版として残す
+  const pk=x=>JSON.stringify(SLOTS.map(s=>x.pieces&&x.pieces[s]?[x.pieces[s].main,(x.pieces[s].subs||[]).map(q=>q.s+q.v)]:null));
+  const snap=x=>({date:x.date||'',pieces:JSON.parse(JSON.stringify(x.pieces||{})),eff:(x.eff||[]).slice()});
+  let add=0, upd=0, same=0; for(const c of list){ if(!c||typeof c!=='object'||!c.id||!c.pieces) continue; if(!Array.isArray(c.eff)) c.eff=S.eff.slice();
+    const m=CHARS.find(x=>x.id===c.id)||(c.name&&CHARS.find(x=>x.name===c.name))||(c.sig&&CHARS.find(x=>x.sig&&SHOT.sameOwner(x.sig,c.sig)))||null;
+    if(!m){ CHARS.push(c); add++; continue; }
+    const hs=[...(m.hist||[]),...(c.hist||[])], inNew=(c.date||'')>(m.date||'');
+    const has=(x,k)=>x.pieces&&x.pieces[k]&&(x.pieces[k].subs||[]).some(q=>q.v!==''), sk=(x,k)=>JSON.stringify([x.pieces[k].main,x.pieces[k].subs.map(q=>q.s+q.v)]);
+    const inc=SLOTS.filter(k=>has(c,k)), diff=inc.some(k=>!has(m,k)||sk(m,k)!==sk(c,k));
+    if(diff){ if(inNew){ hs.push(snap(m)); m.pieces=Object.assign({},m.pieces,Object.fromEntries(inc.map(k=>[k,c.pieces[k]]))); if(c.pimg) m.pimg=Object.assign({},m.pimg,Object.fromEntries(inc.filter(k=>c.pimg[k]).map(k=>[k,c.pimg[k]]))); m.eff=c.eff; m.date=c.date; if(c.stype) m.stype=c.stype; } else hs.push(snap(c)); upd++; } else same++;
+    if(c.pimg){ m.pimg=m.pimg||{}; for(const k of SLOTS) if(!m.pimg[k]&&c.pimg[k]&&has(m,k)&&has(c,k)&&sk(m,k)===sk(c,k)) m.pimg[k]=c.pimg[k]; }
+    if(!m.name&&c.name) m.name=c.name; if(!m.set&&c.set) m.set=c.set; if(!m.face&&c.face){ m.face=c.face; m.sig=c.sig; }
+    const seen=new Set([pk(m)]), out=[]; hs.sort((x,y)=>(x.date||'').localeCompare(y.date||'')).forEach(h=>{ const k=(h.date||'')+pk(h); if(seen.has(pk(h))&&false) return; if(seen.has(k)) return; seen.add(k); if(pk(h)!==pk(m)) out.push(h); });
+    if(out.length) m.hist=out; else delete m.hist; }
   if(d&&Array.isArray(d.nameDict)) d.nameDict.forEach(learnName);
-  saveChars(); renderChars(); return `読み込みました（追加 ${add}人・上書き ${upd}人）`; }
+  saveChars(); renderChars(); return `読み込みました（新しく追加 ${add}人・同じキャラにまとめた ${upd}人・中身が同じで変更なし ${same}人）`; }
 $('mvOut').addEventListener('click',()=>{ $('mvText').value=moveExport(); $('mvCopy').hidden=false; $('mvFile').hidden=false; $('mvMsg').textContent=`${CHARS.length}人ぶんを書き出しました。コピーするか、ファイルに保存してください。`; $('mvText').select(); });
 $('mvCopy').addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText($('mvText').value); $('mvMsg').textContent='コピーしました。'; }catch(e){ $('mvText').select(); $('mvMsg').textContent='自動でコピーできませんでした。枠の中を全部選んで、手でコピーしてください。'; } });
 $('mvFile').addEventListener('click',()=>{ try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([$('mvText').value],{type:'application/json'})); a.download='genshin-lab-chars.json'; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ $('mvMsg').textContent='この画面ではファイルに保存できませんでした。コピーを使ってください。'; } });
