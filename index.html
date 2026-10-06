@@ -151,6 +151,8 @@ thead th{color:var(--muted); font-weight:500}
 .impit.bad{border-color:#d9776a}
 .impcrop{width:100%; max-width:320px; border-radius:6px; display:block}
 .impform{display:grid; gap:5px}
+.impg,.impit,.impform{grid-template-columns:minmax(0,1fr)} .impg>*,.impit>*,.impform>*{min-width:0} .impg input,.impg select{max-width:100%; min-width:0} .impg .cesub>*{width:100%} .impH{flex-wrap:wrap} .impface{max-width:100%}
+.impown{display:grid;gap:5px;padding:7px 8px;border:1px solid #c98a3a;border-radius:6px;background:rgba(201,138,58,.1);font-size:12.5px}.impown img{max-width:100%;height:auto;border-radius:4px}
 .impwarn{margin:2px 0 0; padding-left:1.2em; color:#ff9d8f; font-size:12.5px}
 .chpick{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px}
 .chpick button{display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:13px; color:var(--ink); background:var(--panel2); border:1px solid var(--line); border-radius:999px; padding:4px 12px 4px 6px; cursor:pointer}
@@ -1774,9 +1776,10 @@ function cardWideSVG(c,st,style){
     const det=sl.est&&sl.est.ok?sl.est.det:null, MX=LX+44, MW=GAUGE?104:178, SW=(RX-MX-MW-6)/4;
     g+=`<text x="${MX}" y="${yc+4.5}" font-size="12" fill="${s==='flower'||s==='plume'?C.muted:C.ink}">${esc((MAIN_JP[p.main]||'').replace('元素ダメージ','元素ダメ'))}</text>${GAUGE?'':`<text x="${MX+MW-14}" y="${yc+5}" text-anchor="end" font-family='${mono}' font-size="14" font-weight="700" fill="${C.ink}">${MAIN_VAL20[p.main]||''}</text>`}`;
     p.subs.slice().sort((a,b)=>(effS.has(b.s)?1:0)-(effS.has(a.s)?1:0)).forEach((q,i)=>{ const x=MX+MW+i*SW, on=effS.has(q.s), d=det?det.find(z=>z.s===q.s):null, pct=!FLAT.has(q.s);
-      g+=`<rect x="${x}" y="${y+3}" width="${SW-6}" height="${RH-6}" rx="4" fill="${on?HL:'#fff'}" fill-opacity="${on?.2:.03}" ${on?`stroke="${HL}" stroke-opacity=".45"`:''}/><text x="${x+8}" y="${yc+4.5}" font-size="${GAUGE?12.5:11.5}" font-weight="${on?700:400}" fill="${on?C.ink:C.muted}">${CARD_SHORT[q.s]||JP[q.s]}</text><text x="${x+(GAUGE?146:136)}" y="${yc+5}" text-anchor="end" font-family='${mono}' font-size="${GAUGE?15:14}" font-weight="700" fill="${on?C.ink:C.muted}">+${esc(q.v)}${pct?'%':''}</text>`;
-      if(d) g+=GAUGE?rollBlocks(d,x+156,yc-4,on?HL:'#8a93a6',on,8,3,3.2):rollBlocks(d,x+144,yc-3,on?HL:'#8a93a6',on,6,2.6,2.6); }); });
-  g+=`<text x="${LX}" y="${H-10}" font-size="10.5" fill="${C.muted}">※ 伸び幅（細い4マス）は合計からの推定です。1回ごとの内訳はゲームに表示されないため、均等に割り振って描いています</text><text x="${RX}" y="${H-10}" text-anchor="end" font-size="12" letter-spacing=".12em" fill="${C.muted}">聖遺物ラボ${c.date?'　'+c.date:''}</text>`;
+      g+=`<rect x="${x}" y="${y+3}" width="${SW-6}" height="${RH-6}" rx="4" fill="${on?HL:'#fff'}" fill-opacity="${on?.2:.03}" ${on?`stroke="${HL}" stroke-opacity=".45"`:''}/><text x="${x+8}" y="${y+17.5}" font-size="${GAUGE?12.5:11.5}" font-weight="${on?700:400}" fill="${on?C.ink:C.muted}">${CARD_SHORT[q.s]||JP[q.s]}</text><text x="${x+SW-14}" y="${y+18}" text-anchor="end" font-family='${mono}' font-size="14" font-weight="700" fill="${on?C.ink:C.muted}">+${esc(q.v)}${pct?'%':''}</text>`;
+      /* 伸びは値の下の段。最大6回ぶん（初期＋5回）が必ず収まる幅に割る */
+      if(d){ const bg=5, cw=((SW-22+bg)/6-bg-3*1.3)/4; g+=rollBlocks(d,x+8,y+RH-10.5,on?HL:'#8a93a6',on,4,cw,bg); } }); });
+  g+=`<text x="${LX}" y="${H-10}" font-size="10.5" fill="${C.muted}">※ 伸び幅（横長の4マス）は合計からの推定です。1回ごとの内訳はゲームに表示されないため、均等に割り振って描いています</text><text x="${RX}" y="${H-10}" text-anchor="end" font-size="12" letter-spacing=".12em" fill="${C.muted}">聖遺物ラボ${c.date?'　'+c.date:''}</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="カードのラフ：${esc(nm||'キャラ')}" style="display:block;width:100%;height:auto;border-radius:10px${CARD_FONT?';font-family:CardFont,sans-serif':''}">${g}</svg>`;
 }
 function cardPiecesSVG(c,st,v){
@@ -2129,7 +2132,8 @@ const SHOT=(function(){
         const M={x1:xa,y1:a,w:xb-xa,h:b-a,m}; let rs=runs(M,0,b-a,1); for(let i=1;i<rs.length;i++) if(rs[i].xa-rs[i-1].xb>1.0*U){ rs=rs.slice(0,i); break; }
         if(rs.length>=3){ const sig=nameSig(M,rs); out.owner={g:grid(M,rs[0].xa,0,rs[rs.length-1].xb,b-a,120,NH),asp:sig.asp};
           const fx=PX0-6, fy=a-0.42*U, fw=xa+rs[rs.length-1].xb+0.4*U-fx, fh=(b-a)+0.84*U;
-          const fc=document.createElement('canvas'); fc.height=44; fc.width=Math.round(fw*44/fh); fc.getContext('2d').drawImage(P.cv,fx,fy,fw,fh,0,0,fc.width,fc.height); out.face=fc.toDataURL('image/jpeg',0.82); } } }
+          const fc=document.createElement('canvas'); fc.height=44; fc.width=Math.round(fw*44/fh); fc.getContext('2d').drawImage(P.cv,fx,fy,fw,fh,0,0,fc.width,fc.height); out.face=fc.toDataURL('image/jpeg',0.82); } }
+      if(!out.owner){ /* 持ち主の行が読めないとき：その辺りを切り抜いて、目で確かめてもらう */ const cy=Math.max(0,y2-5.3*U), chh=3.4*U, fc=document.createElement('canvas'); fc.height=64; fc.width=Math.round(16*U*64/chh); fc.getContext('2d').drawImage(P.cv,PX0-6,cy,16*U,chh,0,0,fc.width,fc.height); out.ownCrop=fc.toDataURL('image/jpeg',0.82); } }
     // 確認用の切り抜き（名前〜サブOP）
     { const cc=document.createElement('canvas'); const ch=Math.round(sb+7.6*U-(PSTAR-3.8*U)); cc.width=Math.round(16*U*0.5); cc.height=Math.round(ch*0.5); cc.getContext('2d').drawImage(P.cv,0,PSTAR-3.8*U,16*U,ch,0,0,cc.width,cc.height); out.crop=cc; }
     return out;
@@ -2199,28 +2203,32 @@ function shotToPiece(r){ // SHOT.read の結果 → 取り込み用の1個
   const subs=r.subs.map(x=>({s:x.s&&(x.nsc==null||x.nsc>=0.45)?x.s:null,v:x.v||''}));
   subs.forEach((x,i)=>{ if(!x.s) warn.push(`サブOP${i+1}行目の名前が読めませんでした`); else if(!/^\d+(\.\d)?$/.test(x.v)||!matches(x.s,x.v).some(m=>m&&m.cnt)) warn.push(`サブOP${i+1}行目「${JP[x.s]} ${x.v}」はあり得ない値です。確かめてください`); });
   if(subs.length<4) warn.push(`サブOPが${subs.length}行しか読めませんでした`);
-  return {slot,main,subs,warn:[...new Set(warn.filter(w=>!/読み取りにくい/.test(w)||true))],note,hl:r.subs.filter(x=>x.hl&&x.s).map(x=>x.s),crop:r.crop.toDataURL('image/jpeg',0.8),owner:r.owner||null,face:r.face||'',art:r.art||''};
+  return {slot,main,subs,warn:[...new Set(warn.filter(w=>!/読み取りにくい/.test(w)||true))],note,hl:r.subs.filter(x=>x.hl&&x.s).map(x=>x.s),crop:r.crop.toDataURL('image/jpeg',0.8),owner:r.owner||null,face:r.face||'',art:r.art||'',ownCrop:r.ownCrop||''};
 }
 async function importShots(files){
   const imgs=[...files].filter(f=>f&&/^image\//.test(f.type)); if(!imgs.length) return;
-  if(!IMP) IMP={groups:[],fails:[]}; else impRead();
+  if(!IMP) IMP={groups:[],fails:[]}; else impRead(); const orphans=[];
   const box=$('chImport'); box.hidden=false; const say=t=>{ box.innerHTML=`<h2>スクショの取り込み</h2><p class="note" aria-live="polite">${t}</p>`; };
   for(let i=0;i<imgs.length;i++){ say(`読み取り中…（${i+1}/${imgs.length}枚）`); await new Promise(r=>setTimeout(r,0));
     const f=imgs[i], label=f.name||`${i+1}枚目`;
     try{ const bm=await createImageBitmap(f); const r=SHOT.read(bm,bm.width,bm.height,SHOT_T); if(bm.close) bm.close();
       if(!r.ok){ IMP.fails.push(`${label}：${r.why}`); continue; }
-      const p=shotToPiece(r); if(!p.owner){ IMP.fails.push(`${label}：「〇〇装備済」の表示が見つかりません（だれも装備していない聖遺物は対象外です）`); continue; }
+      const p=shotToPiece(r); if(!p.owner){ p.label=label; orphans.push(p); continue; }
       let g=IMP.groups.find(x=>SHOT.sameOwner(x.owner,p.owner));
       if(!g){ const c=CHARS.find(x=>x.sig&&SHOT.sameOwner(x.sig,p.owner)); g={owner:p.owner,face:p.face,charId:c?c.id:null,name:(c&&c.name)||'',eff:c?c.eff.slice():null,items:[]}; if(!g.name){ g.name=guessName(p.owner); g.nameGuess=!!g.name; } IMP.groups.push(g); }
       const k=p.slot?g.items.findIndex(x=>x.slot===p.slot):-1; if(k>=0) g.items[k]=p; else g.items.push(p);
     }catch(e){ IMP.fails.push(`${label}：画像を開けませんでした`); } }
+  /* 持ち主が読めなかった分：その部位がまだ無いキャラ（1人だけのとき）か、取り込み中の唯一のキャラへ仮に入れる。決められなければ持ち主不明の組にする */
+  for(const p of orphans){ const free=IMP.groups.filter(g=>p.slot&&!g.items.some(x=>x.slot===p.slot)); let g=free.length===1?free[0]:IMP.groups.length===1?IMP.groups[0]:null;
+    if(g) p.own='guess'; else { p.own='none'; g=IMP.groups.find(x=>!x.owner&&!x.items.some(y=>y.slot===p.slot)); if(!g){ g={owner:null,face:p.ownCrop,charId:null,name:'',eff:null,items:[]}; IMP.groups.push(g); } }
+    g.items.push(p); }
   for(const g of IMP.groups){ if(!g.eff){ const u=SUBS.filter(s=>g.items.some(p=>p.hl.includes(s))); g.eff=u.length?u:S.eff.slice(); g.effFrom=u.length?'hl':'def'; }
     g.items.sort((a,b)=>(a.slot?SLOTS.indexOf(a.slot):9)-(b.slot?SLOTS.indexOf(b.slot):9)); }
   renderImport(); box.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function renderImport(){ const box=$('chImport'); if(!IMP){ box.hidden=true; box.innerHTML=''; return; } box.hidden=false;
   const nP=IMP.groups.reduce((a,g)=>a+g.items.length,0), nW=IMP.groups.reduce((a,g)=>a+g.items.filter(p=>p.warn.length).length,0);
-  let h=`<h2>スクショの取り込み（確認）</h2><p class="note">${IMP.groups.length}キャラ・${nP}個を読み取りました${nW?`。<span class="err">赤字のある${nW}個</span>は切り抜きと見比べて直してください`:''}。保存すると画像は捨て、値だけを残します。</p>`;
+  let h=`<h2>スクショの取り込み（確認）</h2><p class="note">${IMP.groups.length}キャラ・${nP}個を読み取りました${nW?`。<span class="err">赤字のある${nW}個</span>は切り抜きと見比べて直してください`:''}${IMP.groups.some(g=>g.items.some(p=>p.own))?`。<span class="err">持ち主を読み取れなかった聖遺物</span>があります。枠の中の切り抜きで確かめてください`:''}。保存すると画像は捨て、値だけを残します。</p>`;
   h+=IMP.groups.map((g,gi)=>{ const c=g.charId&&CHARS.find(x=>x.id===g.charId);
     return `<div class="impg" data-g="${gi}"><div class="impH"><img src="${g.face}" alt="持ち主の表示の切り抜き" class="impface">
       <label class="f">キャラ名${g.nameGuess?'（切り抜きから推測。違っていたら直してください）':'（読み取れなかったので、入れてください。一度入れた名前は覚えて、次からは自動で当てます）'}<input type="text" data-iname value="${esc(g.name)}" placeholder="空なら切り抜きを名札にします"></label>
@@ -2229,10 +2237,12 @@ function renderImport(){ const box=$('chImport'); if(!IMP){ box.hidden=true; box
       <label class="f" style="max-width:520px">スコアの型<select data-istype>${stypeOpts(g.stype||(c&&c.stype)||'')}</select></label>
       <div class="impitems">`+g.items.map((p,pi)=>{ const mains=p.slot?MAINS[p.slot].map(([m])=>m):Object.keys(MAIN_JP).filter(m=>MAIN_VAL20[m]);
         const mopts=(p.main&&!mains.includes(p.main)?[p.main]:[]).concat(mains);
-        return `<div class="impit${p.warn.length?' bad':''}" data-p="${pi}"><img src="${p.crop}" alt="読み取った聖遺物の切り抜き" class="impcrop">
+        return `<div class="impit${p.warn.length||p.own?' bad':''}" data-p="${pi}"><img src="${p.crop}" alt="読み取った聖遺物の切り抜き" class="impcrop">
           <div class="impform"><div class="row" style="gap:6px"><select data-islot aria-label="部位"><option value="">部位を選ぶ</option>${SLOTS.map(s=>`<option value="${s}"${s===p.slot?' selected':''}>${SLOT_JP[s]}</option>`).join('')}</select>
             <select data-imain aria-label="メインOP">${p.main?'':'<option value="">メインOPを選ぶ</option>'}${mopts.map(m=>`<option value="${m}"${m===p.main?' selected':''}>${MAIN_JP[m]}</option>`).join('')}</select></div>`
           +[0,1,2,3].map(i=>{ const x=p.subs[i]||{s:null,v:''}; return `<div class="cesub"><select data-isub="${i}" aria-label="サブOP${i+1}"><option value="">—</option>${SUBS.map(o=>`<option value="${o}"${o===x.s?' selected':''}>${JP[o]}</option>`).join('')}</select><input type="text" inputmode="decimal" data-ival="${i}" value="${esc(x.v)}" aria-label="サブOP${i+1}の値"></div>`; }).join('')
+          +(p.own?`<div class="impown"><b>持ち主を確かめてください</b>${p.label?`（${esc(p.label)}）`:''}<img src="${p.ownCrop}" alt="持ち主の表示があるはずの場所の切り抜き"><span>「〇〇装備済」を読み取れませんでした。${p.own==='guess'?`ほかの画像から<b>推定</b>して、このキャラに入れています。`:'だれのものか決められませんでした。'}切り抜きを見て、違うなら移してください。だれも装備していない聖遺物なら「この1個を外す」。</span>
+            <select data-iown aria-label="この聖遺物の持ち主"><option value="">このキャラのまま</option>${IMP.groups.map((x,xi)=>xi===gi?'':`<option value="${xi}">${esc(x.name||`名前なしのキャラ（${xi+1}番目）`)}へ移す</option>`).join('')}<option value="new">別のキャラとして分ける</option></select></div>`:'')
           +(p.warn.length?`<ul class="impwarn">${p.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:'')+(p.note?`<p class="note">${esc(p.note)}</p>`:'')
           +`<button class="btn" style="padding:2px 8px;font-size:12px;justify-self:start" data-idrop>この1個を外す</button></div></div>`; }).join('')+`</div></div>`; }).join('');
   if(IMP.fails.length) h+=`<div class="grp"><span class="err">読み取れなかった画像</span><ul class="impwarn">${IMP.fails.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;
@@ -2240,6 +2250,10 @@ function renderImport(){ const box=$('chImport'); if(!IMP){ box.hidden=true; box
   box.innerHTML=h;
   box.querySelectorAll('[data-islot]').forEach(el=>el.addEventListener('change',()=>{ impRead(); renderImport(); }));
   box.querySelectorAll('[data-imain],[data-isub],[data-ival]').forEach(el=>el.addEventListener('change',()=>{ impRead(true); renderImport(); }));
+  box.querySelectorAll('[data-iown]').forEach(el=>el.addEventListener('change',()=>{ impRead(); const gi=+el.closest('.impg').dataset.g, g=IMP.groups[gi], pi=+el.closest('.impit').dataset.p, p=g.items[pi], v=el.value; if(!v) return;
+    let t; if(v==='new'){ t={owner:null,face:p.ownCrop,charId:null,name:'',eff:g.eff.slice(),effFrom:g.effFrom,items:[]}; IMP.groups.push(t); } else t=IMP.groups[+v];
+    g.items.splice(pi,1); p.own='moved'; const k=p.slot?t.items.findIndex(x=>x.slot===p.slot):-1; if(k>=0) t.items[k]=p; else t.items.push(p); t.items.sort((a,b)=>(a.slot?SLOTS.indexOf(a.slot):9)-(b.slot?SLOTS.indexOf(b.slot):9));
+    IMP.groups=IMP.groups.filter(x=>x.items.length); renderImport(); }));
   box.querySelectorAll('[data-idrop]').forEach(el=>el.addEventListener('click',()=>{ impRead(); const g=IMP.groups[+el.closest('.impg').dataset.g]; g.items.splice(+el.closest('.impit').dataset.p,1); IMP.groups=IMP.groups.filter(x=>x.items.length); renderImport(); }));
   $('impMore').addEventListener('change',e=>{ const fs=[...e.target.files]; importShots(fs); });
   $('impCancel').addEventListener('click',()=>{ IMP=null; renderImport(); });
