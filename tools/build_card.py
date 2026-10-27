@@ -239,12 +239,14 @@ function cardAppInit(){
   $('cPng').addEventListener('click',()=>cardExport('png',$('cMsg'))); $('cWebp').addEventListener('click',()=>cardExport('webp',$('cMsg')));
   // 取り込む：UID（Enka.Network のJSONを受け渡し）と、動画（聖遺物ビデオスキャナーを scan/ に置き、枠の中で動かす）。どちらもキャラ一覧へ直接入れる
   pScan.innerHTML=`<div class="panel" style="margin-top:14px"><h2>UIDから取り込む</h2>
-    <p class="note">ゲームのショーケースに並べたキャラの聖遺物を、Enka.Network から取り込みます（ゲームのプロフィールで、キャラの詳細を見られるようにしておいてください）。このページからは Enka に直接つなげないので、次の手順で受け渡します。</p>
-    <ol class="note csteps"><li>UIDを入れて「Enkaで開く」を押す（別のタブで文字だらけのページが開きます）</li><li>開いたページの文字を全部選んでコピーする（Firefoxは「生データ」のタブで）。または、そのページを保存する</li><li>下の欄に貼り付けて「読み込む」を押す（保存したときは「ファイルから読み込む」）</li></ol>
-    <div class="row" style="margin-top:10px"><label class="f" for="enkaUid">UID<input type="text" id="enkaUid" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="例：800123456" style="width:9em"></label><a class="btn" id="enkaOpen" target="_blank" rel="noopener" aria-disabled="true">Enkaで開く</a></div>
-    <textarea id="enkaText" rows="3" aria-label="Enka のページの文字" placeholder="Enka のページの文字を、ここに貼り付けます" style="width:100%;margin-top:10px;font:12px/1.4 ui-monospace,monospace;color:var(--ink);background:var(--inset);border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
-    <div class="btns"><button class="btn primary" id="enkaIn">読み込む</button><label class="btn" style="cursor:pointer">ファイルから読み込む<input type="file" id="enkaFile" accept=".json,.txt,application/json,text/plain" hidden></label></div>
+    <p class="note">ゲームのショーケースに並べたキャラの聖遺物を、Enka.Network から取り込みます（ゲームのプロフィールで、キャラの詳細を見られるようにしておいてください）。UIDを入れて「UIDで取得」を押します。</p>
+    <div class="row" style="margin-top:10px"><label class="f" for="enkaUid">UID<input type="text" id="enkaUid" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="例：800123456" style="width:9em"></label><button class="btn primary" id="enkaGet">UIDで取得</button></div>
     <div class="note" id="enkaMsg" aria-live="polite" style="margin-top:8px"></div>
+    <details class="more" id="enkaManual" style="margin-top:10px"><summary>「UIDで取得」がうまくいかないとき（手で受け渡す）</summary>
+    <ol class="note csteps"><li>UIDを入れて「Enkaで開く」を押す（別のタブで文字だらけのページが開きます）</li><li>開いたページの文字を全部選んでコピーする（Firefoxは「生データ」のタブで）。または、そのページを保存する</li><li>下の欄に貼り付けて「読み込む」を押す（保存したときは「ファイルから読み込む」）</li></ol>
+    <div class="btns"><a class="btn" id="enkaOpen" target="_blank" rel="noopener" aria-disabled="true">Enkaで開く</a></div>
+    <textarea id="enkaText" rows="3" aria-label="Enka のページの文字" placeholder="Enka のページの文字を、ここに貼り付けます" style="width:100%;margin-top:10px;font:12px/1.4 ui-monospace,monospace;color:var(--ink);background:var(--inset);border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
+    <div class="btns"><button class="btn primary" id="enkaIn">読み込む</button><label class="btn" style="cursor:pointer">ファイルから読み込む<input type="file" id="enkaFile" accept=".json,.txt,application/json,text/plain" hidden></label></div></details>
     <p class="note" style="margin-top:8px">★5の聖遺物だけを取り込みます。Enka のデータにはサブOPが伸びた1回ごとの幅が入っているので、有効RVは推定ではなく実際の値で計算します。同じUIDをすぐ開き直しても、しばらくは同じ内容が返ります。データ：Enka.Network</p></div>
     <div class="panel" style="margin-top:14px"><h2>動画から取り込む</h2><p class="note">ゲームの所持品画面（聖遺物）を録画した動画から、聖遺物を読み取ります。読み終わったら「キャラ一覧に入れる」で、装備中のキャラがキャラ一覧に入ります。+20になっていない聖遺物はいまの値で評価し、カードに「+8」などの印が付きます。★4の聖遺物は外します。動画はこの端末の中だけで処理し、どこにも送りません。</p>
     <div class="btns" id="scanStartBox"><button class="btn primary" id="scanStart">動画の読み取りを始める</button><span class="note" style="align-self:center">読み取りの道具（約15MB）を読み込みます</span></div>
@@ -255,6 +257,7 @@ function cardAppInit(){
     u.value=store.get('enkaUid','')||''; u.addEventListener('input',sync); sync();
     a.addEventListener('click',e=>{ if(a.getAttribute('aria-disabled')==='true'){ e.preventDefault(); $('enkaMsg').textContent='UIDは9けたか10けたの数字です。'; } }); }
   $('enkaIn').addEventListener('click',()=>enkaImport($('enkaText').value));
+  $('enkaGet').addEventListener('click',enkaFetch); $('enkaUid').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); enkaFetch(); } });
   $('enkaFile').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; if(f) enkaImport(await f.text()); });
   window.addEventListener('message',scanOnMessage);
   // 設定
@@ -265,7 +268,7 @@ function cardAppInit(){
     <dt>確率の出典</dt><dd>KQM「Genshin Impact Artifacts Guide」、Genshin Impact Wiki（Fandom）「Artifact/Distribution」（草元素追加後の値）</dd></dl></div>
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v1.3。計算は聖遺物厳選ラボと共通です。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v1.4。計算は聖遺物厳選ラボと共通です。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   // ドラッグで取り込み（どのページでも）
   document.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
@@ -340,6 +343,28 @@ function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
     const set=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>=2).map(([k,n])=>(ENKA.set[k]||'セット'+k)+(n>=4?'4':'2')).join('＋');
     out.push({id:'enka-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()}); }
   return {chars:out,notes}; }
+/* UIDで取得：Enka に問い合わせる（中継の設定があれば中継、なければ直接）。
+   Enka の決まり：応答の ttl（秒）が切れるまでは同じUIDを取り直さない → この端末に応答を取っておき、ttl の間はそれを使う。
+   つながらないとき（このページからの通信が許されていない・CORS・ネットワーク）は、手で受け渡す手順を開いて案内する */
+const ENKA_PROXY=''; // 中継（例：Cloudflare Workers）を置いたら、そのURL（末尾に UID を足す形）をここに。空なら直接
+var ENKA_BUSY=false;
+async function enkaFetch(){ const box=$('enkaMsg'), uid=$('enkaUid').value.replace(/\D/g,''), btn=$('enkaGet');
+  if(!/^\d{9,10}$/.test(uid)){ box.textContent='UIDは9けたか10けたの数字です。'; return; } if(ENKA_BUSY) return;
+  let cache=null; try{ cache=JSON.parse(localStorage.getItem('lab:enkaCache:'+uid)||'null'); }catch(e){}
+  if(cache&&cache.until>Date.now()&&cache.text){ enkaImport(cache.text); box.insertAdjacentHTML('afterbegin',`<p class="note">（さっき取った内容を使いました。Enka が新しい内容を返すまで、あと約${Math.ceil((cache.until-Date.now())/1000)}秒です）</p>`); return; }
+  ENKA_BUSY=true; btn.disabled=true; box.textContent='Enka に問い合わせています…';
+  let csp=false; const onCsp=e=>{ if(/enka|workers|proxy/i.test(e.blockedURI||'')||ENKA_PROXY&&(e.blockedURI||'').startsWith(ENKA_PROXY)) csp=true; }; document.addEventListener('securitypolicyviolation',onCsp);
+  const url=ENKA_PROXY?ENKA_PROXY+uid:`https://enka.network/api/uid/${uid}/`, ac=new AbortController(), tm=setTimeout(()=>ac.abort(),20000);
+  try{ const r=await fetch(url,{signal:ac.signal,headers:{'Accept':'application/json'}});
+    if(!r.ok){ const why={400:'UIDの形が正しくないようです',404:'このUIDのプレイヤーが見つかりませんでした',424:'ゲームのメンテナンス中か、更新の直後で Enka が情報を取れない状態です。しばらくしてからもう一度',429:'問い合わせが混み合っています。少し時間をおいてからもう一度',500:'Enka 側で問題が起きています。しばらくしてからもう一度',503:'Enka 側で問題が起きています。しばらくしてからもう一度'}[r.status]; box.textContent=(why||`Enka から取得できませんでした（${r.status}）`)+'。'; return; }
+    const text=await r.text(); let ttl=60; try{ const j=JSON.parse(text); if(j&&+j.ttl>0) ttl=Math.min(+j.ttl,600); }catch(e){}
+    try{ localStorage.setItem('lab:enkaCache:'+uid,JSON.stringify({until:Date.now()+ttl*1000,text})); }catch(e){}
+    enkaImport(text); }
+  catch(e){ await new Promise(r=>setTimeout(r,50)); const det=$('enkaManual'); if(det) det.open=true;
+    box.textContent=(e&&e.name==='AbortError')?'Enka から返事がありませんでした。少し待ってもう一度押すか、下の「うまくいかないとき」の手順で取り込んでください。'
+      :csp?'この画面（claude.ai の中）からは Enka に直接つなげません。下の「うまくいかないとき」の手順で取り込んでください（GitHub 版のページなら、このボタンで取れる場合があります）。'
+      :'このページからは Enka に直接つなげませんでした。下の「うまくいかないとき」の手順で取り込んでください。（理由：通信が許されていない〈CORS〉か、ネットワークの問題）'; }
+  finally{ clearTimeout(tm); document.removeEventListener('securitypolicyviolation',onCsp); ENKA_BUSY=false; btn.disabled=false; } }
 function enkaImport(txt){ const box=$('enkaMsg'); let d;
   try{ d=enkaParse(txt); }catch(e){ box.textContent='読み込めませんでした。Enka で開いたページの文字を、最初から最後まで全部コピーして貼り付けてください（Firefoxでは「生データ」のタブで全選択します）。'; return; }
   if(!d||typeof d!=='object'||(!d.playerInfo&&!d.avatarInfoList)){ box.textContent='Enka のデータではないようです。「Enkaで開く」で開いたページの文字を貼り付けてください。'; return; }
