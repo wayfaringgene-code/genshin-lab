@@ -1,0 +1,758 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>聖遺物ビデオスキャナー</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* レイアウト: 左に録画と読み取りゲージ、右に読み取り結果が流れ込む 2 カラム。狭い画面では縦に積む。 */
+:root {
+  --ground: #e8ebf0;      /* 所持品画面の空の色を薄くした地色 */
+  --panel: #f7f8fa;
+  --panel-2: #eef0f4;
+  --line: #cfd4dd;
+  --ink: #1d2433;
+  --ink-2: #566074;
+  --amber: #a85a14;       /* 詳細パネルの見出し帯 */
+  --amber-soft: #f3e3d1;
+  --star: #c98a00;
+  --ok: #1f7a4d;
+  --warn: #b3261e;
+  --warn-soft: #fbe6e3;
+  --elx: #6a4bb5;
+  --screen: #10141d;
+  --font: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #141925; --panel: #1d2433; --panel-2: #252d3f; --line: #37415a; --ink: #e9ecf3; --ink-2: #9ea8bd;
+    --amber: #e9a35a; --amber-soft: #3a2c1e; --star: #f0b93a; --ok: #5ccf94; --warn: #ff8a80; --warn-soft: #3d2222; --elx: #b9a3f0; --screen: #0a0d13;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #141925; --panel: #1d2433; --panel-2: #252d3f; --line: #37415a; --ink: #e9ecf3; --ink-2: #9ea8bd;
+  --amber: #e9a35a; --amber-soft: #3a2c1e; --star: #f0b93a; --ok: #5ccf94; --warn: #ff8a80; --warn-soft: #3d2222; --elx: #b9a3f0; --screen: #0a0d13;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 48px; display: flex; flex-direction: column; gap: 20px; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; }
+.top h1 { font-size: 26px; font-weight: 900; letter-spacing: .02em; margin: 0; text-wrap: balance; }
+.top p { margin: 0; color: var(--ink-2); max-width: 60ch; }
+.local { margin-left: auto; font-size: 13px; color: var(--ok); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.local::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } .local { margin-left: 0; } }
+.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* 録画の表示 */
+.screen { position: relative; background: var(--screen); aspect-ratio: 16 / 9; max-width: 100%; border-radius: 6px; overflow: hidden; }
+.screen video { width: 100%; height: 100%; display: block; object-fit: contain; }
+.reader { position: absolute; left: 70.3125%; top: 12.037%; width: 21.354%; height: 49.074%; border: 2px solid var(--star); border-radius: 3px; pointer-events: none; opacity: .9; }
+.reader.hit { animation: hit .28s ease-out; }
+@keyframes hit { from { box-shadow: 0 0 0 6px rgba(240, 185, 58, .55); background: rgba(240, 185, 58, .22); } to { box-shadow: 0 0 0 0 rgba(240, 185, 58, 0); background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .reader.hit { animation: none; } }
+.drop { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; color: #e9ecf3; border: 2px dashed #5a6684; border-radius: 6px; }
+.drop.over { border-color: #f0b93a; background: rgba(240, 185, 58, .08); }
+.drop strong { font-size: 18px; font-weight: 700; }
+.drop span { font-size: 13px; color: #9ea8bd; }
+
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 7px 14px; font-weight: 700; cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--amber); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primary { background: var(--amber); border-color: var(--amber); color: var(--panel); }
+.btn.onscreen { background: #f0b93a; border-color: #f0b93a; color: #10141d; }
+
+/* ゲージ */
+.gauge { display: flex; flex-direction: column; gap: 8px; }
+.bar { height: 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width .15s linear; }
+.status { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-size: 13px; color: var(--ink-2); }
+.status b { color: var(--ink); font-weight: 700; }
+.tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tally div { background: var(--panel); padding: 8px 12px; min-width: 0; }
+.tally dt { font-size: 12px; color: var(--ink-2); }
+.tally dd { margin: 0; font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.tally .w dd { color: var(--warn); }
+@media (max-width: 480px) { .tally { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.controls label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.controls select { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 6px 8px; }
+.note { font-size: 13px; color: var(--ink-2); margin: 0; }
+.note.err { color: var(--warn); font-weight: 700; }
+
+details.cond { border-top: 1px solid var(--line); padding-top: 10px; font-size: 14px; }
+details.cond summary { cursor: pointer; font-weight: 700; }
+details.cond ul { margin: 8px 0 0; padding-left: 1.2em; color: var(--ink-2); display: flex; flex-direction: column; gap: 2px; }
+details.cond li b { color: var(--ink); }
+
+/* 結果 */
+.rhead { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rhead h2 { font-size: 17px; font-weight: 900; margin: 0; margin-right: auto; }
+.tabs { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tabs button { border: 0; background: var(--panel); padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--ink-2); }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 720px; overflow-y: auto; }
+.row { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+.row.flag { border-color: var(--warn); }
+.row.off { opacity: .45; }
+.row > button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 10px; padding: 8px 10px; width: 100%; }
+.row > button:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+.slot { grid-row: span 2; width: 34px; height: 34px; border-radius: 4px; background: var(--amber-soft); color: var(--amber); font-weight: 900; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+.l1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.l1 .set { font-weight: 700; overflow-wrap: anywhere; }
+.l1 .lv { font-family: var(--mono); font-size: 13px; background: var(--ink); color: var(--ground); border-radius: 3px; padding: 0 5px; }
+.l1 .rar { color: var(--star); font-size: 12px; letter-spacing: 1px; }
+.l1 .main { color: var(--amber); font-weight: 700; font-size: 14px; }
+.l1 .no { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+.l1 .who { font-size: 12px; font-weight: 700; color: var(--panel); background: var(--ok); border-radius: 3px; padding: 0 6px; }
+.l1 .elx { font-size: 12px; font-weight: 700; color: var(--elx); border: 1px solid var(--elx); border-radius: 3px; padding: 0 4px; }
+.chars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 720px; overflow-y: auto; }
+.chars li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; }
+.chars .nm { font-weight: 700; }
+.chars .st { font-size: 13px; color: var(--ink-2); grid-column: 1; }
+.chars .pc { grid-row: span 2; display: flex; gap: 4px; align-self: center; }
+.chars .pc span { width: 34px; text-align: center; border-radius: 4px; background: var(--amber-soft); color: var(--amber); font-size: 12px; font-weight: 700; line-height: 1.25; padding: 2px 0; }
+.chars .pc span b { display: block; font-family: var(--mono); font-weight: 500; color: var(--ink); }
+.chars .pc span.none { background: var(--panel-2); color: var(--ink-2); }
+.export select { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+.l1 .lk { font-size: 12px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+.l1 .ex { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--ink-2); border: 1px dashed var(--line); border-radius: 3px; padding: 0 5px; }
+.subs { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.subs span b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+.subs span.pend { opacity: .6; }
+.subs span.pend::after { content: "（未解放）"; font-size: 11px; }
+.why { grid-column: 2; font-size: 12px; font-weight: 700; color: var(--warn); }
+.detail { border-top: 1px solid var(--line); padding: 10px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; background: var(--panel-2); border-radius: 0 0 6px 6px; }
+.detail img { width: 205px; max-width: 100%; border-radius: 3px; }
+.detail div { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--ink-2); min-width: 0; flex: 1 1 160px; }
+.empty { color: var(--ink-2); font-size: 14px; padding: 16px 4px; }
+.export { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.export .note { flex: 1 1 200px; }
+textarea.json { width: 100%; height: 120px; font-family: var(--mono); font-size: 12px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>聖遺物ビデオスキャナー</h1>
+    <p>所持品画面を録画した動画から聖遺物を読み取り、オプティマイザ用の GOOD 形式にします。</p>
+    <span class="local">動画はこの端末の中だけで処理します</span>
+  </header>
+
+  <div class="grid">
+    <section class="col" aria-label="録画と読み取り状況">
+      <div class="screen" id="screen">
+        <video id="video" muted playsinline preload="auto"></video>
+        <div class="reader" id="reader" hidden></div>
+        <div class="drop" id="drop">
+          <strong>録画ファイルをここにドロップ</strong>
+          <span>聖遺物を順番に送っていく様子を録画した MP4 / WebM</span>
+          <button class="btn onscreen" id="pick" type="button">ファイルを選ぶ</button>
+          <input id="file" type="file" accept="video/*" hidden>
+        </div>
+      </div>
+
+      <div class="gauge">
+        <div class="bar" role="progressbar" aria-label="読み取りの進み具合" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barBox"><i id="bar"></i></div>
+        <div class="status"><span id="state">読み取りエンジンを準備しています…</span><span id="clock"></span></div>
+        <dl class="tally">
+          <div><dt>読み取り済み</dt><dd id="nDone">0</dd></div>
+          <div><dt>解析待ち</dt><dd id="nQueue">0</dd></div>
+          <div class="w"><dt>要確認</dt><dd id="nFlag">0</dd></div>
+          <div><dt>重複をまとめた数</dt><dd id="nDup">0</dd></div>
+        </dl>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="start" type="button" disabled>読み取り開始</button>
+        <button class="btn" id="reset" type="button" disabled>別の動画にする</button>
+        <label>再生速度
+          <select id="speed"><option value="1">等速</option><option value="step">確実（1コマずつ・時間がかかります）</option><option value="0.5">ゆっくり（0.5倍速）</option><option value="2">2倍速</option></select>
+        </label>
+        <label><input type="checkbox" id="dedupe" checked> 同じ内容は1個にまとめる</label>
+      </div>
+      <p class="note" id="msg"></p>
+
+      <details class="cond" open>
+        <summary>録画の条件</summary>
+        <ul>
+          <li><b>画面比率 16:9、縦 1080 以上</b>（720 は未検証）</li>
+          <li><b>ゲーム言語は日本語</b></li>
+          <li><b>コントローラー操作時の画面レイアウト</b>（詳細パネルが右側に出る配置。PC のコントローラー操作と PS5）</li>
+          <li><b>30fps 以上</b>。長押しの最高速送りでも読めます</li>
+          <li>コマ落ちが多いと表示されたら、再生速度を<b>「確実（1コマずつ）」</b>にする</li>
+          <li>ブラウザで再生できる形式。HEVC が再生できない場合は H.264 で録画</li>
+          <li><b>先頭から右へ順に送る</b>と、所持品画面での並び順の番号が付き、読み飛ばしも検出できます</li>
+          <li>読み取り中はこのタブを表示したままにする</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="col" aria-label="読み取り結果">
+      <div class="rhead">
+        <h2>読み取り結果</h2>
+        <div class="tabs" role="group" aria-label="絞り込み">
+          <button type="button" id="tabAll" aria-pressed="true">すべて</button>
+          <button type="button" id="tabFlag" aria-pressed="false">要確認のみ</button>
+          <button type="button" id="tabChar" aria-pressed="false">キャラ別</button>
+        </div>
+      </div>
+      <ul class="list" id="list"></ul>
+      <ul class="chars" id="chars" hidden></ul>
+      <div class="export">
+        <button class="btn primary" id="save" type="button" disabled hidden>ファイルを保存</button>
+        <button class="btn" id="copy" type="button" disabled>JSON をコピー</button>
+        <label class="note">形式
+          <select id="fmt"><option value="good">GOOD（全聖遺物・オプティマイザ用）</option><option value="lab">聖遺物ラボ用（装備中のキャラ別）</option></select>
+        </label>
+        <p class="note" id="exmsg">読み取った聖遺物がここから書き出せます。</p>
+      </div>
+      <textarea class="json" id="json" readonly hidden aria-label="GOOD 形式の JSON"></textarea>
+    </section>
+  </div>
+</div>
+
+<script src="tess/tesseract.min.js"></script>
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const G = window.GSCAN, D = window.GSCAN_DATA, P = G.PANEL;
+  const video = $('video');
+  const SLOT_MARK = { flower: '花', plume: '羽', sands: '砂', goblet: '杯', circlet: '冠' };
+  const DIFF_THRESHOLD = 5;      // パネルが切り替わったとみなす差分（8x8 ブロック平均の最大値）
+  const QUEUE_HIGH = 40, QUEUE_LOW = 8;
+
+  const S = {
+    workers: [], ready: false, jobs: [], waiters: [], active: 0,
+    entries: new Map(), order: [], seq: 0, dup: 0, skipped: 0, unread: 0,
+    running: false, ended: false, heldByQueue: false, heldByTab: false,
+    filter: 'all', url: null, spans: [], fix: {}, fixedCount: 0, scanTotal: 0, scanDone: 0, recovering: false, cols: [], missed: [], drops: 0, minDt: Infinity, lastT: -1, samples: true,
+  };
+
+  /* ---------- 読み取りエンジン ---------- */
+  async function initEngine() {
+    if (!window.Tesseract) { fail('読み取りエンジンを読み込めませんでした。ページを開き直してください。'); return; }
+    const base = new URL('tess', document.baseURI).href, emb = window.GSCAN_EMBED;      // 1 ファイル版では、必要なファイルをページ内に埋め込んである
+    const n = Math.max(2, Math.min(6, (navigator.hardwareConcurrency || 4) - 2));
+    // 認識データは配信できる拡張子に変えて置いてある。エンジンが付け足すファイル名は # 以降に逃がす
+    const make = async () => {
+      const w = await Tesseract.createWorker('jpn', 1, {
+        workerPath: emb ? emb.worker : base + '/worker.min.js', corePath: emb ? emb.core : base, langPath: emb ? emb.lang : base + '/jpn-traineddata.wasm#',
+        gzip: false, workerBlobURL: false, cacheMethod: 'none',
+      });
+      await w.setParameters({ tessedit_pageseg_mode: '7' });
+      S.workers.push(w);
+      pump(w);
+    };
+    try {
+      await make();
+      S.ready = true; refresh();
+      for (let i = 1; i < n; i++) make().catch(() => {});
+    } catch (e) {
+      fail('読み取りエンジンを起動できませんでした（' + (e && e.message ? e.message : e) + '）。');
+    }
+  }
+
+  function nextJob() {
+    if (S.jobs.length) return Promise.resolve(S.jobs.shift());
+    return new Promise(r => S.waiters.push(r));
+  }
+  function pushJob(job) {
+    const w = S.waiters.shift();
+    if (w) w(job); else S.jobs.push(job);
+  }
+  async function pump(worker) {
+    const ocr = async (im, h, gap) => (await worker.recognize(new Blob([G.toPGM(im, h, gap)]))).data.text.trim();
+    for (;;) {
+      const job = await nextJob();
+      S.active++;
+      try {
+        const r = await G.readArtifact(job.meta, ocr);
+        if (r.art) await ingest(r, job); else S.unread++;
+      } catch (e) { S.unread++; }
+      S.active--;
+      if (S.heldByQueue && S.jobs.length <= QUEUE_LOW) { S.heldByQueue = false; resume(); }
+      refresh();
+    }
+  }
+
+  /* ---------- 動画からパネルの切り替わりを拾う ---------- */
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return { c, ctx: c.getContext('2d', { willReadFrequently: true }) }; };
+  // 動画から画像を取り出すのは 1 コマにつき 1 回だけにする（取り出しが重く、回数が増えるとコマ落ちの原因になる）。
+  // 一覧と詳細パネルをまとめて切り出し、以降はこの画像の中から必要な部分を読む
+  const GX = 150, GY = 130, GW = 1610, GH = 825;      // 1920x1080 基準での切り出し範囲
+  const grab = mk(GW, GH);
+  function grabFrame() {
+    const k = video.videoWidth / 1920;
+    grab.ctx.drawImage(video, GX * k, GY * k, GW * k, GH * k, 0, 0, GW, GH);
+  }
+  const panelNow = () => grab.ctx.getImageData(P.x - GX, P.y - GY, P.w, P.h);
+
+  // 一覧のカーソル（白い枠線）: 各列の左辺を見て、白い行がいちばん多い列を選ぶ
+  function cursorOf() {
+    let best = { n: 0, col: -1, y0: 0 };
+    for (let c = 0; c < 10; c++) {
+      const d = grab.ctx.getImageData(8 + 117 * c, 35, 6, 790).data;
+      let n = 0, y0 = -1;
+      for (let y = 0; y < 790; y++) {
+        let hit = false;
+        for (let x = 0; x < 6 && !hit; x++) { const i = (y * 6 + x) * 4; if (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2] > 246) hit = true; }
+        if (hit) { n++; if (y0 < 0) y0 = y; }
+      }
+      if (n > best.n) best = { n, col: c, y0 };
+    }
+    return best;
+  }
+  // 一覧のタイル左上に出るロック印（こげ茶の地に朱色の錠）を見る。詳細パネルのロック表示は切り替えがアニメーションするが、こちらは動かない
+  function tileLock(cu) {
+    if (cu.n < 60) return null;
+    const d = grab.ctx.getImageData(8 + 117 * cu.col, 37 + cu.y0, 24, 24).data;
+    let red = 0, brown = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      if (r > 225 && g > 110 && g < 165 && b > 90 && b < 140) red++;
+      else if (r > 75 && r < 115 && g > 45 && g < 80 && b > 10 && b < 50) brown++;
+    }
+    return red >= 15 && brown >= 60;
+  }
+  let prevPanel = null, segLen = 0, prevTiny = null, lastLock = null, segLock0 = 0, segLock1 = 0, segStart = 0, segOwnLock = false, segOwnFrames = 0, held = null;
+  let segCur = { n: 0, col: -1, y0: 0 }, lastSubTiny = null;
+
+  // パネル上部（縦 460 ぶん）を 5 分の 1 に縮めた明るさの画像。切り替わりの検出に使う
+  function tinyOf(img) {
+    const d = img.data, g = new Float32Array(82 * 92);
+    for (let ty = 0; ty < 92; ty++) for (let tx = 0; tx < 82; tx++) {
+      let s = 0;
+      for (let y = ty * 5; y < ty * 5 + 5; y++) { let i = (y * P.w + tx * 5) * 4; for (let x = 0; x < 5; x++, i += 4) s += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; }
+      g[ty * 82 + tx] = s / 25;
+    }
+    return g;
+  }
+  function blockDiff(a, b) {
+    let max = 0;
+    for (let by = 0; by < 11; by++) for (let bx = 0; bx < 10; bx++) {
+      let s = 0;
+      for (let y = by * 8; y < by * 8 + 8; y++) {
+        if (y >= 46 && y < 66) continue;            // レベルとロックの帯は、ロック表示のアニメーションがあるので見ない
+        for (let x = bx * 8; x < bx * 8 + 8; x++) s += Math.abs(a[y * 82 + x] - b[y * 82 + x]);
+      }
+      if (s / 64 > max) max = s / 64;
+    }
+    return max;
+  }
+  function lockValOf(img) {
+    let lv = 0, n = 0;
+    for (let y = 253; y < 289; y++) for (let x = 262; x < 298; x++) { lv += img.data[(y * P.w + x) * 4]; n++; }
+    return lv / n;
+  }
+
+  function onFrame(mediaTime) {
+    if (!S.running) return;
+    grabFrame();
+    const img = panelNow(), t = tinyOf(img);
+    if (prevTiny && segLen > 0 && blockDiff(t, prevTiny) > DIFF_THRESHOLD) { submit(prevPanel, segLen); segLen = 0; }
+    const lv = lockValOf(img), cu = cursorOf();
+    if (segLen === 0) { segOwnLock = false; segOwnFrames = 0; }
+    if (segLen === 0 || cu.n > segCur.n) segCur = cu;
+    if (cu.n >= 60) {
+      // いま選択中のタイルのロック印。選択直後のコマは枠のアニメーションで印が隠れることがあるので、映ったコマのどれかで見えれば「ロック」とする
+      segOwnFrames++; if (tileLock(cu)) segOwnLock = true;
+      // ひとつ前の聖遺物のタイルは、カーソルが離れたあとなら確実に見える
+      if (held && held.col >= 0 && cu.col === held.col + 1) held.lockNext = tileLock({ n: cu.n, col: held.col, y0: cu.y0 }) || held.lockNext === true;
+    }
+    if (segLen === 0) { segLock0 = lv; segStart = mediaTime; }
+    segLock1 = lv;
+    prevTiny = t; prevPanel = img; segLen++;
+
+    // コマ落ちの見張り
+    if (S.lastT >= 0) {
+      const dt = mediaTime - S.lastT;
+      if (dt > 0.004) { if (dt < S.minDt) S.minDt = dt; else if (dt > S.minDt * 1.6) S.drops += Math.round(dt / S.minDt) - 1; }
+    }
+    S.lastT = mediaTime;
+
+    if (S.jobs.length >= QUEUE_HIGH && !S.heldByQueue && !S.stepping) { S.heldByQueue = true; video.pause(); }
+    refresh();
+  }
+  function loop() {
+    if (video.requestVideoFrameCallback) {
+      const cb = (now, md) => { onFrame(md.mediaTime); if (S.running) video.requestVideoFrameCallback(cb); };
+      video.requestVideoFrameCallback(cb);
+    } else {
+      let last = -1;
+      const cb = () => { if (!S.running) return; if (video.currentTime !== last) { last = video.currentTime; onFrame(last); } requestAnimationFrame(cb); };
+      requestAnimationFrame(cb);
+    }
+  }
+  function submit(img, len) {
+    const meta = G.analyzePanel(img.data, P.w, P.h);
+    if (!meta) { S.skipped++; lastLock = null; return; }
+    // ロックのアイコンは前の聖遺物の状態から徐々に切り替わる。高速送りでは途中の色しか映らないので、変化の向きで判定する
+    const within = segLock1 - segLock0;      // この聖遺物が映っている間の変化
+    if (within < -6) meta.lock = true;
+    else if (within > 6) meta.lock = false;
+    else if (lastLock !== null && meta.lockVal < lastLock - 10) meta.lock = true;
+    else if (lastLock !== null && meta.lockVal > lastLock + 10) meta.lock = false;
+    lastLock = meta.lockVal;
+    // 並び順の番号は、カーソルの列の並びから後でまとめて決める（1 行は 10 列）
+    const col = segCur.n >= 60 ? segCur.col : -1;
+    S.cols.push(col); S.spans.push([segStart, Math.max(segStart, S.lastT)]);
+    // 直前に読んだものと見た目が同じなら、同じ枠をもう一度映しただけ（番号は進めない）
+    if (lastSubTiny && prevTiny && blockDiff(prevTiny, lastSubTiny) <= DIFF_THRESHOLD) S.fix[S.cols.length - 2] = { same: true };
+    lastSubTiny = prevTiny;
+    const r = $('reader'); r.classList.remove('hit'); void r.offsetWidth; r.classList.add('hit');
+    // ロックの確定は、次の聖遺物が映り終わるまで待つ
+    flushHeld();
+    held = { job: { seq: ++S.seq, meta, img, t: video.currentTime, len }, col, lockOwn: segOwnLock, ownFrames: segOwnFrames, lockNext: null };
+  }
+  function flushHeld() {
+    if (!held) return;
+    const h = held; held = null;
+    if (h.lockOwn || h.lockNext === true) h.job.meta.lock = true;
+    else if (h.lockNext === false || h.ownFrames >= 2) h.job.meta.lock = false;
+    pushJob(h.job);                     // どちらでも決まらないときは、詳細パネルの表示から判定した値のまま
+  }
+
+  /* ---------- 読み飛ばしの拾い直し ---------- */
+  // 再生中にコマが落ちた箇所では、聖遺物が 1 個も映らないまま通り過ぎていることがある。
+  // 「コマが落ちた境目」のうち怪しいところを 1 コマずつ表示し直し、間に挟まっていた聖遺物を数えて読む
+  function seekTo(t, fd) {
+    return new Promise(res => {
+      let done = false; const fin = () => { if (!done) { done = true; res(); } };
+      // 目的のコマが実際に画面へ出たことを待つ（ひとつ前のシークのコマが遅れて届くことがあるので、時刻を確かめる）
+      if (video.requestVideoFrameCallback) {
+        const cb = (now, md) => { if (done) return; if (md.mediaTime <= t + 0.002 && md.mediaTime > t - fd * 1.3) fin(); else video.requestVideoFrameCallback(cb); };
+        video.requestVideoFrameCallback(cb);
+      }
+      else video.addEventListener('seeked', () => setTimeout(fin, 60), { once: true });
+      setTimeout(fin, 1500);
+      video.currentTime = t;
+    });
+  }
+  async function recover() {
+    const n = S.cols.length;
+    if (n < 2) return;
+    const url = S.url, fd = isFinite(S.minDt) && S.minDt > 0.004 ? S.minDt : 1 / 30;
+    const gap = i => (S.spans[i + 1][0] - S.spans[i][1]) / fd;                 // 境目で落ちたコマ数 + 1
+    const todo = [];
+    // 2 コマ以上続けて落ちた境目は、間に聖遺物が挟まっていた可能性があるので、すべて確かめる
+    for (let i = 0; i + 1 < n; i++) if (!S.fix[i] && gap(i) > 2.5) todo.push(i);
+    if (!todo.length) return;
+    S.recovering = true; S.scanTotal = todo.length; S.scanDone = 0; refresh();
+    try {
+      for (let q = 0; q < todo.length; q++) {
+        const i = todo[q];
+        const runs = []; let prev = null, last = null;
+        for (let t = S.spans[i][1]; t <= S.spans[i + 1][0] + fd * 0.5; t += fd) {
+          await seekTo(t + fd * 0.3, fd);
+          if (S.url !== url) return;
+          grabFrame();
+          const img = panelNow(), tn = tinyOf(img);
+          let carry = false;
+          if (prev && blockDiff(tn, prev) > DIFF_THRESHOLD) runs.push(last); else if (last) carry = last.lock;
+          prev = tn; last = { img, t, tiny: tn, lock: tileLock(cursorOf()) === true || carry };
+        }
+        if (last) runs.push(last);
+        // 最初は読み取り済みの i 番目、最後は i+1 番目。その間が読み飛ばした聖遺物
+        // 前後どちらかと同じ見た目のもの、直前と同じものは数えない（表示の遅れで同じ場面が二度出ることがある）
+        const A = runs[0], B = runs[runs.length - 1], same = (x, y) => blockDiff(x.tiny, y.tiny) <= DIFF_THRESHOLD;
+        const mid = runs.slice(1, -1).filter((r, q2, arr) => !same(r, A) && !same(r, B) && !arr.slice(0, q2).some(o => same(o, r)));
+        S.fix[i] = runs.length < 2 || (!mid.length && same(A, B)) ? { same: true } : { mids: mid.length };
+        mid.forEach((r, j) => {
+          const meta = G.analyzePanel(r.img.data, P.w, P.h);
+          if (!meta) { S.skipped++; return; }
+          meta.lock = r.lock; S.fixedCount++;
+          pushJob({ seq: i + 1 + (j + 1) / (mid.length + 1), gap: { i, j }, meta, img: r.img, t: r.t, len: 1 });
+        });
+        S.scanDone++; refresh();
+      }
+    } finally { S.recovering = false; refresh(); }
+  }
+
+  /* ---------- 結果の取り込みと表示 ---------- */
+  const thumb = mk(P.w, P.h);
+  function toThumb(img) {
+    return new Promise(res => {
+      thumb.ctx.putImageData(img, 0, 0);
+      thumb.c.toBlob(b => res(b ? URL.createObjectURL(b) : ''), 'image/jpeg', 0.8);
+    });
+  }
+  async function ingest(r, job) {
+    const key = G.artKey(r.art);
+    const had = $('dedupe').checked ? S.entries.get(key) : null;
+    if (had) {
+      S.dup++;
+      if (job.len > had.len) { had.art.lock = r.art.lock; had.len = job.len; }
+      return;
+    }
+    const e = { key: key + '#' + job.seq, no: 0, gap: job.gap || null, art: r.art, issues: r.issues, seq: job.seq, t: job.t, len: job.len, off: false, url: await toThumb(job.img) };
+    job.img = null;
+    S.entries.set($('dedupe').checked ? key : e.key, e);
+    S.order.push(e);
+    if (S.samples) { S.samples = false; $('list').textContent = ''; }
+    $('list').prepend(rowOf(e));
+  }
+
+  const mainText = a => {
+    const v = ((D.main[a.rarity] || {})[a.mainStatKey] || [])[a.level];
+    if (v === undefined) return '';
+    return G.PCT(a.mainStatKey) ? (Math.round(v * 1000) / 10).toFixed(1) + '%' : Math.round(v).toLocaleString('en-US');
+  };
+  const statText = s => D.stat[s.key] + ' ';
+  const valText = s => s.value + (G.PCT(s.key) ? '%' : '');
+  function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+
+  function rowOf(e, sample) {
+    const a = e.art, li = el('li', 'row' + (e.issues.length ? ' flag' : ''));
+    li.dataset.flag = e.issues.length ? '1' : '';
+    const b = el('button'); b.type = 'button'; b.setAttribute('aria-expanded', 'false');
+    b.append(el('span', 'slot', SLOT_MARK[a.slotKey]));
+    const l1 = el('span', 'l1');
+    if (!sample) { e.noEl = el('span', 'no', e.no ? 'No.' + e.no : ''); l1.append(e.noEl); }
+    l1.append(el('span', 'set', D.sets[a.setKey].n), el('span', 'lv', '+' + a.level), el('span', 'rar', '★'.repeat(a.rarity)),
+      el('span', 'main', D.stat[a.mainStatKey] + ' ' + mainText(a)));
+    if (a.location) l1.append(el('span', 'who', G.CHAR_NAME[a.location] || a.location));
+    if (a.elixirCrafted) l1.append(el('span', 'elx', 'エリクシル'));
+    if (a.lock) l1.append(el('span', 'lk', 'ロック'));
+    if (sample) l1.append(el('span', 'ex', '表示例'));
+    const subs = el('span', 'subs');
+    const add = (s, pend) => { const x = el('span', pend ? 'pend' : '', statText(s)); x.append(el('b', '', valText(s))); subs.append(x); };
+    a.substats.forEach(s => add(s, false)); (a.unactivatedSubstats || []).forEach(s => add(s, true));
+    b.append(l1, subs);
+    if (e.issues.length) b.append(el('span', 'why', e.issues.join(' / ')));
+    li.append(b);
+    if (!sample) b.addEventListener('click', () => {
+      let d = li.querySelector('.detail');
+      if (d) { d.remove(); b.setAttribute('aria-expanded', 'false'); return; }
+      d = el('div', 'detail');
+      if (e.url) { const im = document.createElement('img'); im.src = e.url; im.alt = '読み取り元の画面'; d.append(im); }
+      const side = el('div');
+      side.append(el('span', '', (e.no ? '所持品画面の ' + Math.ceil(e.no / 10) + ' 行目・' + ((e.no - 1) % 10 + 1) + ' 列目。' : '') + '動画の ' + clock(e.t) + ' 付近。画像と見比べて、違っていれば書き出しから外せます。'));
+      const off = el('button', 'btn', e.off ? '書き出しに戻す' : '書き出しから外す'); off.type = 'button';
+      off.addEventListener('click', () => { e.off = !e.off; li.classList.toggle('off', e.off); off.textContent = e.off ? '書き出しに戻す' : '書き出しから外す'; refresh(); });
+      side.append(off); d.append(side); li.append(d); b.setAttribute('aria-expanded', 'true');
+    });
+    return li;
+  }
+
+  const SAMPLES = [
+    { art: { setKey: 'FinaleOfTheDeepGalleries', slotKey: 'plume', level: 20, rarity: 5, mainStatKey: 'atk', lock: true, substats: [{ key: 'critDMG_', value: 24.9 }, { key: 'def', value: 23 }, { key: 'critRate_', value: 7.4 }, { key: 'atk_', value: 11.1 }] }, issues: [] },
+    { art: { setKey: 'HeartOfTheFurnace', slotKey: 'sands', level: 0, rarity: 5, mainStatKey: 'enerRech_', lock: false, substats: [{ key: 'critRate_', value: 3.9 }, { key: 'hp', value: 269 }, { key: 'def_', value: 7.3 }], unactivatedSubstats: [{ key: 'critDMG_', value: 5.4 }] }, issues: [] },
+    { art: { setKey: 'ScarletProof', slotKey: 'goblet', level: 0, rarity: 5, mainStatKey: 'pyro_dmg_', lock: false, substats: [{ key: 'hp_', value: 5.8 }, { key: 'critDMG_', value: 6.2 }, { key: 'hp', value: 209 }], unactivatedSubstats: [{ key: 'eleMas', value: 21 }] }, issues: [] },
+  ];
+  function showSamples() {
+    S.samples = true; $('list').textContent = '';
+    SAMPLES.forEach(s => $('list').append(rowOf(s, true)));
+  }
+
+  const clock = t => { t = Math.max(0, t || 0); return Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'); };
+  const kept = () => S.order.filter(e => !e.off).sort((a, b) => (a.no && b.no ? a.no - b.no : 0) || a.seq - b.seq);
+
+  function refresh() {
+    const dur = video.duration || 0, pct = dur ? Math.min(100, video.currentTime / dur * 100) : 0;
+    const pending = S.jobs.length + S.active;
+    const done = S.ended && pending === 0 && !S.recovering;
+    $('bar').style.width = (done ? 100 : pct) + '%';
+    $('barBox').setAttribute('aria-valuenow', String(Math.round(done ? 100 : pct)));
+    $('clock').textContent = dur ? clock(video.currentTime) + ' / ' + clock(dur) : '';
+    // 番号の振り直し（直近のぶんと、完了時の全件）
+    if (S.cols.length) {
+      const nb = G.numberSeq(S.cols, S.fix);
+      const from = done && !S.numbered ? 0 : Math.max(0, S.order.length - 40);
+      for (let i = from; i < S.order.length; i++) { const e = S.order[i], v = !nb.known ? 0 : e.gap ? nb.no[e.gap.i] + 1 + e.gap.j : nb.no[e.seq - 1]; if (v !== e.no) { e.no = v; if (e.noEl) e.noEl.textContent = v ? 'No.' + v : ''; } }
+      S.numbered = done;
+    }
+    const flags = S.order.filter(e => e.issues.length && !e.off).length;
+    $('nDone').textContent = S.order.length; $('nQueue').textContent = pending; $('nFlag').textContent = flags; $('nDup').textContent = S.dup;
+    let st;
+    if (S.failed) st = S.failed;
+    else if (!S.ready) st = '読み取りエンジンを準備しています…';
+    else if (!S.url) st = '準備完了。録画ファイルを選んでください。';
+    else if (done) st = '完了。' + S.order.length + ' 個を読み取りました。';
+    else if (S.recovering) st = 'コマが落ちた箇所を 1 コマずつ確かめています…（' + S.scanDone + ' / ' + S.scanTotal + '）';
+    else if (S.ended) st = '動画の再生は終わりました。残りを解析しています…';
+    else if (S.heldByTab) st = 'タブが隠れているので一時停止しています。';
+    else if (S.heldByQueue) st = '解析が追いつくまで再生を待っています…';
+    else if (S.running && S.stepping) st = '1 コマずつ読み取り中';
+    else if (S.running) st = '読み取り中';
+    else st = '動画を読み込みました。「読み取り開始」を押してください。';
+    $('state').textContent = st;
+    $('start').disabled = !(S.ready && S.url && !S.running && !S.ended);
+    $('reset').disabled = !S.url;
+    const n = kept().length;
+    $('copy').disabled = $('save').disabled = n === 0;
+    if (n) $('exmsg').textContent = n + ' 個を書き出します' + (flags ? '（うち要確認 ' + flags + ' 個）。' : '。');
+    const extra = [];
+    if (S.drops > 20) extra.push('再生中にコマ落ちを ' + S.drops + ' 回検出しました。落ちた箇所は再生後に確かめ直します。回数が多いと時間がかかるので、その場合は「確実（1コマずつ）」が向いています。');
+    if (S.skipped + S.unread > 0 && (S.running || S.ended)) extra.push('聖遺物の詳細として読めなかった場面: ' + (S.skipped + S.unread) + ' 件。');
+    if (S.fixedCount && !S.recovering) extra.push('再生中に映らなかった ' + S.fixedCount + ' 個を、1 コマずつ表示し直して読みました。');
+    if (S.filter === 'char') renderChars();
+    if (!S.warn) $('msg').textContent = extra.join(' ');
+  }
+  function fail(text) { S.failed = text; $('state').textContent = text; $('msg').textContent = text; $('msg').className = 'note err'; }
+  function warn(text) { S.warn = text; $('msg').textContent = text; $('msg').className = 'note' + (text ? ' err' : ''); }
+
+  /* ---------- 操作 ---------- */
+  function load(file) {
+    if (!file) return;
+    resetAll();
+    S.url = URL.createObjectURL(file);
+    video.src = S.url;
+    $('drop').hidden = true; $('reader').hidden = false;
+    refresh();
+  }
+  function resetAll() {
+    S.running = false; S.ended = false; video.pause();
+    if (S.url) URL.revokeObjectURL(S.url);
+    S.order.forEach(e => e.url && URL.revokeObjectURL(e.url));
+    S.jobs.length = 0; S.entries.clear(); S.order = []; S.seq = 0; S.dup = 0; S.skipped = 0; S.unread = 0; S.cols = []; S.spans = []; S.fix = {}; S.fixedCount = 0; S.recovering = false; S.stepping = false; S.probing = false; S.numbered = false; S.missed = []; S.drops = 0; S.minDt = Infinity; S.lastT = -1;
+    S.url = null; S.heldByQueue = false; S.heldByTab = false; prevPanel = null; segLen = 0; prevTiny = null; lastLock = null; held = null; lastSubTiny = null;
+    video.removeAttribute('src'); video.load();
+    $('drop').hidden = false; $('reader').hidden = true; $('json').hidden = true;
+    $('exmsg').textContent = '読み取った聖遺物がここから書き出せます。';
+    warn(''); showSamples(); refresh();
+  }
+  function resume() { if (S.running && !S.stepping && !S.ended && !S.heldByQueue && !S.heldByTab) video.play().catch(() => {}); }
+
+  $('pick').addEventListener('click', () => $('file').click());
+  $('file').addEventListener('change', e => { load(e.target.files[0]); e.target.value = ''; });
+  const drop = $('screen');
+  drop.addEventListener('dragover', e => { e.preventDefault(); $('drop').classList.add('over'); });
+  drop.addEventListener('dragleave', () => $('drop').classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); $('drop').classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) load(f); });
+
+  video.addEventListener('loadedmetadata', () => {
+    const r = video.videoWidth / video.videoHeight;
+    if (Math.abs(r - 16 / 9) > 0.03) warn('この動画は 16:9 ではありません（' + video.videoWidth + '×' + video.videoHeight + '）。読み取り位置が合わず、正しく読めません。');
+    else if (video.videoHeight < 1000) warn('縦 ' + video.videoHeight + ' ピクセルの動画です。1080 未満は文字が潰れて誤読が増える恐れがあります。');
+    refresh();
+  });
+  video.addEventListener('error', () => { if (S.url) warn('この動画はこのブラウザで再生できません。H.264 の MP4 で録画し直すか、変換してから読み込んでください。'); });
+  video.addEventListener('ended', () => {
+    if (!S.running) return;
+    if (S.stepping) return;
+    finishPass();
+  });
+  function finishPass() {
+    if (segLen > 0) submit(prevPanel, segLen);
+    flushHeld();
+    S.running = false; S.ended = true; refresh();
+    recover();
+  }
+  // 確実モード: 再生せず、1 コマずつ表示し直して全コマを見る。コマ落ちが起きないかわりに時間がかかる
+  async function stepThrough() {
+    const url = S.url;
+    // コマの間隔を知るために、最初だけ少し再生する
+    S.stepping = true; S.probing = true; refresh();
+    const seen = [];
+    if (video.requestVideoFrameCallback) {
+      const cb = (now, md) => { seen.push(md.mediaTime); if (S.probing) video.requestVideoFrameCallback(cb); };
+      video.requestVideoFrameCallback(cb);
+      try { await video.play(); } catch (e) {}
+      await new Promise(r => setTimeout(r, 900));
+      video.pause();
+    }
+    S.probing = false;
+    let fd = 1 / 30;
+    const ds = []; for (let i = 1; i < seen.length; i++) if (seen[i] - seen[i - 1] > 0.004) ds.push(seen[i] - seen[i - 1]);
+    if (ds.length) fd = Math.min(...ds);
+    S.minDt = fd; S.lastT = -1; S.drops = 0;
+    for (let t = 0; t < video.duration - fd * 0.5; t += fd) {
+      if (S.url !== url || !S.running) return;
+      while (S.jobs.length >= QUEUE_HIGH || document.hidden) { await new Promise(r => setTimeout(r, 200)); if (S.url !== url) return; }
+      await seekTo(t + fd * 0.3, fd);
+      onFrame(t);
+    }
+    if (S.url === url) finishPass();
+  }
+  $('start').addEventListener('click', () => {
+    S.running = true;
+    if ($('speed').value === 'step') { stepThrough(); refresh(); return; }
+    video.playbackRate = parseFloat($('speed').value) || 1;
+    loop(); resume(); refresh();
+  });
+  $('speed').addEventListener('change', () => { if (!S.stepping) video.playbackRate = parseFloat($('speed').value) || 1; });
+  $('reset').addEventListener('click', resetAll);
+  document.addEventListener('visibilitychange', () => {
+    if (!S.running) return;
+    if (S.stepping) { refresh(); return; }
+    if (document.hidden) { S.heldByTab = true; video.pause(); } else { S.heldByTab = false; resume(); }
+    refresh();
+  });
+
+  function setFilter(f) {
+    S.filter = f;
+    $('tabAll').setAttribute('aria-pressed', String(f === 'all')); $('tabFlag').setAttribute('aria-pressed', String(f === 'flag')); $('tabChar').setAttribute('aria-pressed', String(f === 'char'));
+    $('list').hidden = f === 'char'; $('chars').hidden = f !== 'char';
+    if (f === 'char') renderChars();
+    else $('list').querySelectorAll('.row').forEach(li => { li.hidden = f === 'flag' && !li.dataset.flag; });
+  }
+  $('tabAll').addEventListener('click', () => setFilter('all'));
+  $('tabFlag').addEventListener('click', () => setFilter('flag'));
+  $('tabChar').addEventListener('click', () => setFilter('char'));
+  new MutationObserver(() => { if (S.filter === 'flag') setFilter('flag'); }).observe($('list'), { childList: true });
+
+  // キャラ別: 装備中の聖遺物を持ち主ごとにまとめる
+  let charSig = '';
+  function renderChars() {
+    const by = new Map();
+    for (const e of kept()) { const k = e.art.location; if (!k) continue; if (!by.has(k)) by.set(k, []); by.get(k).push(e.art); }
+    const sig = [...by].map(([k, v]) => k + v.map(a => a.slotKey + a.level + a.setKey).join()).join('|');
+    if (sig === charSig && $('chars').childElementCount) return;
+    charSig = sig;
+    const box = $('chars'); box.textContent = '';
+    if (!by.size) { box.append(el('li', 'empty', S.samples ? '動画を読み取ると、装備中のキャラごとにセットと強化状況が並びます。' : 'まだ装備中の聖遺物が見つかっていません。')); return; }
+    for (const [k, list] of by) {
+      const li = el('li'), cnt = {};
+      list.forEach(a => { cnt[a.setKey] = (cnt[a.setKey] || 0) + 1; });
+      li.append(el('span', 'nm', G.CHAR_NAME[k] || k));
+      const pc = el('span', 'pc');
+      for (const sl of Object.keys(SLOT_MARK)) {
+        const a = list.find(x => x.slotKey === sl), c = el('span', a ? '' : 'none', SLOT_MARK[sl]);
+        c.append(el('b', '', a ? '+' + a.level : '—')); pc.append(c);
+      }
+      li.append(pc, el('span', 'st', Object.entries(cnt).sort((x, y) => y[1] - x[1]).map(([sk, n]) => D.sets[sk].n + '×' + n).join(' ／ ')));
+      box.append(li);
+    }
+  }
+
+  const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const exportJSON = fmt => {
+    const arts = kept().map(e => e.art);
+    return (fmt || $('fmt').value) === 'lab' ? JSON.stringify(G.toLab(arts, today())) : JSON.stringify(G.toGOOD(arts), null, 2);
+  };
+  $('copy').addEventListener('click', async () => {
+    const text = exportJSON();
+    try { await navigator.clipboard.writeText(text); $('exmsg').textContent = $('fmt').value === 'lab' ? 'コピーしました。聖遺物ラボの「データの引っ越し」に貼り付けてください。' : 'コピーしました。オプティマイザの読み込み欄に貼り付けてください。'; }
+    catch (e) { const t = $('json'); t.hidden = false; t.value = text; t.focus(); t.select(); $('exmsg').textContent = 'コピーできなかったので下に表示しました。全選択してコピーしてください。'; }
+  });
+  let downloads = null;
+  // 1 ファイル版など、ふつうのブラウザで直接開いたときは、そのままファイルとして保存する
+  if (!(window.claude && window.claude.use)) {
+    downloads = { save: async ({ filename, data }) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); } };
+    $('save').hidden = false;
+  }
+  if (window.claude && window.claude.use) window.claude.use('downloads').then(d => { downloads = d; if (d) $('save').hidden = false; }).catch(() => {});
+  $('save').addEventListener('click', async () => {
+    if (!downloads) return;
+    try { await downloads.save({ filename: $('fmt').value === 'lab' ? 'genshin-lab-chars.json' : 'artifacts_GOOD.json', data: exportJSON() }); $('exmsg').textContent = '保存しました。'; }
+    catch (e) {
+      if (e && e.code === 'declined') $('exmsg').textContent = '保存をやめました。';
+      else if (e && e.code === 'rate_limited') $('exmsg').textContent = '少し待ってからもう一度押してください。';
+      else { $('save').hidden = true; $('exmsg').textContent = 'ここではファイル保存が使えません。「JSON をコピー」を使ってください。'; }
+    }
+  });
+
+  window.__gscan = { S, exportJSON, load };
+  showSamples(); refresh(); initEngine();
+})();
+</script>
+
+</body></html>

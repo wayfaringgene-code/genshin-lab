@@ -1,0 +1,4 @@
+# Mac と Windows の両方で触るので、文字のファイルは改行を LF にそろえる
+* text=auto eol=lf
+*.png binary
+*.wasm binary
