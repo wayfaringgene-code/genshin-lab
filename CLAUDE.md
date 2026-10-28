@@ -1,6 +1,6 @@
 # このリポジトリについて（Claude 向け）
 
-- 最初に `MAINTENANCE.md` を読む。どこに何があるか・公開の流れ・困ったときの確認手順がまとまっている
+- 最初に `MAINTENANCE.md` を読む。どこに何があるか・公開の流れ・困ったときの確認手順がまとまっている。次に何をやるかは `docs/ROADMAP.md`
 - 正は `src/lab.html`（ラボの元）。命ノ星座カードは `tools/build_card.py` がラボの元に差分を当てて組み立てる。公開ページは `tools/build_pages.py` が `_site/` に組み立て、`main` への push で GitHub Actions が GitHub Pages に公開する
 - 変更したら `python3 tools/build_pages.py` が通ることと、`python3 -m http.server 8000 --directory _site` で開いて動くことを確かめてから push する。push 後は Actions の成功まで見届ける
 - 立ち絵の登録は `docs/PORTRAITS.md` の手順（`tools/build_portraits.py`）。見本の立ち絵やカードの見た目を変えたら `src/og.png` も `tools/make_og.mjs` で作り直す

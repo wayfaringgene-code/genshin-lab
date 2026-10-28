@@ -128,6 +128,8 @@ artifact は自動では更新されない。Claude に「artifact 版も最新�
 
 ## 6. 残っている宿題
 
+進める順番とアイデアは **[docs/ROADMAP.md](docs/ROADMAP.md)**。
+
 - 立ち絵を集めて登録する（`docs/PORTRAITS.md`）
 - 「いちばんすごいカード」を出すときのガチャふうの演出（`homeReveal()` に差し込む）。縦長の動画（Shorts・X 用）の書き出しも
 - 前回からの伸びを見せる（取り直したときの変化）、友達のUIDと比べる
