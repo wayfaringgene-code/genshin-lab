@@ -581,12 +581,13 @@ function rvCardDraw(x,it,ps,kind,dim,L,lit){ const W=it.W, H=it.H; x.save(); x.g
     if(L.plate>0){ const g=x.createLinearGradient(0,-H/2,0,H/2); g.addColorStop(0,`rgba(255,236,190,${.1*L.plate})`); g.addColorStop(1,`rgba(255,236,190,${.02*L.plate})`); x.fillStyle=g; x.fillRect(-W/2,-H/2,W,H); }
     if(L.flash>0){ x.fillStyle=`rgba(255,246,220,${L.flash})`; x.fillRect(-W/2,-H/2,W,H); } }
   else x.drawImage(im,-W/2,-H/2,W,H);
-  if(lit!=null&&lit<1){ const W2=W*1.15; if(lit<=0) x.fillStyle='rgba(4,5,14,.92)'; else { const g=x.createRadialGradient(0,0,lit*W2,0,0,lit*W2+300); g.addColorStop(0,'rgba(4,5,14,0)'); g.addColorStop(1,'rgba(4,5,14,.92)'); x.fillStyle=g; } x.fillRect(-W/2,-H/2,W,H); } // 落ちてくるあいだは逆光で暗く、着地で中央から灯る
+  if(lit!=null&&lit<1){ const W2=W*1.15, D='rgba(6,8,22,.72)'; if(lit<=0) x.fillStyle=D; else { const g=x.createRadialGradient(0,0,lit*W2,0,0,lit*W2+300); g.addColorStop(0,'rgba(6,8,22,0)'); g.addColorStop(1,D); x.fillStyle=g; } x.fillRect(-W/2,-H/2,W,H); } // 落ちてくるあいだは逆光で暗く、着地で中央から灯る
   x.restore(); if(dim>0){ x.fillStyle=`rgba(2,3,10,${dim})`; const b=kind==='photo'?16:0; rvRR(x,-W/2-b,-H/2-b,W+2*b,H+2*b,kind==='photo'?3:12); x.fill(); } // 下になったカードは沈める（写真は白い縁ごと）
+  if(lit!=null&&lit<1){ const ra=1-rvCl(lit*1.6); x.save(); x.globalAlpha*=ra; x.strokeStyle='#f3dc9e'; x.shadowColor='#f5dfa6'; x.shadowBlur=18; x.lineWidth=3/ps.s; rvRR(x,-W/2,-H/2,W,H,12); x.stroke(); x.globalAlpha*=.5; x.lineWidth=1.2/ps.s; rvRR(x,-W/2+10,-H/2+10,W-20,H-20,8); x.stroke(); x.restore(); } // 逆光の縁：暗くても「カード」と分かるように
   x.restore(); }
 function rvShadowDraw(x,A,it,ps,kind){ const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), S=rvShadowOf(A,w,h), sc=1+ps.h*.22;
   x.save(); x.translate(ps.x+8+ps.h*60,ps.y+14+ps.h*110); x.rotate(ps.rot); x.scale(sc,sc*ps.sy); x.globalAlpha=ps.sa!=null?ps.sa:ps.a;
-  rvSprite(x,S.hard,w,h,Math.max(0,1-ps.h)*(kind==='photo'?.45:.7)); rvSprite(x,S.soft,w,h,kind==='drop'?rvCl(.12+(1.6-ps.h)*.36):.25+ps.h*.35); x.restore(); } // 影：遠いほど薄くぼやけ、近づくほど濃くくっきり
+  rvSprite(x,S.hard,w,h,Math.max(0,1-ps.h)*(kind==='photo'?.45:.5)); rvSprite(x,S.soft,w,h,kind==='drop'?Math.min(.34,.08+(1.6-ps.h)*.24):.25+ps.h*.35); x.restore(); } // 影：遠いほど薄くぼやけ、近づくほど濃くくっきり
 function rvGlowDraw(x,A,it,ps,a,kind){ if(a<=0) return; const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), G=rvGlowOf(A,w,h,it.rk);
   x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvSprite(x,G,w,h,a*(it.rk.myth?.55:1),'lighter'); x.restore(); } // 虹の光は重ねて明るいので弱める
 function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?.32*rvCl((t-b.t0)/450)*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードを少し暗く
