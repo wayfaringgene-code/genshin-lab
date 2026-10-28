@@ -4,8 +4,8 @@
 
 | ページ | URL | 中身 |
 |---|---|---|
-| 聖遺物ラボ：キャラ | `/` | 手持ちのキャラの装備を、秘境レベル（平均的な人が秘境だけで揃えるのにかかる日数）で並べる |
-| 命ノ星座カード | `/card/` | キャラごとのカード画像を作る。UID（Enka.Network）・動画・スクショから取り込み |
+| 命ノ星座カード | `/` | 入口。UIDを入れると、キャラごとの聖遺物を秘境レベル（平均的な人が秘境だけで揃えるのにかかる日数）で測ってカードにする。動画・スクショからの取り込みも |
+| 聖遺物ラボ：キャラ | `/lab/` | くわしい分析。手持ちのキャラの装備を、秘境レベルで並べる |
 
 保守のしかた（どこに何があるか、困ったときの確認手順）は **[MAINTENANCE.md](MAINTENANCE.md)** にまとめています。
 
@@ -19,6 +19,8 @@
 - `tools/build_scan.py` … スキャナーをカードの「取り込む」ページ用に組み立てる
 - `tools/build_enka_tables.py` / `tools/enka_tables.json` … Enka.Network の公式リポジトリ（EnkaNetwork/API-docs）から抜き出した、キャラ名・セット名・サブOPの伸び幅の対応表。新キャラ・新セットが出たら作り直す
 - `proxy/` … 「UIDで取得」用の Enka.Network 中継（Cloudflare Workers）。置き方は `proxy/README.md`
+- `src/portraits/` … 同梱の立ち絵（`tools/build_portraits.py` で登録。集め方は `docs/PORTRAITS.md`）
+- `src/og.png` … X などにURLを貼ったときの画像（`tools/make_og.mjs` で作る）
 - `tools/patch_lab_cardlink.py` … ラボのキャラの詳細のカードを、命ノ星座カードへのリンクに置き換える（`src/lab.html` には適用済み）
 
 ## 手元で組み立てる

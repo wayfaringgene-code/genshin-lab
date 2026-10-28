@@ -7,10 +7,13 @@
 #   tools/           組み立てスクリプトと Enka の対応表
 #
 # 出力：
-#   index.html           聖遺物ラボ：キャラ（LAB_MODE='chars'。ホーム画面に追加できる頭を付ける）
-#   card/index.html      命ノ星座カード（build_card.py）
-#   card/scan/           ビデオスキャナー（build_scan.py）
-#   card/fonts/          フォント
+#   index.html           命ノ星座カード（build_card.py。ホームから始まる。OGP付き）
+#   scan/                ビデオスキャナー（build_scan.py）
+#   fonts/               カード画像に埋め込むフォント
+#   portraits/           同梱の立ち絵（src/portraits があれば）
+#   og.png               X などにURLを貼ったときの画像（src/og.png があれば）
+#   lab/index.html       聖遺物ラボ：キャラ（LAB_MODE='chars'）
+#   card/index.html      以前の /card/ からトップへの転送
 import os, re, shutil, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,18 +46,36 @@ if os.path.isdir(OUT): shutil.rmtree(OUT)
 os.makedirs(OUT)
 lab = read(os.path.join(SRC, 'lab.html'))
 
-# 聖遺物ラボ：キャラ（ルート）。カードへのリンクは、同じサイトの card/ に向ける
-chars = pages_head(lab, '聖遺物ラボ：キャラ', '聖遺物ラボ', 'apple-touch-icon.png', "<script>window.LAB_MODE='chars';</script>\n")
-assert chars.count(ARTIFACT_CARD_URL) == 1
-write(os.path.join(OUT, 'index.html'), chars.replace(ARTIFACT_CARD_URL, 'card/').replace(' target="_blank" rel="noopener" style="text-decoration:none">命ノ星座カードを開く', ' style="text-decoration:none">命ノ星座カードを開く'))
+SITE = 'https://wayfaringgene-code.github.io/genshin-lab/'
+OGP = (f'<meta name="description" content="原神の聖遺物が「秘境を何日回った人のレベル」かを測って、カードにします。UIDを入れるだけ・ログイン不要。">\n'
+       f'<meta property="og:type" content="website">\n<meta property="og:site_name" content="命ノ星座カード">\n'
+       f'<meta property="og:title" content="命ノ星座カード｜あなたの聖遺物は、秘境を何日回った人のレベル？">\n'
+       f'<meta property="og:description" content="UIDを入れるだけで、キャラごとの聖遺物の「秘境レベル」をカードにします。ログイン不要。非公式のファンツールです。">\n'
+       f'<meta property="og:url" content="{SITE}">\n<meta property="og:image" content="{SITE}og.png">\n'
+       f'<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
+       f'<meta name="twitter:card" content="summary_large_image">\n')
 
-# 命ノ星座カード
+# 命ノ星座カード（ルート）。ホームから始まる。スキャナー・フォント・同梱の立ち絵もルートに置く
 with tempfile.TemporaryDirectory() as td:
     tmp = os.path.join(td, 'card.html')
     subprocess.run([sys.executable, os.path.join(TOOLS, 'build_card.py'), os.path.join(SRC, 'lab.html'), tmp], check=True)
-    write(os.path.join(OUT, 'card', 'index.html'), pages_head(read(tmp), '命ノ星座カード', '命ノ星座カード', '../apple-touch-icon.png'))
-subprocess.run([sys.executable, os.path.join(TOOLS, 'build_scan.py'), os.path.join(SRC, 'scanner'), os.path.join(OUT, 'card', 'scan')], check=True)
-shutil.copytree(os.path.join(SRC, 'fonts'), os.path.join(OUT, 'card', 'fonts'))
+    write(os.path.join(OUT, 'index.html'), pages_head(read(tmp), '命ノ星座カード', '命ノ星座カード', 'apple-touch-icon.png', OGP))
+subprocess.run([sys.executable, os.path.join(TOOLS, 'build_scan.py'), os.path.join(SRC, 'scanner'), os.path.join(OUT, 'scan')], check=True)
+shutil.copytree(os.path.join(SRC, 'fonts'), os.path.join(OUT, 'fonts'))
+if os.path.isdir(os.path.join(SRC, 'portraits')):
+    shutil.copytree(os.path.join(SRC, 'portraits'), os.path.join(OUT, 'portraits'))
+if os.path.exists(os.path.join(SRC, 'og.png')):
+    shutil.copy(os.path.join(SRC, 'og.png'), OUT)
+
+# 聖遺物ラボ：キャラ（/lab/）。カードへのリンクは、サイトのトップ（../）に向ける
+chars = pages_head(lab, '聖遺物ラボ：キャラ', '聖遺物ラボ', '../apple-touch-icon.png', "<script>window.LAB_MODE='chars';</script>\n")
+assert chars.count(ARTIFACT_CARD_URL) == 1
+write(os.path.join(OUT, 'lab', 'index.html'), chars.replace(ARTIFACT_CARD_URL, '../').replace(' target="_blank" rel="noopener" style="text-decoration:none">命ノ星座カードを開く', ' style="text-decoration:none">命ノ星座カードを開く'))
+
+# 以前の /card/ は、トップへ転送する（ブックマーク・共有済みのリンクのため）
+write(os.path.join(OUT, 'card', 'index.html'), '<!doctype html>\n<html lang="ja"><head><meta charset="utf-8"><title>命ノ星座カード</title>\n'
+      '<meta http-equiv="refresh" content="0; url=../"><link rel="canonical" href="../">\n'
+      '<script>location.replace("../"+location.hash)</script></head>\n<body><p><a href="../">命ノ星座カードはこちらに移りました</a></p></body></html>\n')
 
 shutil.copy(os.path.join(ROOT, 'apple-touch-icon.png'), OUT)
 open(os.path.join(OUT, '.nojekyll'), 'w').close()

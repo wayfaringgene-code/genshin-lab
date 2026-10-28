@@ -1,7 +1,7 @@
 # 保守メモ（聖遺物ラボ・命ノ星座カード）
 
 しばらく触らなかったあとに、「どこに何があって、困ったら何を見ればいいか」を思い出すためのメモ。
-最終更新：2026-10-28（命ノ星座カード v1.5）
+最終更新：2026-10-28（命ノ星座カード v2.0）
 
 > Claude に頼むときは「`wayfaringgene-code/genshin-lab` の `MAINTENANCE.md` を読んでから」と伝えると早い。
 
@@ -12,8 +12,9 @@
 | もの | 場所 | 役割 | ログイン |
 |---|---|---|---|
 | **GitHub リポジトリ** | https://github.com/wayfaringgene-code/genshin-lab | すべての元（ラボのコード・組み立てスクリプト・中継のコード・このメモ）。**正はここ** | Google で続行 |
-| **聖遺物ラボ：キャラ** | https://wayfaringgene-code.github.io/genshin-lab/ | 公開ページ。キャラの装備を秘境レベルで並べる | 不要 |
-| **命ノ星座カード** | https://wayfaringgene-code.github.io/genshin-lab/card/ | 公開ページ。カード画像を作る。UID・動画・スクショから取り込み | 不要 |
+| **命ノ星座カード（トップ）** | https://wayfaringgene-code.github.io/genshin-lab/ | 公開ページの入口。ホーム（見本カード → UID → いちばんすごいカード）・キャラ一覧・カード・取り込む・設定 | 不要 |
+| **聖遺物ラボ：キャラ** | https://wayfaringgene-code.github.io/genshin-lab/lab/ | くわしい分析（年表・山の全景など）。トップからリンク | 不要 |
+| （以前の /card/） | https://wayfaringgene-code.github.io/genshin-lab/card/ | トップへ転送するだけ（古いブックマーク・共有済みのリンクのため） | — |
 | **Enka 中継（Cloudflare Workers）** | https://enka-proxy.wayfaringgene.workers.dev/uid/{UID} | カードの「UIDで取得」が Enka.Network に問い合わせるための窓口 | Cloudflare（Google で続行） |
 | **GitHub Actions** | リポジトリの Actions タブ | push のたびにページを組み立てて公開する係 | — |
 | claude.ai の artifact（予備） | 命ノ星座カード：https://claude.ai/artifact/CWeeXV4M4vmh2rh7JRabbP<br>聖遺物厳選ラボ（全タブ入り）：https://claude.ai/artifact/CyumpKAACPGCbSeY8sFpFA | 自分だけが見られる版。自動では更新されない（下の「artifact 版」） | claude.ai |
@@ -42,7 +43,7 @@ flowchart LR
 
 - キャラのデータ・設定は **ブラウザの中（localStorage）**、立ち絵は **ブラウザの中（IndexedDB）**。サーバーには何も送っていない
 - 端末・ブラウザごとに別々。**別の端末へ移すときは**、カードアプリの「設定 → データの引っ越し」で書き出して、移した先で読み込む（**立ち絵は引っ越しに入らない**ので、選び直し）
-- GitHub Pages では、ラボ（ルート）とカード（`/card/`）が **同じ保存場所を共有** する。カードで取り込んだキャラはラボにも出る
+- GitHub Pages では、カード（トップ）とラボ（`/lab/`）が **同じ保存場所を共有** する。カードで取り込んだキャラはラボにも出る。見た目の設定は取り合わない（カードは自分の決まった見た目で描く）
 - artifact 版と GitHub 版は **別々の保存場所**（行き来は「データの引っ越し」で）
 - ブラウザの「サイトのデータを消去」をするとデータも消える。心配なら、ときどき「データの引っ越し」で書き出して控えを取っておく
 
@@ -56,6 +57,12 @@ flowchart LR
 3. 反映を確かめる：カードアプリの「設定」タブの一番下の版番号。古いままなら強制再読み込み（Mac：Command+Shift+R／Windows：Ctrl+F5）。GitHub Pages は最大10分ほどキャッシュすることがある
 
 > 以前はラボを artifact で直していたが、**今は `src/lab.html` が正**。artifact だけを直すと GitHub と食い違う。
+
+### 立ち絵を足す・差し替える
+手順は **[docs/PORTRAITS.md](docs/PORTRAITS.md)**。画像（ファイル名はキャラ名）を ZIP にして Claude に「立ち絵を登録して」と頼めば、`tools/build_portraits.py` で `src/portraits/` に登録して公開まで進める。
+
+### X に貼ったときの画像（OGP）を作り直す
+トップの見本カード（フリーナ）を撮って `src/og.png`（1200×630）を作る。見本の立ち絵を入れたときや、カードの見た目を変えたときに Claude に頼む（`tools/make_og.mjs`。手順はファイルの先頭）。X 側は古い画像を覚えていることがあり、反映に時間がかかる。
 
 ### 新キャラ・新セットが出た（カードに「不明なキャラ（10000xxx）」と出る）
 Enka の対応表を作り直す。Claude に「Enka の対応表を更新して」と頼めばよい。中身は：
@@ -117,8 +124,13 @@ artifact は自動では更新されない。Claude に「artifact 版も最新�
 | v1.3 | 空の部位の不具合修正、立ち絵の縮小保存、一覧の並び順の切り替え、見えない図の計算を省略 |
 | v1.4 | 「UIDで取得」ボタン |
 | v1.5 | GitHub Pages に移行、Cloudflare の中継経由で UID から直接取得、ラボとの設定の取り合いを解消 |
+| v2.0 | トップを命ノ星座カードのホームに（見本カード・UID入力・いちばんすごいカードを表示・前回の続き）、共有ボタン、カードの右下にURL、OGP、同梱の立ち絵の仕組み。キャラ版は `/lab/` へ |
 
 ## 6. 残っている宿題
+
+- 立ち絵を集めて登録する（`docs/PORTRAITS.md`）
+- 「いちばんすごいカード」を出すときのガチャふうの演出（`homeReveal()` に差し込む）。縦長の動画（Shorts・X 用）の書き出しも
+- 前回からの伸びを見せる（取り直したときの変化）、友達のUIDと比べる
 
 - ラボとカードの共通部分の切り出し（コードの二重持ちの解消）。ラボ本体に残っている「空の部位がメインOPつきで保存される」不具合も、そのときに直す
 - 立ち絵を「データの引っ越し」に含める

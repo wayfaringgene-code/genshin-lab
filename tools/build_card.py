@@ -128,6 +128,11 @@ rep("$('ceSave').addEventListener('click',()=>{ editorRead(); delete CH_EDIT.eff
 rep("async function cardExport(fmt,msg){", "async function cardExport(fmt,msg,opt){ opt=opt||{};")
 rep("const r=await saveBlob(`命ノ星座_${nm}_${ds}.${ext}`,blob);", "const fname=`命ノ星座_${nm}_${ds}.${ext}`; if(opt.blobOnly) return {blob,name:fname,fontOk}; const r=await saveBlob(fname,blob);")
 
+# --- カードの下に、サイトの名前とURL（共有された画像から来られるように）（v2.0） ---
+# 定義の文はカードアプリでは短くし、日付・アプリ名・URLは右下に右寄せで別に置く（長いと枠からはみ出すため）
+rep("＝このキャラ（メインOP・有効OP）の条件で、この有効RV（${Math.round(st.tot)}%）を秘境だけで揃えるのにかかる日数。強さではなく「聖遺物の珍しさ」の物差し<tspan fill=\"#6f7a8e\" font-size=\"10\" dx=\"12\">聖遺物ラボ ${c.date||''}</tspan></text>`;",
+    "${CARD_APP?`＝この有効RV（${Math.round(st.tot)}%）を秘境だけで揃えるのにかかる日数。強さではなく「珍しさ」の物差し</text><text x=\"${W-40}\" y=\"${H-23}\" text-anchor=\"end\" font-family='${sans}' font-size=\"10.5\" fill=\"#8a93a6\" letter-spacing=\".02em\">${esc(c.date||'')}<tspan dx=\"10\" fill=\"#e9d39a\" font-weight=\"700\">命ノ星座カード</tspan><tspan dx=\"8\">wayfaringgene-code.github.io/genshin-lab</tspan></text>`:`＝このキャラ（メインOP・有効OP）の条件で、この有効RV（${Math.round(st.tot)}%）を秘境だけで揃えるのにかかる日数。強さではなく「聖遺物の珍しさ」の物差し<tspan fill=\"#6f7a8e\" font-size=\"10\" dx=\"12\">聖遺物ラボ ${c.date||''}</tspan></text>`}`;")
+
 # --- 起動 ---
 rep("showTab(CHARS_ONLY?'chars':TABS.includes(h0)?h0:'sim');",
     "showTab((CHARS_ONLY||CARD_APP)?'chars':TABS.includes(h0)?h0:'sim');\nif(CARD_APP) cardAppInit();")
@@ -152,6 +157,23 @@ CSS = r"""
 .cthumb img{height:110px; width:100%; object-fit:contain}
 .ckv{display:grid; grid-template-columns:max-content 1fr; gap:6px 18px; font-size:14px; margin:0}
 .ckv dt{color:var(--muted)} .ckv dd{margin:0}
+.chero{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:24px 32px; align-items:center; margin-top:18px}
+.chero-copy{min-width:0}
+.ceyebrow{font-size:12px; letter-spacing:.2em; color:var(--gold)}
+.chero-q{display:block; font-size:clamp(24px,3.4vw,36px); line-height:1.35; margin:8px 0 12px; text-wrap:balance; letter-spacing:.04em}
+.chero-q::before{display:none}
+.chero-q .nw{display:inline-block}
+.chero-lead{color:var(--ink2); font-size:15px; max-width:34em}
+.chero-form{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+.chero-form input{font-size:18px; padding:9px 12px; width:11em; letter-spacing:.06em; font-variant-numeric:tabular-nums}
+.ctrust{font-size:12px; color:var(--muted); margin-top:10px}
+#homeMsg{margin-top:8px}
+.chero-card{margin:0; min-width:0}
+.chero-card svg{display:block; width:100%; height:auto; border-radius:6px; box-shadow:0 18px 48px rgba(0,0,0,.55), 0 0 0 1px rgba(233,211,154,.18)}
+.chero-card figcaption{font-size:11px; color:var(--muted); text-align:right; margin-top:6px; letter-spacing:.08em}
+.chome-links{margin-top:14px} .chome-links a{color:var(--gold-hi)}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+@media (max-width:860px){ .chero{grid-template-columns:minmax(0,1fr)} .chero-card{order:-1} }
 .csteps{margin:8px 0 0; padding-left:1.4em; display:grid; gap:2px}
 #enkaOpen[aria-disabled="true"]{opacity:.45; cursor:default}
 a.btn{text-decoration:none; display:inline-block}
@@ -168,6 +190,7 @@ function cardEl(tag,attrs,html){ const e=document.createElement(tag); if(attrs) 
 function cardShowPage(p){ CARD_PAGE=p; document.querySelectorAll('.cpage').forEach(x=>{ x.hidden=x.id!=='pg-'+p; if(x.hidden) x.setAttribute('inert',''); else x.removeAttribute('inert'); });
   document.querySelectorAll('.cnav [data-page]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.page===p)));
   try{ store.set('cardPage',p); }catch(e){}
+  if(p==='home') homeRender(); else if($('homeSample')) $('homeSample').innerHTML='';
   if(p==='set') cardRenderSettings(); if(p==='card') cardAfterRender(); window.scrollTo({top:0}); }
 const LIST_SORTS={desc:'高い順',asc:'低い順',added:'追加した順'};
 function listSortMode(){ const m=store.get('listSort','desc'); return LIST_SORTS[m]?m:'desc'; }
@@ -182,9 +205,9 @@ function cardAfterRender(){ document.querySelectorAll('[data-lsort]').forEach(b=
   if(!CH_OPEN||!det) host.innerHTML=`<div class="empty">${CHARS.length?'キャラを選ぶと、ここにカードが出ます。':'まだキャラがいません。「動画から取り込む」で録画を読み取るか、「キャラ一覧」でスクショを取り込む・手入力で追加してください。'}</div>`;
   const sel=$('cSel'); if(sel){ const rows=cardSorted(); sel.innerHTML=rows.map(({c})=>`<option value="${c.id}"${c.id===CH_OPEN?' selected':''}>${esc(c.name||'（名前なし）')}</option>`).join('')||'<option value="">—</option>'; }
   const z=$('cZoom'); if(z) z.value=String(CARD_ZOOM[CH_OPEN]||100);
-  const has=!!(CH_OPEN&&CARD_IMG[CH_OPEN]); if($('cZoomWrap')) $('cZoomWrap').hidden=!has; if($('cArtDel')) $('cArtDel').hidden=!has;
-  // 保存してある立ち絵は、開いたときに切り出し直す
-  const id=CH_OPEN; if(id&&CARD_IMG[id]&&!CARD_FIT[id]&&!CARD_FITTING[id]){ CARD_FITTING[id]=1; fitCardArt(CARD_IMG[id],CARD_ZOOM[id]).then(u=>{ delete CARD_FITTING[id]; if(u){ CARD_FIT[id]=u; renderChars(); } }); }
+  const has=!!(CH_OPEN&&CARD_IMG[CH_OPEN]), own=has&&!/^portraits\//.test(CARD_IMG[CH_OPEN]); if($('cZoomWrap')) $('cZoomWrap').hidden=!has; if($('cArtDel')) $('cArtDel').hidden=!own;
+  // 保存してある立ち絵（なければ同梱の立ち絵）は、開いたときに切り出し直す。切り出せない画像（背景つき）は、そのまま貼る
+  const id=CH_OPEN; applyBundled(CHARS.find(x=>x.id===id)); if(id&&CARD_IMG[id]&&!(id in CARD_FIT)&&!CARD_FITTING[id]){ CARD_FITTING[id]=1; fitCardArt(CARD_IMG[id],CARD_ZOOM[id]).then(u=>{ delete CARD_FITTING[id]; CARD_FIT[id]=u||''; renderChars(); }); }
 }
 /* ---- 立ち絵の保存（この端末のIndexedDB。ほかの人には見えない） ---- */
 function cardDB(){ if(CARD_DB) return CARD_DB; CARD_DB=new Promise((res)=>{ try{ const r=indexedDB.open('meinoseiza-card',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('portraits',{keyPath:'id'}); }; r.onsuccess=()=>res(r.result); r.onerror=()=>res(null); }catch(e){ res(null); } }); return CARD_DB; }
@@ -215,11 +238,12 @@ function cardAppInit(){
   CC_LABEL='glass'; CC_FONT='murecho'; CC_FRAME='gold'; CC_LINE='star'; CC_MYTH='m1'; CC_MYTHLANG='en'; CC_UNITS='en3c'; CC_SLOTID='badge';
   const head=document.querySelector('header.top'); head.querySelector('h1').innerHTML='<small>秘境で何日回ると、どこまで行く？</small>命ノ星座カード';
   const nav=cardEl('div',{class:'tabs cnav',role:'tablist','aria-label':'ページ'},
-    '<button role="tab" data-page="list">キャラ一覧</button><button role="tab" data-page="card">カード</button><button role="tab" data-page="scan">取り込む</button><button role="tab" data-page="set">設定</button>');
+    '<button role="tab" data-page="home">ホーム</button><button role="tab" data-page="list">キャラ一覧</button><button role="tab" data-page="card">カード</button><button role="tab" data-page="scan">取り込む</button><button role="tab" data-page="set">設定</button>');
   head.appendChild(nav); nav.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>cardShowPage(b.dataset.page)));
+  { const h1=head.querySelector('h1'); h1.style.cursor='pointer'; h1.addEventListener('click',()=>cardShowPage('home')); }
   const wrap=document.querySelector('.wrap'), view=$('view-chars');
-  const pList=cardEl('section',{id:'pg-list',class:'cpage'}), pCard=cardEl('section',{id:'pg-card',class:'cpage',hidden:''}), pSet=cardEl('section',{id:'pg-set',class:'cpage',hidden:''}), pScan=cardEl('section',{id:'pg-scan',class:'cpage',hidden:''});
-  view.parentNode.insertBefore(pList,view); view.parentNode.insertBefore(pCard,view); view.parentNode.insertBefore(pScan,view); view.parentNode.insertBefore(pSet,view);
+  const pHome=cardEl('section',{id:'pg-home',class:'cpage'}), pList=cardEl('section',{id:'pg-list',class:'cpage',hidden:''}), pCard=cardEl('section',{id:'pg-card',class:'cpage',hidden:''}), pSet=cardEl('section',{id:'pg-set',class:'cpage',hidden:''}), pScan=cardEl('section',{id:'pg-scan',class:'cpage',hidden:''});
+  view.parentNode.insertBefore(pHome,view); view.parentNode.insertBefore(pList,view); view.parentNode.insertBefore(pCard,view); view.parentNode.insertBefore(pScan,view); view.parentNode.insertBefore(pSet,view);
   // キャラ一覧：横棒の一覧＋取り込みの入口（取り込みの確認と手入力は、この上に出る）
   const tl=$('chTimeline').closest('.panel');
   pList.appendChild($('chEditor')); pList.appendChild($('chImport')); pList.appendChild(tl);
@@ -230,7 +254,7 @@ function cardAppInit(){
   const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラのカードが開きます。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの秘境レベル、右の数字＝5部位の合計の秘境レベル。色はランク（<span id="tierLegend"></span>）。';
   // カード
   pCard.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ctool"><div class="grp2"><button class="btn" id="cPrev" aria-label="前のキャラ">◀</button><select id="cSel" aria-label="キャラ"></select><button class="btn" id="cNext" aria-label="次のキャラ">▶</button><button class="btn" id="cEdit">編集</button><span id="cDelBox"><button class="btn" id="cDel">削除</button></span></div>
-    <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button></div></div>
+    <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button></div></div>
     <p class="note" id="cMsg" aria-live="polite" style="margin-top:6px"></p><div id="cardHost" style="margin-top:6px"></div>
     <p class="note" style="margin-top:8px">立ち絵はこの端末（このブラウザ）に保存され、ほかの人には見えません。絵はドラッグで位置を動かせます（ダブルクリックで元の位置）。保存した画像は2400×1350です。PNGはどこに上げても確実、WebPは軽いかわりに受け付けないサービスもあります。</p></div>`;
   const step=d=>{ const rows=cardSorted(); if(!rows.length) return; let i=rows.findIndex(r=>r.c.id===CH_OPEN); i=(i+d+rows.length)%rows.length; CH_OPEN=rows[i].c.id; renderChars(); };
@@ -241,7 +265,7 @@ function cardAppInit(){
   $('cArt').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(!f||!CH_OPEN) return; const rd=new FileReader(); rd.onload=async()=>{ const id=CH_OPEN; CARD_IMG[id]=await portraitShrink(rd.result); delete CARD_FIT[id]; delete CARD_POS[id]; portraitSave(id); renderChars(); }; rd.readAsDataURL(f); });
   $('cZoom').addEventListener('change',e=>{ const id=CH_OPEN, src=CARD_IMG[id]; if(!src) return; CARD_ZOOM[id]=+e.target.value; portraitSave(id); fitCardArt(src,CARD_ZOOM[id]).then(u=>{ if(u&&CARD_IMG[id]===src){ CARD_FIT[id]=u; renderChars(); } }); });
   $('cArtDel').addEventListener('click',()=>{ if(CH_OPEN) portraitDelete(CH_OPEN); });
-  $('cPng').addEventListener('click',()=>cardExport('png',$('cMsg'))); $('cWebp').addEventListener('click',()=>cardExport('webp',$('cMsg')));
+  $('cShare').addEventListener('click',cardShare); $('cPng').addEventListener('click',()=>cardExport('png',$('cMsg'))); $('cWebp').addEventListener('click',()=>cardExport('webp',$('cMsg')));
   // 取り込む：UID（Enka.Network のJSONを受け渡し）と、動画（聖遺物ビデオスキャナーを scan/ に置き、枠の中で動かす）。どちらもキャラ一覧へ直接入れる
   pScan.innerHTML=`<div class="panel" style="margin-top:14px"><h2>UIDから取り込む</h2>
     <p class="note">ゲームのショーケースに並べたキャラの聖遺物を、Enka.Network から取り込みます（ゲームのプロフィールで、キャラの詳細を見られるようにしておいてください）。UIDを入れて「UIDで取得」を押します。</p>
@@ -273,7 +297,7 @@ function cardAppInit(){
     <dt>確率の出典</dt><dd>KQM「Genshin Impact Artifacts Guide」、Genshin Impact Wiki（Fandom）「Artifact/Distribution」（草元素追加後の値）</dd></dl></div>
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v1.5。計算は聖遺物厳選ラボと共通です。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.0。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   // ドラッグで取り込み（どのページでも）
   document.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
@@ -282,8 +306,9 @@ function cardAppInit(){
   $('chAdd').addEventListener('click',()=>cardShowPage('list'));
   if(!CH_OPEN&&CHARS.length) CH_OPEN=cardSorted()[0].c.id;
   portraitLoadAll().then(()=>{ renderChars(); });
-  const p0=store.get('cardPage','list'); cardShowPage(['list','card','set','scan'].includes(p0)?p0:'list');
+  homeInit(pHome); cardShowPage('home');
   renderChars();
+  if(location.hash) try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
 }
 /* ---- 動画から取り込む：枠（scan/index.html?embed=1）とのやりとり ---- */
 var SCAN_LOADED=false, SCAN_HELLO=false;
@@ -307,7 +332,7 @@ async function cardExportMany(ids,msg,btn){ const say=t=>{ if(msg) msg.textConte
   if(btn) btn.disabled=true; const back=CARD_PAGE, keep=CH_OPEN, files=[]; let fontBad=false;
   try{ cardShowPage('card');
     for(let i=0;i<ids.length;i++){ const id=ids[i], c=CHARS.find(x=>x.id===id); say(`${i+1}/${ids.length}人目（${c.name||''}）を描いています…`);
-      if(CARD_IMG[id]&&!CARD_FIT[id]){ const u=await fitCardArt(CARD_IMG[id],CARD_ZOOM[id]); if(u) CARD_FIT[id]=u; }
+      applyBundled(c); if(CARD_IMG[id]&&!(id in CARD_FIT)){ const u=await fitCardArt(CARD_IMG[id],CARD_ZOOM[id]); CARD_FIT[id]=u||''; }
       CH_OPEN=id; renderChars(); await new Promise(r=>setTimeout(r,60));
       const r=await cardExport('png',null,{blobOnly:true}); if(!r||!r.blob) throw new Error('image');
       if(!r.fontOk) fontBad=true; files.push({name:`${String(i+1).padStart(2,'0')}_${r.name}`,data:new Uint8Array(await r.blob.arrayBuffer())}); }
@@ -356,7 +381,7 @@ var ENKA_BUSY=false;
 async function enkaFetch(){ const box=$('enkaMsg'), uid=$('enkaUid').value.replace(/\D/g,''), btn=$('enkaGet');
   if(!/^\d{9,10}$/.test(uid)){ box.textContent='UIDは9けたか10けたの数字です。'; return; } if(ENKA_BUSY) return;
   let cache=null; try{ cache=JSON.parse(localStorage.getItem('lab:enkaCache:'+uid)||'null'); }catch(e){}
-  if(cache&&cache.until>Date.now()&&cache.text){ enkaImport(cache.text); box.insertAdjacentHTML('afterbegin',`<p class="note">（さっき取った内容を使いました。Enka が新しい内容を返すまで、あと約${Math.ceil((cache.until-Date.now())/1000)}秒です）</p>`); return; }
+  if(cache&&cache.until>Date.now()&&cache.text){ const nm=enkaImport(cache.text); box.insertAdjacentHTML('afterbegin',`<p class="note">（さっき取った内容を使いました。Enka が新しい内容を返すまで、あと約${Math.ceil((cache.until-Date.now())/1000)}秒です）</p>`); return nm; }
   ENKA_BUSY=true; btn.disabled=true; box.textContent='Enka に問い合わせています…';
   let csp=false; const onCsp=e=>{ if(/enka|workers|proxy/i.test(e.blockedURI||'')||ENKA_PROXY&&(e.blockedURI||'').startsWith(ENKA_PROXY)) csp=true; }; document.addEventListener('securitypolicyviolation',onCsp);
   const url=ENKA_PROXY?ENKA_PROXY+uid:`https://enka.network/api/uid/${uid}/`, ac=new AbortController(), tm=setTimeout(()=>ac.abort(),20000);
@@ -364,7 +389,7 @@ async function enkaFetch(){ const box=$('enkaMsg'), uid=$('enkaUid').value.repla
     if(!r.ok){ const why={400:'UIDの形が正しくないようです',404:'このUIDのプレイヤーが見つかりませんでした',424:'ゲームのメンテナンス中か、更新の直後で Enka が情報を取れない状態です。しばらくしてからもう一度',429:'問い合わせが混み合っています。少し時間をおいてからもう一度',500:'Enka 側で問題が起きています。しばらくしてからもう一度',503:'Enka 側で問題が起きています。しばらくしてからもう一度'}[r.status]; box.textContent=(why||`Enka から取得できませんでした（${r.status}）`)+'。'; return; }
     const text=await r.text(); let ttl=60; try{ const j=JSON.parse(text); if(j&&+j.ttl>0) ttl=Math.min(+j.ttl,600); }catch(e){}
     try{ localStorage.setItem('lab:enkaCache:'+uid,JSON.stringify({until:Date.now()+ttl*1000,text})); }catch(e){}
-    enkaImport(text); }
+    return enkaImport(text); }
   catch(e){ await new Promise(r=>setTimeout(r,50)); const det=$('enkaManual'); if(det) det.open=true;
     box.textContent=(e&&e.name==='AbortError')?'Enka から返事がありませんでした。少し待ってもう一度押すか、下の「うまくいかないとき」の手順で取り込んでください。'
       :csp?'この画面（claude.ai の中）からは Enka に直接つなげません。下の「うまくいかないとき」の手順で取り込んでください（GitHub 版のページなら、このボタンで取れる場合があります）。'
@@ -379,7 +404,85 @@ function enkaImport(txt){ const box=$('enkaMsg'); let d;
   if(notes.partial) ex.push(`+20になっていない聖遺物 ${notes.partial}個は、いまの値で評価しています`); if(notes.low) ex.push(`★4以下の聖遺物 ${notes.low}個は外しました`);
   if(notes.unknown) ex.push(`名前の分からないキャラが ${notes.unknown}人います（アプリの更新待ち。名前は編集で直せます）`); if(notes.odd) ex.push(`読めなかった聖遺物が ${notes.odd}個ありました`);
   if(ex.length) r+='。'+ex.join('。')+'。'; if(d.uid&&/^\d{9,10}$/.test(String(d.uid))){ $('enkaUid').value=String(d.uid); try{ store.set('enkaUid',String(d.uid)); }catch(e){} }
-  $('enkaText').value=''; importDone(box,r,chars.map(c=>c.name)); }
+  $('enkaText').value=''; importDone(box,r,chars.map(c=>c.name)); return chars.map(c=>c.name); }
+/* ================= ホーム（v2.0）：見本のカード → UID → いちばんすごいカード ================= */
+const SITE_URL='https://wayfaringgene-code.github.io/genshin-lab/';
+const ON_SITE=/(^|\.)github\.io$/.test(location.hostname)||location.hostname==='localhost'; // GitHub Pages（と手元の確認）で開いているか
+const LAB_URL=ON_SITE?'lab/':'https://claude.ai/artifact/CyumpKAACPGCbSeY8sFpFA';
+/* ---- 同梱の立ち絵：portraits/{avatarId}.webp（tools/build_portraits.py で作る）。自分で選んだ立ち絵があれば、そちらが優先 ---- */
+const PORTRAITS=__PORTRAITS__; // {avatarId:{file, name, zoom?, pos?}}
+let _N2A=null; function name2aid(n){ if(!_N2A){ _N2A={}; for(const [k,v] of Object.entries(ENKA.avatar)) if(!(v in _N2A)) _N2A[v]=k; } return _N2A[n]; }
+function bundledPortrait(c){ if(!ON_SITE||!c) return null; const a=((/^(?:enka|sample)-(\d+)$/.exec(c.id||''))||[])[1]||name2aid(c.name); const q=a&&PORTRAITS[a]; return q?{src:'portraits/'+q.file,zoom:q.zoom||0,pos:q.pos||null}:null; }
+function applyBundled(c){ if(!c||CARD_IMG[c.id]) return; const b=bundledPortrait(c); if(!b) return; CARD_IMG[c.id]=b.src; if(b.zoom&&!CARD_ZOOM[c.id]) CARD_ZOOM[c.id]=b.zoom; if(b.pos&&!CARD_POS[c.id]) CARD_POS[c.id]=b.pos; }
+/* ---- 見本のキャラ（実在のプレイヤーのデータではなく、伸び方を決めて作った例） ---- */
+function homeSampleChar(){
+  const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
+  return {id:'sample-10000089',name:'フリーナ',set:'黄金の劇団4',eff:['HP%','CR','CD','ER'],date:'見本',pieces:{
+    flower:P('HP',[['CR',[3,3,2]],['CD',[3,2]],['HP%',[3,2]],['ER',[2]]]),
+    plume:P('ATK',[['CR',[3,3]],['CD',[3,2,2]],['HP%',[2]],['ER',[1]]]),
+    sands:P('HP%',[['CR',[3,2]],['CD',[3,3,3]],['ER',[2]],['ATK',[1]]]),
+    goblet:P('DMG_水',[['CR',[3,3]],['CD',[3,2,2]],['HP%',[2]],['EM',[1]]]),
+    circlet:P('CR',[['CD',[3,3,2,2]],['HP%',[3]],['ER',[2]],['ATK%',[0]]])}}; }
+var HOME_SAMPLE=null;
+function homeInit(box){
+  box.innerHTML=`<section class="chero">
+    <div class="chero-copy"><p class="ceyebrow">原神・聖遺物の「珍しさ」を測る</p>
+      <h2 class="chero-q"><span class="nw">あなたの聖遺物は、</span><span class="nw">秘境を何日回った</span><span class="nw">人のレベル？</span></h2>
+      <p class="chero-lead">UIDを入れるだけで、ショーケースに並べたキャラの聖遺物を「秘境レベル」で測って、カードにします。</p>
+      <form id="homeForm" class="chero-form" novalidate><label class="sr" for="homeUid">UID</label><input type="text" id="homeUid" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="UID（9〜10けた）"><button class="btn primary big" id="homeGo" type="submit">カードを作る</button></form>
+      <div class="note" id="homeMsg" aria-live="polite"></div>
+      <p class="ctrust">ログイン不要・入れるのはUIDだけ・データはこの端末の中だけに保存</p></div>
+    <figure class="chero-card"><div id="homeSample" aria-label="カードの見本"></div><figcaption>見本：こんなカードができます</figcaption></figure></section>
+    <div id="homeBack"></div>
+    <div class="panel" style="margin-top:14px"><details class="more"><summary>「秘境レベル」って？</summary><dl class="ckv" style="margin-top:6px">
+      <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの聖遺物と同じだけの有効RVを、秘境だけで揃えるのにかかる平均の日数です（1日9周＝樹脂180）。強さではなく「どれだけ珍しいか」の物差しです。</dd>
+      <dt>ランク</dt><dd>★1 〜1週／★2 〜1か月／★3 〜3か月／★4 〜1年／★5 〜3年／★5+ 3年〜。100年以上は ONCE IN A CENTURY、5000年以上は SINCE THE DAWN OF TIME。</dd>
+      <dt>有効RV</dt><dd>有効なサブOP（そのキャラに役立つもの）が伸びた量の合計です。1回でいちばん大きく伸びたときを100%として数えます。</dd>
+      <dt>使い方のヒント</dt><dd>部位ごとの秘境レベルが、これから秘境を回るつもりの日数より長ければ、その期間にその部位を更新できる見込みは五分以下です。</dd></dl></details></div>
+    <p class="note chome-links">ほかの取り込み方：<a href="#" data-hgo="scan">動画・スクショから取り込む</a>　／　くわしく分析：<a href="${LAB_URL}"${ON_SITE?'':' target="_blank" rel="noopener"'}>聖遺物ラボ</a>　／　非公式のファンツールです（HoYoverse とは関係ありません）</p>`;
+  box.querySelector('#homeForm').addEventListener('submit',homeGo);
+  box.querySelectorAll('[data-hgo]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); cardShowPage(a.dataset.hgo); }));
+  const u=$('homeUid'); u.addEventListener('input',()=>{ const v=u.value.replace(/\D/g,''); if(v!==u.value) u.value=v; }); }
+function homeRender(){
+  const uid=store.get('enkaUid','')||''; if(uid&&!$('homeUid').value) $('homeUid').value=uid; $('homeGo').textContent=uid?'最新のカードを作る':'カードを作る';
+  // 見本のカード
+  const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()); applyBundled(sm);
+  const draw=()=>{ const b=$('homeSample'); if(b&&CARD_PAGE==='home') b.innerHTML=cardSVG(sm,charStats(sm),'SK'); }; draw();
+  if(CARD_IMG[sm.id]&&!(sm.id in CARD_FIT)&&!CARD_FITTING[sm.id]){ CARD_FITTING[sm.id]=1; fitCardArt(CARD_IMG[sm.id],CARD_ZOOM[sm.id]).then(u=>{ delete CARD_FITTING[sm.id]; CARD_FIT[sm.id]=u||''; draw(); }); }
+  // 前回の続き
+  const back=$('homeBack'); if(!CHARS.length){ back.innerHTML=''; return; }
+  const best=homeBest(CHARS);
+  back.innerHTML=`<div class="panel chome-back" style="margin-top:14px"><h2>前回の続き</h2><p class="note">この端末に ${CHARS.length}人のキャラが保存されています。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name||'（名前なし）')}</b>（${esc(fmtAge(best.a))}・${esc(tierOf(best.a)[1])}）です。${uid?'上の「最新のカードを作る」で取り直すと、前回からの変化も残ります。':''}</p>
+    <div class="btns"><button class="btn primary" data-hb="card">カードを見る</button><button class="btn" data-hb="list">キャラ一覧</button></div></div>`;
+  back.querySelector('[data-hb="card"]').addEventListener('click',()=>{ CH_OPEN=best.c.id; renderChars(); cardShowPage('card'); });
+  back.querySelector('[data-hb="list"]').addEventListener('click',()=>cardShowPage('list')); }
+function homeBest(cs){ const v=a=>isFinite(a)?a:1e15; return cs.map(c=>({c,a:charStats(c).age||0})).sort((x,y)=>v(y.a)-v(x.a))[0]; }
+async function homeGo(e){ if(e) e.preventDefault(); const msg=$('homeMsg'), btn=$('homeGo'), uid=$('homeUid').value.replace(/\D/g,'');
+  if(!/^\d{9,10}$/.test(uid)){ msg.textContent='UIDは9けたか10けたの数字です（ゲームのメニュー画面の右下などに出ています）。'; return; }
+  $('enkaUid').value=uid; try{ store.set('enkaUid',uid); }catch(err){}
+  btn.disabled=true; msg.textContent='Enka に問い合わせています…'; let names=null;
+  try{ names=await enkaFetch(); }catch(err){} finally{ btn.disabled=false; }
+  if(names&&names.length){ msg.textContent=''; homeReveal(names); return; }
+  const why=($('enkaMsg').querySelector('p')||$('enkaMsg')).innerText.trim();
+  msg.innerHTML=`<p class="err">${esc(why||'取得できませんでした。')}</p><p style="margin-top:4px"><a href="#" id="homeAlt">ほかの方法で取り込む（動画・スクショ・手で受け渡す）</a></p>`;
+  $('homeAlt').addEventListener('click',ev=>{ ev.preventDefault(); cardShowPage('scan'); }); }
+/* いちばん秘境レベルが高いキャラのカードを出す。ガチャふうの演出は、あとでここに差し込む */
+function homeReveal(names){ const cs=[...new Set(names)].map(n=>CHARS.find(c=>c.name===n)).filter(Boolean); if(!cs.length) return;
+  const best=homeBest(cs); CH_OPEN=best.c.id; renderChars(); cardShowPage('card');
+  $('cMsg').innerHTML=`${cs.length}人を取り込みました。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name)}</b> でした。◀ ▶ でほかのキャラも見られます。`; }
+/* ---- 共有：スマホは画像ごと共有シートへ。できなければ画像を保存して、X の投稿画面を開くボタン ---- */
+async function cardShare(){ const msg=$('cMsg'), c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const st=charStats(c), tr=tierOf(st.age||0);
+  const text=`${c.name}の聖遺物は「秘境レベル ${fmtAge(st.age)}（${tr[1]}）」でした #命ノ星座カード`;
+  const xLink=`<a class="btn" style="padding:3px 10px;font-size:12px" target="_blank" rel="noopener" href="https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE_URL)}">X に投稿する</a>`;
+  const r=await cardExport('png',msg,{blobOnly:true}); if(!r||!r.blob){ msg.textContent='画像を作れませんでした'; return; }
+  const file=new File([r.blob],r.name,{type:'image/png'}), data={files:[file],text:text+' '+SITE_URL};
+  const tryShare=async()=>{ try{ await navigator.share(data); msg.textContent='共有しました'; return true; }catch(e){ if(e&&e.name==='AbortError'){ msg.textContent=''; return true; } return e&&e.name==='NotAllowedError'?'again':false; } };
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    const t=await tryShare(); if(t===true) return;
+    if(t==='again'){ msg.innerHTML='画像の準備ができました。<button class="btn primary" style="padding:3px 10px;font-size:12px" id="cShare2">画像を共有する</button>'; $('cShare2').addEventListener('click',async()=>{ const t2=await tryShare(); if(t2!==true) cardShareFallback(r,xLink); }); return; } }
+  cardShareFallback(r,xLink); }
+async function cardShareFallback(r,xLink){ const msg=$('cMsg'); const res=await saveBlob(r.name,r.blob);
+  msg.innerHTML=(res==='saved'?'画像を保存しました。':res==='declined'?'画像の保存をやめました。':'画像を保存できませんでした。')+` ${xLink}（保存した画像を添付してください）`; }
 function cardAppBindDel(){ const b=$('cDel'); if(b) b.addEventListener('click',()=>{ const c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const box=$('cDelBox'); box.innerHTML=`<span class="note">「${esc(c.name||'（名前なし）')}」を削除しますか？</span> <button class="btn" id="cDelYes">削除する</button> <button class="btn" id="cDelNo">やめる</button>`;
   $('cDelYes').addEventListener('click',()=>{ CHARS=CHARS.filter(x=>x!==c); CH_OPEN=(cardSorted()[0]||{c:{}}).c.id||null; saveChars(); portraitTx('readwrite',st=>st.delete(c.id)); box.innerHTML='<button class="btn" id="cDel">削除</button>'; cardAppBindDel(); renderChars(); });
   $('cDelNo').addEventListener('click',()=>{ box.innerHTML='<button class="btn" id="cDel">削除</button>'; cardAppBindDel(); }); }); }
@@ -389,5 +492,10 @@ import os, json as _json
 _t = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enka_tables.json'), encoding='utf-8').read(); _json.loads(_t)
 assert s.count('__ENKA_TABLES__') == 1
 s = s.replace('__ENKA_TABLES__', _t)
+_pp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src', 'portraits', 'portraits.json')
+_pj = open(_pp, encoding='utf-8').read() if os.path.exists(_pp) else '{}'
+_json.loads(_pj)
+assert s.count('__PORTRAITS__') == 1
+s = s.replace('__PORTRAITS__', _pj)
 open(dst, 'w', encoding='utf-8').write(s)
 print('wrote', dst, len(s))
