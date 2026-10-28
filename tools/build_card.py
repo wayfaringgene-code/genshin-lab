@@ -555,7 +555,9 @@ function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev
 function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompositeOperation='source-over'; x.globalAlpha=1; x.drawImage(A.desk,0,0);
   // 光の風圧：輪が広がり、机の星屑を押し流す
   const evs=P.events.filter(e=>t>e.t0), RR=(e,dt)=>e.str*430*(1-Math.exp(-dt/380)); // 輪はカードの縁から外へ、机の上に収まる大きさまで
-  for(const d of A.dust){ let dx=0,dy=0,b=0; for(const e of evs){ const dt=t-e.t0, R=RR(e,dt), vx=d.x-e.x, vy=d.y-e.y, dd=Math.hypot(vx,vy)||1, ex=Math.max(0,dd-Math.max(e.w,e.h)*.42);
+  // 落ちるカード：いちばんのカードを待つあいだ、星屑が落ちる場所へだんだん速く吸い寄せられる（着地の風圧で一気に外へ）
+  const bb=P.items[P.items.length-1], suck=P.v==='drop'&&P.items.length>1&&t>=bb.t0?(t<bb.land?Math.pow(rvCl((t-bb.t0)/(bb.drop-bb.t0)),2):Math.exp(-(t-bb.land)/90)):0;
+  for(const d of A.dust){ let dx=0,dy=0,b=0; if(suck>0.002){ const vx=bb.rest.x-d.x, vy=bb.rest.y-d.y, dd=Math.hypot(vx,vy)||1, m=Math.min(dd*.55,260)*suck; dx+=vx/dd*m; dy+=vy/dd*m; b+=suck*.7; } for(const e of evs){ const dt=t-e.t0, R=RR(e,dt), vx=d.x-e.x, vy=d.y-e.y, dd=Math.hypot(vx,vy)||1, ex=Math.max(0,dd-Math.max(e.w,e.h)*.42);
       if(R>ex){ const m=e.str*150*Math.exp(-ex/650)*rvCl((R-ex)/240); dx+=vx/dd*m; dy+=vy/dd*m; } b+=Math.exp(-Math.pow((R-ex)/80,2))*e.str*Math.max(0,1-dt/1800); }
     x.globalAlpha=Math.min(1,d.a*(.72+.28*Math.sin(t*.0016+d.ph))+b*.7); x.fillStyle=d.col; x.beginPath(); x.arc(d.x+dx,d.y+dy,d.r*(1+b),0,6.283); x.fill(); }
   x.globalAlpha=1;
@@ -590,9 +592,9 @@ function rvShadowDraw(x,A,it,ps,kind){ const w=it.W+(kind==='photo'?32:0), h=it.
   rvSprite(x,S.hard,w,h,Math.max(0,1-ps.h)*(kind==='photo'?.45:.5)); rvSprite(x,S.soft,w,h,kind==='drop'?Math.min(.34,.08+(1.6-ps.h)*.24):.25+ps.h*.35); x.restore(); } // 影：遠いほど薄くぼやけ、近づくほど濃くくっきり
 function rvGlowDraw(x,A,it,ps,a,kind){ if(a<=0) return; const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), G=rvGlowOf(A,w,h,it.rk);
   x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvSprite(x,G,w,h,a*(it.rk.myth?.55:1),'lighter'); x.restore(); } // 虹の光は重ねて明るいので弱める
-function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?.32*rvCl((t-b.t0)/450)*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードを少し暗く
+function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?.2*rvCl((t-b.t0)/450)*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードを少し暗く
   // いちばんのカードを待つあいだ、落ちる場所の机からランク色の光が漏れてくる（机のカードの下から、縁にだけ見える）
-  if(kind==='drop'&&t>=b.t0&&t<b.land) rvGlowDraw(x,P.A,b,{x:b.rest.x,y:b.rest.y,rot:0,s:1.04,sy:1},rvCl((t-b.t0)/(b.drop-b.t0))*.9,kind);
+  if(kind==='drop'&&t>=b.t0&&t<b.land){ const q=rvCl((t-b.t0)/(b.drop-b.t0)), hb=q*.5+.38*Math.exp(-Math.pow((q-.4)/.07,2))+.5*Math.exp(-Math.pow((q-.72)/.07,2))+(q>.84?(q-.84)/.16*.45:0); rvGlowDraw(x,P.A,b,{x:b.rest.x,y:b.rest.y,rot:0,s:1.04,sy:1},Math.min(1,hb)*.95,kind); } // 光はドクン、ドクンと2回脈打ってから最大に
   its.forEach((it,k)=>{ if(t<it.t0) return; const ps=rvPose(P,it,t); let dim=0; for(let j=k+1;j<its.length;j++) if(t>its[j].land) dim+=.34*rvCl((t-its[j].land)/380); dim=Math.min(.6,dim+(it.best?0:spot));
     rvShadowDraw(x,P.A,it,ps,kind);
     // 光：いちばんのカードは溜めのあいだ強まり、着地で強く光って、そのまま残る。ほかのカードは着地で一度だけ
@@ -640,6 +642,8 @@ function rvDrawInfo(x,P,t){ for(const it of P.items){ const foil=P.v==='foil', a
     rvLS(x,'0px'); x.restore(); } }
 function rvDrawFrame(x,P,t){ x.save(); x.textAlign='center'; x.globalAlpha=rvCl(t/500)*.85; x.font=`700 30px ${RV_MINCHO}`; rvLS(x,'12px'); x.fillStyle='#e9d39a'; x.fillText('命ノ星座カード',RV_CX,150);
   if(P.mode==='all'&&P.items.length>1){ let k=0; P.items.forEach((it,i)=>{ if(t>=it.t0) k=i; }); x.globalAlpha=rvCl(t/500)*.55; x.font=`400 22px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#b9b2a3'; x.fillText(`${k+1} / ${P.items.length}`,RV_CX,200); }
+  // 落ちるカード：いちばんのカードの前に「最後の1枚」と出す（何を待っているのかが分かるように）
+  { const b=P.items[P.items.length-1]; if(P.v==='drop'&&P.items.length>1&&t>=b.t0&&t<b.drop){ x.globalAlpha=rvCl((t-b.t0-60)/380)*(1-rvCl((t-b.drop+200)/200))*.9; x.font=`700 40px ${RV_MINCHO}`; rvLS(x,'14px'); x.fillStyle='#e9d39a'; x.fillText('最後の1枚',RV_CX,1240); } }
   const fa=rvCl((t-P.E)/650); if(fa>0){ x.globalAlpha=fa; x.font=`700 30px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#e9d39a'; x.fillText('#命ノ星座カード',RV_CX,1760); x.globalAlpha=fa*.7; x.font=`400 24px ${RV_SANS}`; rvLS(x,'1px'); x.fillStyle='#b9b2a3'; x.fillText(SITE_URL.replace(/^https:\/\//,'').replace(/\/$/,''),RV_CX,1812); }
   rvLS(x,'0px'); x.restore(); }
 /* ---- 流す ---- */
