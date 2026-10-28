@@ -569,13 +569,12 @@ function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompos
   if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
   if(P.v==='drop') rvDrawStreak(x,P,t);
   rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); }
-// 落ちるカード：直前の1枚から最後の1枚へ移るとき、右上から細い光が一筋、落ちる場所へ刺さって小さくきらめく（白金。ランクは匂わせない）
-function rvDrawStreak(x,P,t){ const its=P.items, b=its[its.length-1]; if(its.length<2) return; const u=(t-(b.t0-120))/440; if(u<0||u>1) return;
-  const S=[RVW+90,-160], E=[b.rest.x+70,b.rest.y-60], at=f=>[S[0]+(E[0]-S[0])*f,S[1]+(E[1]-S[1])*f], hd=at(rvOC(rvCl(u/.32))), tl=at(rvCl((u-.12)/.55)), fa=1-rvCl((u-.45)/.55);
-  x.save(); x.globalCompositeOperation='lighter'; const g=x.createLinearGradient(tl[0],tl[1],hd[0],hd[1]); g.addColorStop(0,'rgba(255,246,224,0)'); g.addColorStop(1,'rgba(255,246,224,1)');
-  x.strokeStyle=g; x.lineCap='round'; for(const [lw,a] of [[16,.12],[5,.35],[1.8,.95]]){ x.globalAlpha=a*fa; x.lineWidth=lw; x.beginPath(); x.moveTo(tl[0],tl[1]); x.lineTo(hd[0],hd[1]); x.stroke(); }
-  const k=rvCl((u-.28)/.72); if(k>0){ const r=34*(1-k*.6), al=(1-k)*fa; x.globalAlpha=al; x.fillStyle='#fff6e0'; x.shadowColor='#ffe8b0'; x.shadowBlur=22; x.beginPath(); for(let i=0;i<8;i++){ const a=i*Math.PI/4, rr=i%2?r*.16:r; x.lineTo(E[0]+Math.cos(a)*rr,E[1]+Math.sin(a)*rr); } x.closePath(); x.fill(); }
-  x.restore(); }
+// 落ちるカード：直前の1枚から最後の1枚へ移るとき、机の一番上のカードの表面を、斜めの光沢（反射光）が一度だけ横切る（白。ランクは匂わせない）
+function rvDrawStreak(x,P,t){ const its=P.items, b=its[its.length-1], it=its[its.length-2]; if(!it) return; const u=(t-(b.t0-300))/820; if(u<0||u>1) return;
+  const ps=rvPose(P,it,t), W=it.W, H=it.H, a=-.62, vx=Math.cos(a+Math.PI/2), vy=Math.sin(a+Math.PI/2), L=(W+H)/2+170, e=u*u*(3-2*u), p=-L+e*2*L, fa=Math.min(1,Math.sin(Math.PI*u)*1.4);
+  x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvRR(x,-W/2,-H/2,W,H,12); x.clip(); x.globalCompositeOperation='lighter';
+  const g=x.createLinearGradient(vx*(p-170),vy*(p-170),vx*(p+170),vy*(p+170)); g.addColorStop(0,'rgba(255,248,232,0)'); g.addColorStop(.38,'rgba(255,248,232,.10)'); g.addColorStop(.5,'rgba(255,252,244,.42)'); g.addColorStop(.53,'rgba(255,248,232,.16)'); g.addColorStop(.7,'rgba(255,248,232,.05)'); g.addColorStop(1,'rgba(255,248,232,0)');
+  x.globalAlpha=fa; x.fillStyle=g; x.fillRect(-W/2,-H/2,W,H); x.restore(); }
 function rvPose(P,it,t){ const r=it.rest, T=RV_T[P.v], fl=t<it.drop?Math.sin((t-it.t0)/280)*5:0;
   // 落ちるカード：はじめはカメラより上にあって画面に映らず、影だけが机に落ちて近づいてくる（h：1.6→0.5）。最後に一気に落ちる（0.5→0）
   if(P.v==='drop'){ const pre=t<it.drop; let h; if(pre){ const q=rvCl((t-it.t0)/(it.drop-it.t0)); h=1.6-1.1*q*q*(3-2*q); } else { const p=rvCl((t-it.drop)/it.fall); h=.5*(1-p*p); }
@@ -653,7 +652,7 @@ function rvDrawInfo(x,P,t){ for(const it of P.items){ const foil=P.v==='foil', s
 function rvDrawFrame(x,P,t){ x.save(); x.textAlign='center'; x.globalAlpha=rvCl(t/500)*.85; x.font=`700 30px ${RV_MINCHO}`; rvLS(x,'12px'); x.fillStyle='#e9d39a'; x.fillText('命ノ星座カード',RV_CX,150);
   if(P.mode==='all'&&P.items.length>1){ let k=0; P.items.forEach((it,i)=>{ if(t>=it.t0) k=i; }); x.globalAlpha=rvCl(t/500)*.55; x.font=`400 22px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#b9b2a3'; x.fillText(`${k+1} / ${P.items.length}`,RV_CX,200); }
   // 落ちるカード：いちばんのカードの前に「最後の1枚」と出す（何を待っているのかが分かるように）
-  { const b=P.items[P.items.length-1]; if(P.v==='drop'&&P.items.length>1&&t>=b.t0&&t<b.drop){ x.globalAlpha=rvCl((t-b.t0-60)/380)*(1-rvCl((t-b.drop+200)/200))*.9; x.font=`700 40px ${RV_MINCHO}`; rvLS(x,'14px'); x.fillStyle='#e9d39a'; x.fillText('最後の1枚',RV_CX,1240); } }
+  { const b=P.items[P.items.length-1]; if(P.v==='drop'&&P.items.length>1&&t>=b.t0&&t<b.drop){ x.globalAlpha=rvCl((t-b.t0-220)/380)*(1-rvCl((t-b.drop+200)/200))*.9; x.font=`700 40px ${RV_MINCHO}`; rvLS(x,'14px'); x.fillStyle='#e9d39a'; x.fillText('最後の1枚',RV_CX,1240); } }
   const fa=rvCl((t-P.E)/650); if(fa>0){ x.globalAlpha=fa; x.font=`700 30px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#e9d39a'; x.fillText('#命ノ星座カード',RV_CX,1760); x.globalAlpha=fa*.7; x.font=`400 24px ${RV_SANS}`; rvLS(x,'1px'); x.fillStyle='#b9b2a3'; x.fillText(SITE_URL.replace(/^https:\/\//,'').replace(/\/$/,''),RV_CX,1812); }
   rvLS(x,'0px'); x.restore(); }
 /* ---- 流す ---- */
