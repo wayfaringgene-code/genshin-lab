@@ -538,14 +538,15 @@ function rvGlowOf(A,w,h,rk){ const k=w+'x'+h+(rk.myth?'myth':rk.col); if(A.glow[
   RV_RB.slice(1,5).forEach((c,i)=>{ const a=i*Math.PI/2, t=rvBlurSprite(w,h,64,c,14); x.globalAlpha=.75; x.drawImage(t.cv,Math.cos(a)*40,Math.sin(a)*40); }); return A.glow[k]=s; }
 function rvSprite(x,sp,w,h,alpha,op){ if(alpha<=0) return; x.save(); if(op) x.globalCompositeOperation=op; x.globalAlpha*=alpha; x.drawImage(sp.cv,-w/2-sp.pad,-h/2-sp.pad); x.restore(); }
 /* ---- 段取り：1枚ずつの時刻を決める ---- */
-const RV_T={drop:{lead:250,fall:620,read:1050,charge:950,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
+// drop の pre＝カードはまだ画面の外で、影だけが近づいてくる時間
+const RV_T={drop:{lead:250,pre:430,preBest:1450,fall:230,read:1050,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
 function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
   items.forEach((it,k)=>{ const best=k===n-1; it.best=best; it.t0=t; it.dir=rvRnd(k,7)<.5?-1:1;
     if(v==='photo'){ it.W=900; it.H=506; } else { it.W=980; it.H=551; }
     it.img1=rvScaled(it.img,it.W,it.H); if(v==='foil') it.emb=rvEmboss(it.img,it.W,it.H);
     it.rest=best?{x:RV_CX,y:RV_CY,rot:0}:{x:RV_CX+(rvRnd(k,8)-.5)*90,y:RV_CY+(rvRnd(k,9)-.5)*70,rot:(rvRnd(k,10)-.5)*.24};
     if(v==='foil'){ it.off=best?T.charge:0; it.press=t+380+it.off; it.infoIn=it.press+770; it.starAt=it.infoIn+430; it.press2=best?it.infoIn+900:0; it.land=it.press; t+=T.read+it.off; }
-    else{ it.drop=t+(best?T.charge:0); it.land=it.drop+T.fall; it.infoIn=it.land+100; it.starAt=it.infoIn+260; t=it.land+T.read;
+    else{ it.drop=t+(v==='drop'?(best?T.preBest:T.pre):(best?T.charge:0)); it.land=it.drop+T.fall; it.infoIn=it.land+(v==='drop'?220:100); it.starAt=it.infoIn+260; t=it.land+T.read;
       const w=it.W+(v==='photo'?32:0), h=it.H+(v==='photo'?32:0);
       ev.push({t0:it.land,x:it.rest.x,y:it.rest.y,rot:it.rest.rot,w,h,col:it.rk.myth?'#efe6ff':it.rk.col,str:(v==='photo'?.42:.72)*(best?1.4:1),rings:best?[[0,1],[220,.6]]:[[0,1]]}); } });
   items.forEach((it,k)=>{ it.nx=k<n-1?items[k+1].t0:0; });
@@ -564,12 +565,14 @@ function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompos
   if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
   rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); }
 function rvPose(P,it,t){ const r=it.rest, T=RV_T[P.v], fl=t<it.drop?Math.sin((t-it.t0)/280)*5:0;
-  if(P.v==='drop'){ const p=t<it.drop?0:rvCl((t-it.drop)/T.fall), h=1-p*p; let s=1+h*.85; const dl=t-it.land; if(dl>0&&dl<200) s*=1-.012*Math.sin(Math.PI*dl/200);
-    return {x:r.x+h*it.dir*70,y:r.y-h*150+fl,rot:r.rot+h*it.dir*.16,s,sy:1-h*.3,h,a:rvCl((t-it.t0)/220),edge:5+h*30}; }
+  // 落ちるカード：はじめはカメラより上にあって画面に映らず、影だけが机に落ちて近づいてくる（h：1.6→0.5）。最後に一気に落ちる（0.5→0）
+  if(P.v==='drop'){ const pre=t<it.drop; let h; if(pre){ const q=rvCl((t-it.t0)/(it.drop-it.t0)); h=1.6-1.1*q*q*(3-2*q); } else { const p=rvCl((t-it.drop)/T.fall); h=.5*(1-p*p); }
+    let s=1+h*.85; const dl=t-it.land; if(dl>0&&dl<200) s*=1-.012*Math.sin(Math.PI*dl/200);
+    return {x:r.x+h*it.dir*70,y:r.y-h*150,rot:r.rot+h*it.dir*.16,s,sy:1-Math.min(h,.6)*.3,h,a:pre?0:1,sa:rvCl((t-it.t0)/300),edge:5+Math.min(h,.6)*30}; }
   // 写真：減速しながら降り、一度だけ大きく揺れて（ヒラっと）置かれる
   const p=t<it.drop?0:rvCl((t-it.drop)/T.fall), h=Math.pow(1-p,1.7), sw=Math.cos(1.25*Math.PI*p)*Math.pow(1-p,.8);
   return {x:r.x+it.dir*150*sw,y:r.y-h*130+fl,rot:r.rot+it.dir*.26*sw,s:1+h*.4,sy:1-.22*Math.abs(Math.sin(1.25*Math.PI*p))*(1-p),h,a:rvCl((t-it.t0)/260),edge:0}; }
-function rvCardDraw(x,it,ps,kind,dim,L){ const W=it.W, H=it.H; x.save(); x.globalAlpha*=ps.a; x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy);
+function rvCardDraw(x,it,ps,kind,dim,L,lit){ const W=it.W, H=it.H; x.save(); x.globalAlpha*=ps.a; x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy);
   if(kind!=='photo'){ const e=ps.edge, g=x.createLinearGradient(0,H/2-6,0,H/2+e); g.addColorStop(0,'#d8bb72'); g.addColorStop(.45,'#8a6c34'); g.addColorStop(1,'#33270f'); x.fillStyle=g; rvRR(x,-W/2+1,-H/2+e,W-2,H,12); x.fill(); } // 厚み：金の小口
   else{ x.fillStyle='#f3efe6'; rvRR(x,-W/2-16,-H/2-16,W+32,H+32,3); x.fill(); x.fillStyle='rgba(0,0,0,.06)'; x.fillRect(-W/2-16,H/2+10,W+32,6); } // 写真の白い縁
   x.save(); rvRR(x,-W/2,-H/2,W,H,kind==='photo'?2:12); x.clip();
@@ -578,19 +581,23 @@ function rvCardDraw(x,it,ps,kind,dim,L){ const W=it.W, H=it.H; x.save(); x.globa
     if(L.plate>0){ const g=x.createLinearGradient(0,-H/2,0,H/2); g.addColorStop(0,`rgba(255,236,190,${.1*L.plate})`); g.addColorStop(1,`rgba(255,236,190,${.02*L.plate})`); x.fillStyle=g; x.fillRect(-W/2,-H/2,W,H); }
     if(L.flash>0){ x.fillStyle=`rgba(255,246,220,${L.flash})`; x.fillRect(-W/2,-H/2,W,H); } }
   else x.drawImage(im,-W/2,-H/2,W,H);
+  if(lit!=null&&lit<1){ const W2=W*1.15; if(lit<=0) x.fillStyle='rgba(4,5,14,.92)'; else { const g=x.createRadialGradient(0,0,lit*W2,0,0,lit*W2+300); g.addColorStop(0,'rgba(4,5,14,0)'); g.addColorStop(1,'rgba(4,5,14,.92)'); x.fillStyle=g; } x.fillRect(-W/2,-H/2,W,H); } // 落ちてくるあいだは逆光で暗く、着地で中央から灯る
   x.restore(); if(dim>0){ x.fillStyle=`rgba(2,3,10,${dim})`; const b=kind==='photo'?16:0; rvRR(x,-W/2-b,-H/2-b,W+2*b,H+2*b,kind==='photo'?3:12); x.fill(); } // 下になったカードは沈める（写真は白い縁ごと）
   x.restore(); }
 function rvShadowDraw(x,A,it,ps,kind){ const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), S=rvShadowOf(A,w,h), sc=1+ps.h*.22;
-  x.save(); x.translate(ps.x+8+ps.h*60,ps.y+14+ps.h*110); x.rotate(ps.rot); x.scale(sc,sc*ps.sy); x.globalAlpha=ps.a;
-  rvSprite(x,S.hard,w,h,(1-ps.h)*(kind==='photo'?.45:.7)); rvSprite(x,S.soft,w,h,.25+ps.h*.35); x.restore(); }
+  x.save(); x.translate(ps.x+8+ps.h*60,ps.y+14+ps.h*110); x.rotate(ps.rot); x.scale(sc,sc*ps.sy); x.globalAlpha=ps.sa!=null?ps.sa:ps.a;
+  rvSprite(x,S.hard,w,h,Math.max(0,1-ps.h)*(kind==='photo'?.45:.7)); rvSprite(x,S.soft,w,h,kind==='drop'?rvCl(.12+(1.6-ps.h)*.36):.25+ps.h*.35); x.restore(); } // 影：遠いほど薄くぼやけ、近づくほど濃くくっきり
 function rvGlowDraw(x,A,it,ps,a,kind){ if(a<=0) return; const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), G=rvGlowOf(A,w,h,it.rk);
   x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvSprite(x,G,w,h,a*(it.rk.myth?.55:1),'lighter'); x.restore(); } // 虹の光は重ねて明るいので弱める
-function rvDrawPile(x,P,t){ const kind=P.v, its=P.items;
-  its.forEach((it,k)=>{ if(t<it.t0) return; const ps=rvPose(P,it,t); let dim=0; for(let j=k+1;j<its.length;j++) if(t>its[j].land) dim+=.34*rvCl((t-its[j].land)/380); dim=Math.min(.6,dim);
+function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?.32*rvCl((t-b.t0)/450)*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードを少し暗く
+  // いちばんのカードを待つあいだ、落ちる場所の机からランク色の光が漏れてくる（机のカードの下から、縁にだけ見える）
+  if(kind==='drop'&&t>=b.t0&&t<b.land) rvGlowDraw(x,P.A,b,{x:b.rest.x,y:b.rest.y,rot:0,s:1.04,sy:1},rvCl((t-b.t0)/(b.drop-b.t0))*.9,kind);
+  its.forEach((it,k)=>{ if(t<it.t0) return; const ps=rvPose(P,it,t); let dim=0; for(let j=k+1;j<its.length;j++) if(t>its[j].land) dim+=.34*rvCl((t-its[j].land)/380); dim=Math.min(.6,dim+(it.best?0:spot));
     rvShadowDraw(x,P.A,it,ps,kind);
     // 光：いちばんのカードは溜めのあいだ強まり、着地で強く光って、そのまま残る。ほかのカードは着地で一度だけ
-    const dl=t-it.land; let ga=0; if(it.best){ ga=t<it.drop?rvCl((t-it.t0)/RV_T[kind].charge)*.85:dl<0?.85:.45+.55*Math.exp(-dl/500); } else if(dl>0) ga=.42*Math.exp(-dl/420)*(1-dim);
-    rvGlowDraw(x,P.A,it,ps,ga*ps.a,kind); rvCardDraw(x,it,ps,kind,dim); }); }
+    const dl=t-it.land; let ga=0; if(it.best){ ga=t<it.drop?rvCl((t-it.t0)/(it.drop-it.t0))*.85:dl<0?.85:.45+.55*Math.exp(-dl/500); } else if(dl>0) ga=.42*Math.exp(-dl/420)*(1-dim);
+    if(!(kind==='drop'&&it.best&&dl<0)) rvGlowDraw(x,P.A,it,ps,ga*ps.a,kind);
+    if(ps.a>0) rvCardDraw(x,it,ps,kind,dim,null,kind==='drop'?(dl<0?0:rvCl(dl/520)):null); }); }
 function rvDrawFoil(x,P,t){ for(const it of P.items){ if(t<it.t0) continue; let X=RV_CX+(1-rvOC(rvCl((t-it.t0)/380)))*1150;
     if(it.nx){ const po=rvCl((t-it.nx)/380); if(po>=1) continue; X-=rvIC(po)*1150; }
     const tp=t-it.press, t2=it.press2?t-it.press2:-1; let s=1; if(tp>=0&&tp<170) s=1-.016*Math.sin(Math.PI*tp/170); if(t2>=0&&t2<170) s=1-.016*Math.sin(Math.PI*t2/170);
