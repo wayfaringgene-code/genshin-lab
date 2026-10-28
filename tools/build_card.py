@@ -179,72 +179,18 @@ CSS = r"""
 a.btn{text-decoration:none; display:inline-block}
 .clock{font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:0 8px; margin-left:6px; letter-spacing:0}
 @media (max-width:760px){ .ckv{grid-template-columns:1fr} .ckv dt{margin-top:6px} .cnav button{padding:6px 10px; font-size:13px} }
-/* ===== ガチャふうの演出（v2.1 試作） ===== */
-.rv-ov{position:fixed; inset:0; z-index:9000; background:radial-gradient(ellipse at 50% 45%,#141838 0%,#070816 60%,#020309 100%); display:flex; flex-direction:column; align-items:center; justify-content:safe center; padding:56px 16px 24px; overflow:auto; color:#e6dfcf; animation:rvIn .35s ease-out}
+/* ===== カードの登場の演出（v2.1 試作）：縦長（9:16）のキャンバスに描く。あとで縦動画に書き出すのも同じ描き方 ===== */
+.rv-ov{position:fixed; inset:0; z-index:9000; background:#020309; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:12px; animation:rvIn .3s ease-out}
 @keyframes rvIn{from{opacity:0}}
+.rv-cv{display:block; width:min(calc(100vw - 24px), calc((100dvh - 92px)*9/16)); aspect-ratio:9/16; height:auto; border-radius:14px; box-shadow:0 0 0 1px rgba(233,211,154,.14), 0 20px 60px rgba(0,0,0,.7)}
+@media (max-width:520px){ .rv-cv{border-radius:0; box-shadow:none} .rv-ov{padding:0 0 10px} }
 .rv-skip{position:fixed; top:12px; right:12px; z-index:2; background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer}
-.rv-skip:hover{background:rgba(255,255,255,.16)}
-.rv-flip{position:relative; width:100%; aspect-ratio:16/9; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.3,.1,.2,1)}
-.rv-flip.on{transform:rotateY(180deg)}
-.rv-face{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:6px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(233,211,154,.2)}
-.rv-face svg{display:block; width:100%; height:100%}
-.rv-front{transform:rotateY(180deg)}
-/* ランク色の光（--rv に色、虹のときは .myth）。カードの後ろでぼかして光らせる */
-.rv-aura{position:relative}
-.rv-aura::before{content:''; position:absolute; inset:-6%; border-radius:30px; background:var(--rv,#fff); filter:blur(26px); opacity:0; transition:opacity .5s; pointer-events:none}
-.rv-aura.myth::before{background:conic-gradient(from 0deg,#ff8fb1,#ffd27a,#8ff0c4,#8fbaff,#d59bff,#ff8fb1); animation:rvSpin 3s linear infinite}
-.rv-aura.lit::before{opacity:.55} .rv-aura.hint::before{animation:rvPulse 1.1s ease-in-out infinite} .rv-aura.myth.hint::before{animation:rvSpin 3s linear infinite, rvPulse 1.1s ease-in-out infinite}
-@keyframes rvPulse{0%,100%{opacity:.25; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.03)}}
-@keyframes rvSpin{to{filter:blur(26px) hue-rotate(360deg)}}
-.rv-stage{position:relative; width:min(100%,980px,calc((100dvh - 190px)*16/9)); min-width:min(100%,280px)}
-.rv-d .rv-stage{width:min(100%,980px,calc((100dvh - 340px)*16/9))}
-.rv-cap{text-align:center; margin-top:18px; min-height:74px}
-.rv-cap .n{font-size:clamp(18px,3vw,26px); letter-spacing:.06em} .rv-cap .a{font-size:14px; color:#b9b2a3; margin-top:2px}
-.rv-cap .btns{justify-content:center; margin-top:12px}
-.rv-cap > *{animation:rvUp .5s ease-out both}
-@keyframes rvUp{from{opacity:0; transform:translateY(8px)}}
-.rv-grid{display:grid; grid-template-columns:repeat(var(--cols,3),minmax(0,1fr)); gap:14px; width:min(100%,960px)}
-.rv-cell{display:grid; gap:6px} .rv-cell .rv-face{border-radius:4px}
-.rv-cell .c{font-size:12px; text-align:center; min-height:1.4em; opacity:0; transition:opacity .3s} .rv-cell.open .c{opacity:1}
-.rv-cell .c b{font-weight:700}
-.rv-sky circle,.rv-sky line{transition:opacity .35s}
+.rv-bar{display:flex; gap:8px; justify-content:center; min-height:40px; align-items:center}
+.rv-bar[hidden]{display:flex!important; visibility:hidden}
 .rv-demo{position:fixed; left:50%; bottom:12px; transform:translateX(-50%); z-index:8000; background:rgba(10,12,28,.94); border:1px solid rgba(233,211,154,.4); border-radius:10px; padding:10px 12px; display:grid; gap:6px; font-size:12px; width:min(calc(100% - 24px),560px); box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .rv-demo .row{gap:6px; flex-wrap:wrap; align-items:center}
 .rv-demo button[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi)}
-/* D ドパ：閃光・揺れ・数字のスロット・光の粒・タップでめくる */
-.rv-flash{position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0; background:#fff}
-.rv-fx{position:fixed; inset:0; z-index:4; pointer-events:none; width:100%; height:100%}
-.rv-snd{position:fixed; top:12px; left:12px; z-index:2; background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer}
-.rv-d{width:100%; display:grid; justify-items:center; gap:10px}
-.rv-num{font-variant-numeric:tabular-nums; font-size:clamp(44px,11vw,110px); line-height:1; letter-spacing:.02em; font-weight:700; color:var(--rv,#e6dfcf); text-shadow:0 0 24px color-mix(in srgb,var(--rv,#fff) 70%,transparent), 0 0 2px #000; min-height:1.1em; text-align:center}
-.rv-num small{font-size:.32em; letter-spacing:.14em; display:block; color:#b9b2a3; text-shadow:none; margin-bottom:6px}
-.rv-num.myth{background:linear-gradient(90deg,#ff8fb1,#ffd27a,#8ff0c4,#8fbaff,#d59bff,#ff8fb1); background-size:200% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:none; animation:rvRainbow 1.6s linear infinite}
-.rv-num.myth small{-webkit-text-fill-color:#b9b2a3}
-@keyframes rvRainbow{to{background-position:200% 0}}
-.rv-deck{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; width:min(100%,980px); min-height:48px}
-.rv-deck .t{width:clamp(64px,9vw,112px); border-radius:3px; overflow:hidden; box-shadow:0 0 0 1px rgba(233,211,154,.25); position:relative}
-.rv-deck .t svg{display:block; width:100%; height:auto}
-.rv-deck .t i{position:absolute; left:0; right:0; bottom:0; font-style:normal; font-size:10px; text-align:center; background:rgba(0,0,0,.6); color:#fff; padding:1px 0}
-.rv-tap{position:absolute; left:0; right:0; bottom:8%; text-align:center; font-size:clamp(14px,2.4vw,20px); letter-spacing:.2em; color:#fff; text-shadow:0 0 10px #000; animation:rvTap .9s ease-in-out infinite; pointer-events:none}
-@keyframes rvTap{0%,100%{opacity:.5; transform:translateY(0)} 50%{opacity:1; transform:translateY(-4px)}}
-.rv-stage.tapme{cursor:pointer}
-.rv-aura.lit.hot::before{opacity:.95; filter:blur(34px)}
-/* E 星と深淵：縦に伸びる夜空。揺れなし・音なし */
-.rv-sky2{position:fixed; inset:0; z-index:0; transition:opacity 1.1s ease} .rv-sky2 svg{display:block; width:100%; height:100%}
-.rv-sky2 .tw{animation:rvTw 3.6s ease-in-out infinite} @keyframes rvTw{50%{opacity:.04}}
-.rv-sky2 [data-hero],.rv-sky2 [data-halo]{transition:fill 1s ease}
-.rv-ov.abyss{background:linear-gradient(180deg,#06071a 0%,#070818 45%,#03040c 100%)}
-.rv-ov.abyss > div:not(.rv-sky2):not(.rv-abs){position:relative; z-index:1} /* 本文を空の手前に */
-.rv-quote{font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif; font-weight:700; font-size:clamp(16px,2.6vw,22px); letter-spacing:.42em; text-indent:.42em; color:#e9d39a; opacity:0; text-align:center}
-.rv-quote small{display:block; font-family:"Murecho",sans-serif; font-weight:400; font-size:11px; letter-spacing:.3em; text-indent:.3em; color:#8f8a7c; margin-top:12px}
-.rv-abs{position:fixed; left:0; right:0; z-index:1; text-align:center; pointer-events:none; opacity:0}
-.rv-abs .v{font-family:"Murecho",sans-serif; font-weight:400; font-size:clamp(38px,8vw,78px); letter-spacing:.03em; line-height:1; color:#f6efdc; text-shadow:0 0 36px rgba(255,255,255,.22); font-variant-numeric:tabular-nums}
-.rv-abs .v b{font-weight:400; font-size:.42em; letter-spacing:.14em; margin-left:.25em}
-.rv-abs .r{font-size:13px; letter-spacing:.32em; text-indent:.32em; margin-top:10px; color:var(--rv,#e9d39a)}
-.rv-abs .r.myth{background:linear-gradient(90deg,#ffc7ea,#ffe7a6,#b9f4ff,#cbb8ff,#ffc7ea); -webkit-background-clip:text; background-clip:text; color:transparent}
-.rv-ov.abyss .rv-aura.lit::before{opacity:.32}
-.rv-ov.abyss .rv-cap .n{font-family:"Shippori Mincho B1","Hiragino Mincho ProN",serif; letter-spacing:.12em}
-@media (prefers-reduced-motion: reduce){ .rv-ov,.rv-cap > *{animation:none} .rv-flip{transition:none} .rv-aura.hint::before,.rv-aura.myth::before,.rv-num.myth,.rv-tap,.rv-sky2 .tw{animation:none} }
+@media (prefers-reduced-motion: reduce){ .rv-ov{animation:none} }
 </style>
 """
 s = s.replace("<div class=\"wrap\">", CSS + "<div class=\"wrap\">", 1)
@@ -527,7 +473,6 @@ function homeBest(cs){ const v=a=>isFinite(a)?a:1e15; return cs.map(c=>({c,a:cha
 async function homeGo(e){ if(e) e.preventDefault(); const msg=$('homeMsg'), btn=$('homeGo'), uid=$('homeUid').value.replace(/\D/g,'');
   if(!/^\d{9,10}$/.test(uid)){ msg.textContent='UIDは9けたか10けたの数字です（ゲームのメニュー画面の右下などに出ています）。'; return; }
   $('enkaUid').value=uid; try{ store.set('enkaUid',uid); }catch(err){}
-  rvAudioPrime(); // 演出の効果音は、ボタンを押した中で鳴らせる状態にしておかないと鳴らない（iOS）
   btn.disabled=true; msg.textContent='Enka に問い合わせています…'; let names=null;
   try{ names=await enkaFetch(); }catch(err){} finally{ btn.disabled=false; }
   if(names&&names.length){ msg.textContent=''; homeReveal(names); return; }
@@ -539,205 +484,176 @@ function homeReveal(names){ const cs=[...new Set(names)].map(n=>CHARS.find(c=>c.
   const best=homeBest(cs); CH_OPEN=best.c.id; renderChars(); cardShowPage('card');
   $('cMsg').innerHTML=`${cs.length}人を取り込みました。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name)}</b> でした。◀ ▶ でほかのキャラも見られます。`;
   revealPlay(cs,revealVar()); }
-/* ================= ガチャふうの演出（v2.1 試作。案を見比べてから1つに絞る） =================
-   A 星座：いちばんのキャラだけ。裏面に部位の星が低い順に灯り、線でつながり、ランク色に光ってから表に返る
-   B 10連めくり：取り込んだ全員の裏面を並べ、秘境レベルの低い順にめくる。最後の1枚はランク色で匂わせてからめくる
-   C 10連＋星座：Bの順にめくり、最後の1枚だけAの星座で返す
-   D ドパ：テンポよく。低い順のキャラを閃光つきで連続めくり → 最後の1枚は光の色が段階的に上がる（匂わせ→昇格）→ 秘境レベルの数字がスロットのように回って止まる → タップでめくると光の粒が弾ける。
-     効果音（ブラウザの中で合成。🔊で消せる）と振動（対応する端末だけ）つき
-   どれもスキップできる。端末で「視差効果を減らす」を選んでいる人には、演出なしで最後のカードだけを出す。
-   試作の見比べ：URLの末尾に #reveal を付けて開くと、見本のキャラで流せる操作盤が出る。?reveal=a|b|c|d で本番の流れの案を切り替え */
-const REVEAL_VARS={e:'E 星と深淵',a:'A 星座',b:'B 10連めくり',c:'C 10連＋星座',d:'D ドパ'};
-function revealVar(){ const q=(new URLSearchParams(location.search).get('reveal')||'').toLowerCase(); return REVEAL_VARS[q]?q:'e'; }
+/* ================= カードの登場の演出（v2.1 試作。3案を見比べてから1つに絞る） =================
+   思想：お気に入りのキャラのカードが、自分のものとして形になる瞬間を祝う。全員を同じ儀式で迎え、ランクの差は色と★の数で静かに見せる。
+         いちばんのカードだけ、溜めを少し長く、光を少し強く。見せ場は縦動画（SNS）。アプリの中ではスキップされる前提
+   案：drop ＝落ちるカード：厚みのある重いカードが机に落ち、光の風圧が机の星屑を押し流す。全員のときは机に重なっていく
+       photo＝舞い降りる写真：白い縁の写真が、ヒラっと一度だけ揺れて舞い降りる。風圧は軽く
+       foil ＝箔押し：紙送りで入った無地のカードに、型押し → 色 → 名前と数字に金の箔 → ★を印のように押す
+   描き方：1080×1920 のキャンバスに、時刻 t（ミリ秒）だけから1コマを描く（rvDraw）。スキップは最後の時刻に飛ぶだけ。縦動画の書き出しも同じ関数でコマを作る
+   試作の見比べ：URLの末尾に #reveal で操作盤が出る。?reveal=drop|photo|foil で、UIDで取り込んだときの案を切り替え */
+const REVEAL_VARS={drop:'案2 落ちるカード',photo:"案2' 舞い降りる写真",foil:'案3 箔押し'};
+function revealVar(){ const q=(new URLSearchParams(location.search).get('reveal')||'').toLowerCase(); return REVEAL_VARS[q]?q:'drop'; }
 function rvStill(){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
-function rvRank(a){ const t=a>0?tierOf(a):TIERS[0]; return {t,col:t[2],myth:!isFinite(a)||a>=36500}; } // 100年以上（上限も）は虹
-function rvAuraAttr(a){ const r=rvRank(a); return `class="rv-aura${r.myth?' myth':''}" style="--rv:${r.col}"`; }
-// 1つのページにカードを何枚も並べるので、SVGの中のidを1枚ずつ付け替える（同じidが並ぶと、隠れた側の模様を拾ってしまう）
-var RV_UID=0;
-function rvUniq(svg){ const k='_rv'+(++RV_UID); return svg.replace(/\bid="([^"]+)"/g,`id="$1${k}"`).replace(/url\(#([^)]+)\)/g,`url(#$1${k})`).replace(/href="#([^"]+)"/g,`href="#$1${k}"`); }
-function rvFront(c){ return rvUniq(cardSVG(c,charStats(c),'SK')); }
-// 裏面：カードと同じ夜空に金の枠、真ん中に五つ星の紋（部位の数）
-function rvBack(){ const k=++RV_UID; let sd=11; const RN=()=>{ sd=(sd*9301+49297)%233280; return sd/233280; }; let dots='';
-  for(let i=0;i<70;i++) dots+=`<circle cx="${(RN()*1200).toFixed(0)}" cy="${(RN()*675).toFixed(0)}" r="${(RN()*1.4+.3).toFixed(1)}" fill="#fff" opacity="${(RN()*.5+.15).toFixed(2)}"/>`;
-  const P=[...Array(5)].map((_,i)=>{ const a=(-90+i*72)*Math.PI/180; return [600+70*Math.cos(a),330+70*Math.sin(a)]; }), star=[0,2,4,1,3].map(i=>P[i].map(v=>v.toFixed(1)).join(',')).join(' ');
-  return `<svg viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="rvB${k}" cx=".5" cy=".48" r=".8"><stop offset="0" stop-color="#1b1d48"/><stop offset=".55" stop-color="#0b0e22"/><stop offset="1" stop-color="#04050b"/></radialGradient></defs>
-    <rect width="1200" height="675" fill="url(#rvB${k})"/>${dots}
-    <rect x="16" y="16" width="1168" height="643" rx="10" fill="none" stroke="#e9d39a" stroke-opacity=".6" stroke-width="2.5"/><rect x="30" y="30" width="1140" height="615" rx="6" fill="none" stroke="#e9d39a" stroke-opacity=".22"/>
-    <circle cx="600" cy="330" r="112" fill="none" stroke="#e9d39a" stroke-opacity=".45" stroke-width="1.5"/><circle cx="600" cy="330" r="124" fill="none" stroke="#e9d39a" stroke-opacity=".2" stroke-dasharray="2 6"/>
-    <polygon points="${star}" fill="none" stroke="#e9d39a" stroke-opacity=".5" stroke-width="1.2"/>${P.map(([x,y])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#f5e6bd"/>`).join('')}
-    <text x="600" y="510" text-anchor="middle" font-family='"Murecho","M PLUS 1p",sans-serif' font-size="22" font-weight="700" letter-spacing=".5em" fill="#e9d39a" fill-opacity=".7">命ノ星座</text></svg>`; }
-// 星の位置：カードの星座（中心・半径・部位の向き・ランクの帯ごとの目盛り）と同じ計算
-function rvStars(st){ const cx0=360, cy0=361, R0=58, R=246, BND=[1,7,30,90,365,1095,10950], ANG={flower:-90,plume:-18,sands:54,goblet:126,circlet:198};
-  const rad=d=>{ if(!(d>1)) return R0; if(d>=10950) return R; let k=0; while(k<5&&d>=BND[k+1]) k++; return R0+(k+(Math.log(d)-Math.log(BND[k]))/(Math.log(BND[k+1])-Math.log(BND[k])))/6*(R-R0); };
-  return SLOTS.map(s=>{ const d=st.slots[s].age, r=rad(isFinite(d)?d:1e9), a=ANG[s]*Math.PI/180; return {s,d,has:d>0,x:cx0+r*Math.cos(a),y:cy0+r*Math.sin(a)}; }); }
-const rvWait=(R,ms)=>new Promise(res=>{ if(R.dead) return res(); const t=setTimeout(res,ms); R.timers.push(t); });
-function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; R.timers.forEach(clearTimeout); R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); if(R.fxFit) removeEventListener('resize',R.fxFit); window.RV=null; if(R.onClose) R.onClose(); }
-async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.length) return;
-  const v2=c=>{ const a=charStats(c).age||0; return isFinite(a)?a:1e15; }, ord=cs.slice().sort((x,y)=>v2(x)-v2(y)), best=ord[ord.length-1];
-  const ov=cardEl('div',{class:'rv-ov',role:'dialog','aria-modal':'true','aria-label':'カードの発表'});
-  const R=window.RV={ov,dead:false,timers:[],ovf:document.body.style.overflow,onClose:opt.onClose}; document.body.style.overflow='hidden';
-  const skip=cardEl('button',{class:'rv-skip',type:'button'},'スキップ'); ov.appendChild(skip); const body=cardEl('div',{style:'width:100%;display:grid;justify-items:center'}); ov.appendChild(body); document.body.appendChild(ov);
-  const finish=()=>{ if(R.done) return; R.done=true; R.dead=true; R.timers.forEach(clearTimeout); skip.remove(); rvFinal(R,body,best,ord.length); };
-  skip.addEventListener('click',finish); R.key=e=>{ if(e.key==='Escape'){ e.preventDefault(); R.done?rvClose():finish(); } }; document.addEventListener('keydown',R.key); skip.focus();
-  // 立ち絵（同梱・自分で選んだもの）の切り出しを先に済ませる。待つのは長くても2.5秒
-  await Promise.race([Promise.all(ord.map(c=>{ applyBundled(c); if(!CARD_IMG[c.id]||(c.id in CARD_FIT)) return null; return fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]).then(u=>{ CARD_FIT[c.id]=u||''; }); })),new Promise(r=>setTimeout(r,2500))]);
-  if(R.dead) return; if(rvStill()) return finish();
-  if(v==='d'){ await rvDopa(R,body,ord); if(!R.dead) finish(); return; }
-  if(v==='e'){ await rvAbyss(R,body,ord); if(!R.dead) finish(); return; }
-  if(v!=='a'&&ord.length>1) await rvGrid(R,body,ord,{holdLast:v==='c'});
-  if(R.dead) return;
-  if(v==='b'&&ord.length>1){ await rvWait(R,700); return finish(); }
-  await rvConstellation(R,body,best); if(R.dead) return; await rvWait(R,900); finish(); }
-/* 10連：裏面を並べて低い順にめくる。最後の1枚は光で匂わせる（holdLast＝めくらずに残して、星座の演出へ渡す） */
-async function rvGrid(R,body,ord,o){ const n=ord.length, cols=n<=2?n:n<=4?2:n<=9?3:4;
-  body.innerHTML=`<div class="rv-grid" style="--cols:${cols}">${ord.map((c,i)=>`<div class="rv-cell"><div ${rvAuraAttr(charStats(c).age||0)}><div class="rv-flip"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front"></div></div></div><div class="c"></div></div>`).join('')}</div>`;
-  const cells=[...body.querySelectorAll('.rv-cell')]; await rvWait(R,500);
-  for(let i=0;i<n;i++){ if(R.dead) return; const c=ord[i], el=cells[i], st=charStats(c), last=i===n-1, rk=rvRank(st.age||0);
-    if(last){ el.querySelector('.rv-aura').classList.add('lit','hint'); await rvWait(R,o.holdLast?1100:1600); if(o.holdLast||R.dead) return; }
-    el.querySelector('.rv-front').innerHTML=rvFront(c); el.querySelector('.rv-flip').classList.add('on'); el.classList.add('open');
-    el.querySelector('.c').innerHTML=`${esc(c.name||'')}　<b style="color:${rk.col}">${esc(st.age>0?rk.t[1]:'—')}</b>`;
-    if(last){ const a=el.querySelector('.rv-aura'); a.classList.remove('hint'); }
-    await rvWait(R,last?900:Math.max(220,900/n)+(rk.t[0]>=365?250:0)); } }
-/* 星座：裏面に部位の星が低い順に灯り、線でつながり、真ん中がランク色に光ってから表に返る */
-async function rvConstellation(R,body,c){ const st=charStats(c), rk=rvRank(st.age||0), S=rvStars(st), on=S.filter(p=>p.has).sort((x,y)=>(isFinite(x.d)?x.d:1e15)-(isFinite(y.d)?y.d:1e15));
-  const sky=`<svg class="rv-sky" viewBox="0 0 1200 675" style="position:absolute;inset:0;width:100%;height:100%"><defs><filter id="rvGl" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="rvCore"><stop offset="0" stop-color="${rk.myth?'#fff':rk.col}" stop-opacity=".9"/><stop offset="1" stop-color="${rk.myth?'#cbb8ff':rk.col}" stop-opacity="0"/></radialGradient></defs>
-    <rect width="1200" height="675" fill="#05060f" opacity=".55"/>
-    ${S.map((p,i)=>{ const q=S[(i+1)%5]; return p.has&&q.has?`<line data-ln="${i}" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}" stroke="#c4d8ff" stroke-width="2" stroke-opacity=".75" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`:''; }).join('')}
-    <circle data-core cx="360" cy="361" r="150" fill="url(#rvCore)" opacity="0"/>
-    ${S.filter(p=>p.has).map(p=>`<g data-st="${p.s}" opacity="0"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="16" fill="${rvRank(p.d).myth?'#fff':rvRank(p.d).col}" opacity=".35" filter="url(#rvGl)"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${rvRank(p.d).myth?'#fff':rvRank(p.d).col}" filter="url(#rvGl)"/></g>`).join('')}</svg>`;
-  body.innerHTML=`<div class="rv-stage"><div ${rvAuraAttr(st.age||0)}><div class="rv-flip"><div class="rv-face rv-back">${rvBack()}${sky}</div><div class="rv-face rv-front">${rvFront(c)}</div></div></div><div class="rv-cap"></div></div>`;
-  const svg=body.querySelector('.rv-sky'), A=(el,k,o)=>el&&el.animate?el.animate(k,Object.assign({fill:'forwards'},o)):null;
-  A(svg.querySelector('rect'),[{opacity:0},{opacity:.55}],{duration:500}); await rvWait(R,600);
-  for(const p of on){ if(R.dead) return; const g=svg.querySelector(`[data-st="${p.s}"]`); A(g,[{opacity:0,transform:'scale(.2)'},{opacity:1,transform:'scale(1.25)',offset:.6},{opacity:1,transform:'scale(1)'}],{duration:480,easing:'ease-out'}); g.style.transformOrigin=`${p.x}px ${p.y}px`; g.style.transformBox='view-box'; await rvWait(R,rvRank(p.d).t[0]>=365?520:380); }
-  for(const ln of svg.querySelectorAll('[data-ln]')){ if(R.dead) return; A(ln,[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:220,easing:'ease-in-out'}); await rvWait(R,170); }
-  await rvWait(R,250); if(R.dead) return;
-  const au=body.querySelector('.rv-aura'); au.classList.add('lit','hint'); A(svg.querySelector('[data-core]'),[{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'scale(1)'}],{duration:900,easing:'ease-out'}); svg.querySelector('[data-core]').style.cssText='transform-origin:360px 361px;transform-box:view-box';
-  await rvWait(R,rk.t[0]>=1095?1700:1200); if(R.dead) return;
-  au.classList.remove('hint'); body.querySelector('.rv-flip').classList.add('on'); }
-/* ---- D ドパ ---- */
-// 効果音：音のファイルは持たず、その場で合成する（短い電子音）。ページを触った直後（ボタンを押した中）に rvAudioPrime() で鳴らせる状態にしておく
-var RV_AC=null;
-function rvSoundOn(){ return !!+store.get('rvSound',1); }
-function rvAudioPrime(){ if(rvStill()||!rvSoundOn()) return; try{ if(!RV_AC) RV_AC=new (window.AudioContext||window.webkitAudioContext)(); if(RV_AC.state==='suspended') RV_AC.resume(); }catch(e){} }
-function rvSnd(kind,k){ if(!rvSoundOn()||rvStill()||!RV_AC||RV_AC.state!=='running') return; const ac=RV_AC, t=ac.currentTime;
-  const tone=(f,t0,d,type,g,f2)=>{ try{ const o=ac.createOscillator(), v=ac.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t0+d); v.gain.setValueAtTime(0,t0); v.gain.linearRampToValueAtTime(g,t0+.012); v.gain.exponentialRampToValueAtTime(.0001,t0+d); o.connect(v).connect(ac.destination); o.start(t0); o.stop(t0+d+.03); }catch(e){} };
-  switch(kind){
-    case 'tick': tone(1400+Math.random()*300,t,.035,'square',.035); break;                         // スロットの刻み
-    case 'flip': tone(700,t,.09,'triangle',.14,1100); tone(2100,t+.02,.06,'sine',.06); break;      // 連続めくり
-    case 'big': tone(520,t,.25,'triangle',.18,1040); tone(1560,t+.05,.3,'sine',.12); break;        // ★5以上をめくった
-    case 'step': { const f=440*Math.pow(2,(k||0)/5); tone(f,t,.16,'triangle',.16,f*1.5); tone(f*2,t+.03,.12,'sine',.06); break; } // 光の色が1段上がる
-    case 'myth': [0,.08,.16,.24].forEach((d,i)=>tone(880*Math.pow(2,i*4/12),t+d,.9,'sine',.12)); tone(220,t,.7,'sawtooth',.05,330); break; // 虹に化けた
-    case 'slam': tone(90,t,.35,'sine',.5,38); tone(1760,t+.02,.4,'triangle',.18); tone(2640,t+.02,.25,'sine',.08); break; // 数字が止まる
-    case 'open': [523,659,784,1047,1319].forEach((f,i)=>{ tone(f,t+i*.07,.55,'triangle',.14); tone(f*2,t+i*.07,.3,'sine',.05); }); tone(60,t,.4,'sine',.35,30); break; // めくった
-  } }
-function rvVib(p){ try{ if(!rvStill()&&navigator.vibrate) navigator.vibrate(p); }catch(e){} }
-function rvFlash(R,col,ms,op){ const f=R.flash; if(!f||!f.animate) return; f.style.background=col||'#fff'; f.animate([{opacity:op==null?.5:op},{opacity:0}],{duration:ms||180,easing:'ease-out'}); }
-function rvShake(R,px,ms){ const el=R.body; if(!el||!el.animate||rvStill()) return; const k=[]; for(let i=0;i<8;i++) k.push({transform:`translate(${((Math.random()*2-1)*px).toFixed(1)}px,${((Math.random()*2-1)*px).toFixed(1)}px)`}); k.push({transform:'translate(0,0)'}); el.animate(k,{duration:ms||260,easing:'linear'}); }
-// 光の粒：画面全体のキャンバスに描く。1回ずつ飛ばして、消えるまで描き続ける
-function rvFxInit(R){ const cv=cardEl('canvas',{class:'rv-fx'}); R.ov.appendChild(cv); R.fx={cv,ps:[],run:false};
-  R.fxFit=()=>{ const d=Math.min(2,devicePixelRatio||1); cv.width=Math.round(innerWidth*d); cv.height=Math.round(innerHeight*d); cv._d=d; }; R.fxFit(); addEventListener('resize',R.fxFit); }
-function rvBurst(R,x,y,cols,n,pow){ const F=R.fx; if(!F) return; for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, s=(Math.random()*.6+.4)*pow; F.ps.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-pow*.25,life:1,dec:.012+Math.random()*.02,r:2+Math.random()*3.5,col:cols[i%cols.length],spin:Math.random()<.3}); }
-  if(F.run) return; F.run=true; const cx=F.cv.getContext('2d');
-  const step=()=>{ if(R.dead&&!R.done){ F.run=false; return; } const d=F.cv._d||1; cx.clearRect(0,0,F.cv.width,F.cv.height); F.ps=F.ps.filter(p=>p.life>0);
-    for(const p of F.ps){ p.x+=p.vx; p.y+=p.vy; p.vy+=.32; p.vx*=.985; p.life-=p.dec; cx.globalAlpha=Math.max(0,p.life); cx.fillStyle=p.col; cx.beginPath();
-      if(p.spin){ const r=p.r*2.2*p.life; cx.moveTo((p.x)*d,(p.y-r)*d); cx.lineTo((p.x+r*.35)*d,p.y*d); cx.lineTo(p.x*d,(p.y+r)*d); cx.lineTo((p.x-r*.35)*d,p.y*d); cx.closePath(); } else cx.arc(p.x*d,p.y*d,p.r*d*(.4+p.life*.6),0,Math.PI*2); cx.fill(); }
-    cx.globalAlpha=1; if(F.ps.length) requestAnimationFrame(step); else F.run=false; }; requestAnimationFrame(step); }
-function rvCenter(el){ const b=el.getBoundingClientRect(); return [b.left+b.width/2,b.top+b.height/2]; }
-const RV_RAINBOW=['#ff8fb1','#ffd27a','#8ff0c4','#8fbaff','#d59bff','#fff'];
-async function rvDopa(R,body,ord){ const n=ord.length, best=ord[n-1], st=charStats(best), age=st.age||0, rk=rvRank(age), tIdx=TIERS.indexOf(rk.t);
-  R.flash=cardEl('div',{class:'rv-flash'}); R.ov.appendChild(R.flash); rvFxInit(R); R.body=body;
-  const snd=cardEl('button',{class:'rv-snd',type:'button','aria-label':'効果音'},rvSoundOn()?'🔊':'🔇'); R.ov.appendChild(snd); snd.addEventListener('click',()=>{ store.set('rvSound',rvSoundOn()?0:1); snd.textContent=rvSoundOn()?'🔊':'🔇'; rvAudioPrime(); });
-  body.innerHTML=`<div class="rv-d"><div class="rv-num" style="--rv:#e6dfcf"></div><div class="rv-stage"><div class="rv-aura" style="--rv:${TIERS[0][2]}"><div class="rv-flip" style="transition-duration:.32s"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front"></div></div></div></div><div class="rv-cap"></div><div class="rv-deck"></div></div>`;
-  const stage=body.querySelector('.rv-stage'), aura=body.querySelector('.rv-aura'), flip=body.querySelector('.rv-flip'), front=body.querySelector('.rv-front'), cap=body.querySelector('.rv-cap'), deck=body.querySelector('.rv-deck'), num=body.querySelector('.rv-num');
-  const resetFlip=()=>{ flip.style.transition='none'; flip.classList.remove('on'); void flip.offsetWidth; flip.style.transition=''; };
-  await rvWait(R,350);
-  // 1. 連続めくり：低い順に、閃光つきでテンポよく。めくったカードは下の列へ
-  for(let i=0;i<n-1;i++){ if(R.dead) return; const c=ord[i], s2=charStats(c), r2=rvRank(s2.age||0), big=r2.t[0]>=365;
-    aura.style.setProperty('--rv',r2.col); aura.classList.toggle('myth',r2.myth); aura.classList.add('lit'); front.innerHTML=rvFront(c); flip.classList.add('on');
-    rvFlash(R,r2.col,big?260:140,big?.55:.3); rvVib(big?[30,30,60]:14); rvSnd(big?'big':'flip'); const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,r2.myth?RV_RAINBOW:[r2.col,'#fff'],big?40:12,big?9:5); if(big) rvShake(R,5,220);
-    cap.innerHTML=`<div class="n">${esc(c.name||'')}　<b style="color:${r2.col}">${esc(s2.age>0?r2.t[1]:'—')}</b></div>`;
-    await rvWait(R,big?720:400); if(R.dead) return;
-    const th=cardEl('div',{class:'t'}); th.appendChild(front.firstElementChild); th.insertAdjacentHTML('beforeend',`<i>${esc(c.name||'')} ${esc(s2.age>0?r2.t[1]:'')}</i>`); deck.appendChild(th); resetFlip(); aura.classList.remove('lit'); cap.innerHTML=''; await rvWait(R,90); }
-  // 2. 最後の1枚：溜め。光の色が1段ずつ上がる（★3から）。本当のランクの1つ手前でひと呼吸置いて、昇格
-  aura.classList.remove('myth'); cap.innerHTML=`<div class="n">${n>1?'最後の1枚':''}</div>`; front.innerHTML=''; await rvWait(R,500); if(R.dead) return;
-  const from=Math.min(2,tIdx), steps=[]; for(let k=from;k<=tIdx;k++) steps.push(k); if(rk.myth) steps.push('myth');
-  for(let i=0;i<steps.length;i++){ if(R.dead) return; const k=steps[i], last=i===steps.length-1, before=i===steps.length-2;
-    if(k==='myth'){ aura.classList.add('myth','hot'); num.classList.add('myth'); rvFlash(R,'#fff',600,.9); rvVib([80,40,80,40,200]); rvSnd('myth'); rvShake(R,9,500); const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,RV_RAINBOW,120,13); }
-    else{ aura.style.setProperty('--rv',TIERS[k][2]); num.style.setProperty('--rv',TIERS[k][2]); aura.classList.add('lit'); if(last) aura.classList.add('hot'); rvFlash(R,TIERS[k][2],last?420:160,last?.7:.35); rvVib(last?[40,30,90]:18+k*8); rvSnd('step',k); if(last){ rvShake(R,6,320); const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,[TIERS[k][2],'#fff'],60,10); } }
-    if(before){ aura.classList.add('hint'); await rvWait(R,900); aura.classList.remove('hint'); } else await rvWait(R,last?700:300); }
-  if(R.dead) return;
-  // 3. 数字のスロット：秘境レベルが高速で回って、だんだん遅くなり、ドンと止まる
-  const lo=0, hi=Math.log(Math.max(8,(isFinite(age)?age:3e6)*1.6)); let dt=35; num.innerHTML=`<small>秘境レベル</small><span></span>`; const sp=num.querySelector('span');
-  for(let el=0;el<1500&&!R.dead;el+=dt){ sp.textContent=fmtAge(Math.exp(lo+Math.random()*(hi-lo))); rvSnd('tick'); await rvWait(R,dt); dt=Math.min(140,dt*1.09); }
-  if(R.dead) return; sp.textContent=fmtAge(age); num.animate&&num.animate([{transform:'scale(1.6)',opacity:.4},{transform:'scale(.96)',opacity:1,offset:.7},{transform:'scale(1)'}],{duration:320,easing:'ease-out'});
-  rvFlash(R,rk.myth?'#fff':rk.col,320,.75); rvShake(R,10,380); rvVib([60,40,140]); rvSnd('slam'); { const [cx,cy]=rvCenter(num); rvBurst(R,cx,cy,rk.myth?RV_RAINBOW:[rk.col,'#fff'],50,9); }
-  await rvWait(R,650); if(R.dead) return;
-  // 4. タップでめくる（3秒待っても押されなければ自動で）
-  stage.classList.add('tapme'); aura.classList.add('hint'); stage.insertAdjacentHTML('beforeend','<div class="rv-tap">TAP</div>'); front.innerHTML=rvFront(best);
-  await new Promise(res=>{ const go=()=>{ R.ov.removeEventListener('pointerdown',on); res(); }; const on=e=>{ if(e.target.closest('button')) return; go(); }; R.ov.addEventListener('pointerdown',on); R.timers.push(setTimeout(go,3000)); });
-  if(R.dead) return; stage.classList.remove('tapme'); aura.classList.remove('hint'); const tp=stage.querySelector('.rv-tap'); if(tp) tp.remove();
-  flip.style.transitionDuration='.55s'; flip.classList.add('on'); rvFlash(R,'#fff',500,.95); rvShake(R,12,520); rvVib([30,30,30,30,260]); rvSnd('open');
-  { const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,rk.myth?RV_RAINBOW:[rk.col,'#fff','#ffe8a8'],160,15); R.timers.push(setTimeout(()=>rvBurst(R,cx,cy,rk.myth?RV_RAINBOW:[rk.col,'#fff'],60,8),250)); }
-  await rvWait(R,900); }
-/* ---- E 星と深淵：縦に伸びる夜空。下は深淵（秘境を回った日々）、上は星。
-   取り込んだキャラの光が、それぞれの高さ（秘境レベル）まで静かに昇る。いちばんのキャラの光は最後に、ランクの境目を1つずつ灯しながら昇りきり、
-   そこに秘境レベルの数字が浮かぶ。カードはめくらず、空が沈んだあとに光から浮かび上がる。揺れ・音はなし。振動は着いた瞬間に1回だけ ---- */
-function rvAnim(R,ms,fn){ return new Promise(res=>{ const t0=performance.now(); const step=now=>{ if(R.dead) return res(); const t=Math.min(1,(now-t0)/ms); fn(t); if(t<1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); }); }
-const rvEaseRise=t=>t<.3?(t/.3)*(t/.3)*.3:.3+(1-Math.pow(1-(t-.3)/.7,3))*.7; // ゆっくり出て、終わりはさらにゆっくり
-async function rvAbyss(R,body,ord){ const n=ord.length, best=ord[n-1], st=charStats(best), age=st.age||0, rk=rvRank(age);
-  R.ov.classList.add('abyss');
-  // 高さ：日数の対数。ランクの帯を等間隔（カードの縮尺と同じ）、30年より上は100年・5000年を1段ずつ。いちばんのキャラの1段上まで見せる
-  const BND=[1,7,30,90,365,1095,10950,36500,1825000], TOP=BND.length-1+.6;
-  const U=d=>{ if(!(d>1)) return 0; if(!isFinite(d)) return TOP; let k=0; while(k<BND.length-1&&d>=BND[k+1]) k++; if(k>=BND.length-1) return Math.min(TOP,k+(Math.log(d)-Math.log(BND[k]))/8); return k+(Math.log(d)-Math.log(BND[k]))/(Math.log(BND[k+1])-Math.log(BND[k])); };
-  const UMAX=Math.min(TOP,Math.max(3.6,U(age)+1.25)), W=Math.round(1000*innerWidth/Math.max(1,innerHeight)), Y0=935, Y1=105, Y=d=>Y0-U(d)/UMAX*(Y0-Y1), X=W/2, yT=Y(age);
-  const LBL={7:['1 WEEK','★2'],30:['1 MONTH','★3'],90:['3 MONTHS','★4'],365:['1 YEAR','★5'],1095:['3 YEARS','★5+'],10950:['30 YEARS',''],36500:['100 YEARS','ONCE IN A CENTURY'],1825000:['5000 YEARS','SINCE THE DAWN OF TIME']};
-  const COL=d=>d>=36500?'#e6dcff':d>=10950?'#ffe2b0':tierOf(d)[2], lines=BND.slice(1).filter(d=>U(d)<=UMAX+.02).map(d=>({d,y:Y(d),col:COL(d),lit:false}));
-  let sd=5; const RN=()=>{ sd=(sd*9301+49297)%233280; return sd/233280; }; let stars='';
-  for(let i=0;i<150;i++){ const y=RN()*1000, big=RN()<.1; stars+=`<circle${RN()<.35?' class="tw"':''} style="animation-delay:${(RN()*4).toFixed(1)}s" cx="${(RN()*W).toFixed(0)}" cy="${y.toFixed(0)}" r="${((big?1.7:.9)+RN()*.6).toFixed(1)}" fill="#fff" opacity="${(.1+RN()*.55*(1-y/1250)).toFixed(2)}"/>`; }
-  const MU='"Murecho","M PLUS 1p",sans-serif', others=ord.slice(0,n-1), cnt=Math.ceil(others.length/2);
-  const ox=i=>{ const side=i%2?1:-1, f=cnt>1?Math.floor(i/2)/(cnt-1):.5; return X+side*(W*.14+f*W*.2); }; // 名前は光の下に置くので、端に寄せすぎない
-  const sky=cardEl('div',{class:'rv-sky2'}); sky.innerHTML=`<svg viewBox="0 0 ${W} 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs>
-    <linearGradient id="rvAbG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#03040c" stop-opacity="0"/><stop offset="1" stop-color="#010108"/></linearGradient>
-    <filter id="rvAbF" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="9"/></filter><filter id="rvAbF2" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="2.5"/></filter>
-    <linearGradient id="rvTrail" gradientUnits="userSpaceOnUse" x1="0" y1="${yT}" x2="0" y2="${Y0+30}"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".25" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
-    <g>${stars}</g><rect x="0" y="${Y0-260}" width="${W}" height="${1000-Y0+260}" fill="url(#rvAbG)"/>
-    ${lines.map((l,i)=>`<g data-ln="${i}" opacity="0"><line x1="0" x2="${W}" y1="${l.y.toFixed(1)}" y2="${l.y.toFixed(1)}" stroke="${l.col}" stroke-width=".7" stroke-dasharray="2 6"/><text x="${W-24}" y="${(l.y-9).toFixed(1)}" text-anchor="end" font-family='${MU}' font-size="12" letter-spacing=".2em" fill="${l.col}">${LBL[l.d][0]}</text><text x="24" y="${(l.y-9).toFixed(1)}" font-family='${MU}' font-size="12" letter-spacing=".16em" fill="${l.col}" opacity=".85">${LBL[l.d][1]}</text></g>`).join('')}
-    ${others.map((c,i)=>{ const a=charStats(c).age||0, col=rvRank(a).col, x=ox(i); return `<g data-oc="${i}" opacity="0"><circle data-g cx="${x.toFixed(1)}" cy="${Y0}" r="9" fill="${col}" opacity=".35" filter="url(#rvAbF2)"/><circle data-p cx="${x.toFixed(1)}" cy="${Y0}" r="2.4" fill="${col}"/><text data-t x="${x.toFixed(1)}" y="${Y0}" text-anchor="middle" font-family='${MU}' font-size="11.5" fill="#a8a493" opacity="0" letter-spacing=".06em">${esc(c.name||'')}</text></g>`; }).join('')}
-    <line data-trail x1="${X}" x2="${X}" y1="${Y0}" y2="${Y0+30}" stroke="url(#rvTrail)" stroke-width="1.4"/>
-    <circle data-pulse cx="${X}" cy="${Y0}" r="0" fill="none" stroke="#fff" stroke-width="1" opacity="0"/>
-    <circle data-halo cx="${X}" cy="${Y0}" r="30" fill="#9aa3b2" opacity=".32" filter="url(#rvAbF)"/><circle data-hero cx="${X}" cy="${Y0}" r="4.2" fill="#fff"/></svg>`;
-  R.ov.insertBefore(sky,R.ov.firstChild); R.sky=sky; const q=s=>sky.querySelector(s), A=(el,k,o)=>el&&el.animate?el.animate(k,Object.assign({fill:'forwards'},o)):null;
-  // 1. ひとこと
-  body.innerHTML=`<div class="rv-quote">星と深淵を目指せ<small>REACH FOR THE STARS AND THE ABYSS</small></div>`; const qt=body.querySelector('.rv-quote');
-  A(qt,[{opacity:0},{opacity:1}],{duration:900,easing:'ease-out'}); await rvWait(R,2100); if(R.dead) return; A(qt,[{opacity:1},{opacity:0}],{duration:600}); await rvWait(R,500); if(R.dead) return; body.innerHTML='';
-  // 2. 境目の線が下から順に浮かぶ
-  for(const [i] of lines.entries()){ A(q(`[data-ln="${i}"]`),[{opacity:0},{opacity:.3}],{duration:700}); await rvWait(R,90); }
-  // 3. ほかのキャラの光が、それぞれの高さへ（低い順に、少しずつずらして）
-  const rises=[]; for(const [i,c] of others.entries()){ const a=charStats(c).age||0, g=q(`[data-oc="${i}"]`), y1=Y(a); A(g,[{opacity:0},{opacity:1}],{duration:500});
-    rises.push(rvWait(R,i*130).then(()=>rvAnim(R,1500,t=>{ const y=Y0-(Y0-y1)*rvEaseRise(t); g.querySelector('[data-g]').setAttribute('cy',y); g.querySelector('[data-p]').setAttribute('cy',y); g.querySelector('[data-t]').setAttribute('y',y+20); })).then(()=>A(g.querySelector('[data-t]'),[{opacity:0},{opacity:.9}],{duration:500}))); }
-  await Promise.all(rises); if(R.dead) return; await rvWait(R,others.length?500:0); if(R.dead) return;
-  // 4. いちばんのキャラの光が昇る。境目を越えるたびに、その線とランクの色が灯る
-  const hero=q('[data-hero]'), halo=q('[data-halo]'), trail=q('[data-trail]');
-  await rvAnim(R,n>1?3600:3200,t=>{ const y=Y0-(Y0-yT)*rvEaseRise(t); hero.setAttribute('cy',y); halo.setAttribute('cy',y); trail.setAttribute('y1',y);
-    for(const [i,l] of lines.entries()) if(!l.lit&&y<=l.y+.5){ l.lit=true; const g=q(`[data-ln="${i}"]`); A(g,[{opacity:.3},{opacity:1},{opacity:.6}],{duration:1400,easing:'ease-out'}); halo.setAttribute('fill',l.col); hero.setAttribute('fill',l.d>=1095?l.col:'#fff'); } });
-  if(R.dead) return;
-  // 5. 着いた：輪がひとつ広がる。振動は1回だけ。数字が光のそばに浮かぶ
-  A(q('[data-pulse]'),[{r:0,opacity:.7},{r:150,opacity:0}],{duration:1600,easing:'ease-out'}); A(halo,[{opacity:.32},{opacity:.7,offset:.3},{opacity:.4}],{duration:1600}); rvVib(28);
-  const px=yT*innerHeight/1000, above=px>190, abs=cardEl('div',{class:'rv-abs',style:`--rv:${rk.col};${above?`bottom:${Math.round(innerHeight-px+34)}px`:`top:${Math.round(px+30)}px`}`});
-  const mm=fmtAge(age).match(/^([\d.,]+)\s*(.*)$/); abs.innerHTML=`<div class="v">${mm?`${esc(mm[1])}<b>${esc(mm[2])}</b>`:esc(fmtAge(age))}</div><div class="r${rk.myth?' myth':''}">${rk.myth?esc(age>=1825000||!isFinite(age)?'SINCE THE DAWN OF TIME':'ONCE IN A CENTURY'):esc(age>0?rk.t[1]:'—')}</div>`;
-  R.ov.appendChild(abs); A(abs,[{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:1100,easing:'ease-out'});
-  await rvWait(R,2600); if(R.dead) return;
-  // 6. 空が沈み、カードが浮かび上がる（rvFinal）
-  A(abs,[{opacity:1},{opacity:0}],{duration:700}); sky.style.opacity='.28'; await rvWait(R,800); if(!R.dead) abs.remove(); }
-/* 最後の画面：いちばんのカードを表で大きく。スキップしたときもここ */
-function rvFinal(R,body,c,n){ const st=charStats(c), rk=rvRank(st.age||0); if(R.sky) R.sky.style.opacity='.28'; R.ov.querySelectorAll('.rv-abs').forEach(x=>x.remove());
-  if(!body.querySelector('.rv-stage')||!body.querySelector('.rv-flip.on')){ body.innerHTML=`<div class="rv-stage"><div ${rvAuraAttr(st.age||0)}><div class="rv-flip on" style="transition:none"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front">${rvFront(c)}</div></div></div><div class="rv-cap"></div></div>`;
-    const f=body.querySelector('.rv-stage'); if(f.animate&&!rvStill()) f.animate([{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'scale(1)'}],{duration:R.sky?1300:450,easing:'ease-out'}); }
-  body.querySelector('.rv-aura').classList.add('lit'); body.querySelector('.rv-aura').classList.remove('hint');
-  body.querySelector('.rv-cap').innerHTML=`<div class="n">${n>1?`${n}人の中で、いちばんは `:''}<b class="gold">${esc(c.name||'（名前なし）')}</b></div><div class="a">秘境レベル <b style="color:${rk.col}">${esc(fmtAge(st.age))}</b>（${esc(rk.t[1])}）</div><div class="btns"><button class="btn primary" type="button" data-rvok>カードを見る</button>${/^rvdemo-/.test(c.id)?'':'<button class="btn" type="button" data-rvshare>共有する</button>'}</div>`;
-  const ok=body.querySelector('[data-rvok]'); ok.addEventListener('click',rvClose); ok.focus();
-  const sh=body.querySelector('[data-rvshare]'); if(sh) sh.addEventListener('click',()=>{ rvClose(); cardShare(); }); }
-/* ---- 試作の見比べ：#reveal で開くと、見本のキャラで演出を流す操作盤を出す（保存はしない） ---- */
+const RVW=1080, RVH=1920, RV_CX=540, RV_CY=800;
+const RV_MINCHO='"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif', RV_SANS='"Murecho","M PLUS 1p","Hiragino Sans",sans-serif', RV_RB=['#ff9cbc','#ffd27a','#8ff0c4','#8fbaff','#d59bff','#ffc7ea'];
+const rvCl=v=>v<0?0:v>1?1:v, rvOC=p=>1-Math.pow(1-p,3), rvIC=p=>p*p*p, rvOB=p=>{ const c1=1.9, c3=c1+1; return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2); };
+const rvRnd=(k,j)=>{ const v=Math.sin(k*127.1+j*311.7)*43758.5453; return v-Math.floor(v); };
+// ランク：★の数（★1〜★5）、★5+ は★5に「＋」、100年以上（上限も）は虹
+function rvRank(a){ const t=a>0?tierOf(a):TIERS[0], i=Math.max(0,TIERS.indexOf(t)); return {t,i,col:t[2],stars:a>0?Math.min(5,i+1):0,plus:a>0&&i>=5,myth:a>0&&(!isFinite(a)||a>=36500),dawn:a>0&&(!isFinite(a)||a>=1825000)}; }
+function rvRR(x,X,Y,w,h,r){ r=Math.min(r,w/2,h/2); x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+function rvCanvas(w,h){ const c=document.createElement('canvas'); c.width=Math.ceil(w); c.height=Math.ceil(h); return c; }
+/* ---- カードを1枚の画像にする（保存のときと同じ作り方：書体を埋め込んだSVG → キャンバス）。毎コマSVGを描くと重いので、先に絵にしておく ---- */
+async function rvCardImg(c){ applyBundled(c); if(CARD_IMG[c.id]&&!(c.id in CARD_FIT)){ const u=await fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]); CARD_FIT[c.id]=u||''; }
+  const NS='http://www.w3.org/2000/svg', W=1960, H=1102, box=document.createElement('div'); box.innerHTML=cardSVG(c,charStats(c),'SK'); const el=box.querySelector('svg'); if(!el) return null;
+  el.setAttribute('xmlns',NS); el.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink'); el.setAttribute('width',W); el.setAttribute('height',H); el.removeAttribute('style');
+  try{ const css=await cardFontCSS([...new Set([...el.textContent].map(ch=>ch.codePointAt(0)))]); const st=document.createElementNS(NS,'style'); st.textContent=css; el.insertBefore(st,el.firstChild); }catch(e){}
+  const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(el)],{type:'image/svg+xml'}));
+  try{ const im=new Image(); await new Promise((res,rej)=>{ im.onload=res; im.onerror=rej; im.src=url; }); try{ await im.decode(); }catch(e){} await new Promise(r=>setTimeout(r,200));
+    const cv=rvCanvas(W,H); cv.getContext('2d').drawImage(im,0,0,W,H); return cv; }catch(e){ return null; } finally{ URL.revokeObjectURL(url); } }
+function rvScaled(src,w,h){ const o=rvCanvas(w,h); if(src) o.getContext('2d').drawImage(src,0,0,w,h); return o; }
+// 型押しの版：カードの明るさの差から凹凸を作る（読めないとき〈画像が汚染扱い〉は、暗く沈めた絵で代わりにする）
+function rvEmboss(src,w,h){ const o=rvScaled(src,w,h), x=o.getContext('2d');
+  try{ const d=x.getImageData(0,0,w,h), a=d.data, L=new Float32Array(w*h); for(let i=0;i<w*h;i++) L[i]=a[i*4]*.3+a[i*4+1]*.59+a[i*4+2]*.11;
+    for(let y=0;y<h;y++) for(let X=0;X<w;X++){ const i=y*w+X, j=Math.max(0,y-2)*w+Math.max(0,X-2), e=(L[i]-L[j])*1.3, g=Math.max(0,Math.min(255,30+e+L[i]*.1)); a[i*4]=g*.86; a[i*4+1]=g*.88; a[i*4+2]=Math.min(255,g+14); a[i*4+3]=255; }
+    x.putImageData(d,0,0); }catch(e){ x.fillStyle='rgba(12,14,30,.78)'; x.fillRect(0,0,w,h); } return o; }
+/* ---- 先に作っておく絵：机・星屑・無地のカード・影・光 ---- */
+var RV_ASSETS=null;
+function rvAssets(){ if(RV_ASSETS) return RV_ASSETS; const desk=rvCanvas(RVW,RVH), x=desk.getContext('2d');
+  // 机：夜空を映した黒い漆。真上から見下ろす
+  let g=x.createRadialGradient(540,760,0,540,760,1350); g.addColorStop(0,'#141733'); g.addColorStop(.5,'#080a1c'); g.addColorStop(1,'#020208'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
+  g=x.createLinearGradient(0,300,RVW,1500); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.48,'rgba(200,210,255,.035)'); g.addColorStop(.52,'rgba(200,210,255,.05)'); g.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
+  for(let i=0;i<320;i++){ const r=rvRnd(i,1), big=r<.06; x.globalAlpha=(big?.35:.08)+rvRnd(i,2)*.3; x.fillStyle=rvRnd(i,3)<.2?'#ffe8b8':'#dfe6ff'; x.beginPath(); x.arc(rvRnd(i,4)*RVW,rvRnd(i,5)*RVH,big?1.6:.5+rvRnd(i,6)*.8,0,6.283); x.fill(); }
+  x.globalAlpha=1; g=x.createRadialGradient(540,860,500,540,860,1250); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.6)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
+  const dust=[...Array(150)].map((_,i)=>({x:rvRnd(i,11)*RVW,y:180+rvRnd(i,12)*(RVH-360),r:.7+rvRnd(i,13)*1.7,a:.18+rvRnd(i,14)*.5,ph:rvRnd(i,15)*6.28,col:rvRnd(i,16)<.35?'#f5dfa6':'#e6ecff'}));
+  return RV_ASSETS={desk,dust,sh:{},glow:{}}; }
+function rvBlank(w,h){ const o=rvCanvas(w,h), x=o.getContext('2d'), g=x.createLinearGradient(0,0,w,h); g.addColorStop(0,'#16183a'); g.addColorStop(1,'#090b1d'); x.fillStyle=g; x.fillRect(0,0,w,h);
+  x.strokeStyle='rgba(233,211,154,.42)'; x.lineWidth=2; rvRR(x,14,14,w-28,h-28,8); x.stroke(); x.strokeStyle='rgba(233,211,154,.16)'; x.lineWidth=1; rvRR(x,26,26,w-52,h-52,5); x.stroke(); return o; }
+// 影と光：ぼかしは重いので、1回だけ描いて使い回す（shadowBlur で、図形は枠の外に置いて影だけを写す）
+function rvBlurSprite(w,h,blur,col,r){ const pad=blur*2.2, o=rvCanvas(w+pad*2,h+pad*2), x=o.getContext('2d'); x.shadowColor=col; x.shadowBlur=blur; x.shadowOffsetX=o.width; x.fillStyle='#000'; rvRR(x,pad-o.width,pad,w,h,r); x.fill(); return {cv:o,pad}; }
+function rvShadowOf(A,w,h){ const k=w+'x'+h; return A.sh[k]||(A.sh[k]={hard:rvBlurSprite(w,h,10,'rgba(0,0,0,.95)',12),soft:rvBlurSprite(w,h,46,'rgba(0,0,0,.9)',12)}); }
+function rvGlowOf(A,w,h,rk){ const k=w+'x'+h+(rk.myth?'myth':rk.col); if(A.glow[k]) return A.glow[k];
+  if(!rk.myth) return A.glow[k]=rvBlurSprite(w,h,64,rk.col,14);
+  const s=rvBlurSprite(w,h,64,RV_RB[0],14), x=s.cv.getContext('2d'); x.globalCompositeOperation='lighter'; // 虹：色違いの光を少しずつずらして重ねる
+  RV_RB.slice(1,5).forEach((c,i)=>{ const a=i*Math.PI/2, t=rvBlurSprite(w,h,64,c,14); x.globalAlpha=.75; x.drawImage(t.cv,Math.cos(a)*40,Math.sin(a)*40); }); return A.glow[k]=s; }
+function rvSprite(x,sp,w,h,alpha,op){ if(alpha<=0) return; x.save(); if(op) x.globalCompositeOperation=op; x.globalAlpha*=alpha; x.drawImage(sp.cv,-w/2-sp.pad,-h/2-sp.pad); x.restore(); }
+/* ---- 段取り：1枚ずつの時刻を決める ---- */
+const RV_T={drop:{lead:250,fall:620,read:1050,charge:950,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
+function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
+  items.forEach((it,k)=>{ const best=k===n-1; it.best=best; it.t0=t; it.dir=rvRnd(k,7)<.5?-1:1;
+    if(v==='photo'){ it.W=900; it.H=506; } else { it.W=980; it.H=551; }
+    it.img1=rvScaled(it.img,it.W,it.H); if(v==='foil') it.emb=rvEmboss(it.img,it.W,it.H);
+    it.rest=best?{x:RV_CX,y:RV_CY,rot:0}:{x:RV_CX+(rvRnd(k,8)-.5)*90,y:RV_CY+(rvRnd(k,9)-.5)*70,rot:(rvRnd(k,10)-.5)*.24};
+    if(v==='foil'){ it.off=best?T.charge:0; it.press=t+380+it.off; it.infoIn=it.press+770; it.starAt=it.infoIn+430; it.press2=best?it.infoIn+900:0; it.land=it.press; t+=T.read+it.off; }
+    else{ it.drop=t+(best?T.charge:0); it.land=it.drop+T.fall; it.infoIn=it.land+100; it.starAt=it.infoIn+260; t=it.land+T.read;
+      const w=it.W+(v==='photo'?32:0), h=it.H+(v==='photo'?32:0);
+      ev.push({t0:it.land,x:it.rest.x,y:it.rest.y,rot:it.rest.rot,w,h,col:it.rk.myth?'#efe6ff':it.rk.col,str:(v==='photo'?.42:.72)*(best?1.4:1),rings:best?[[0,1],[220,.6]]:[[0,1]]}); } });
+  items.forEach((it,k)=>{ it.nx=k<n-1?items[k+1].t0:0; });
+  const b=items[n-1], E=v==='foil'?b.infoIn+2200:b.land+T.after; return {v,mode,items,events:ev,A,E,total:E+1500}; }
+/* ---- 1コマを描く ---- */
+function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompositeOperation='source-over'; x.globalAlpha=1; x.drawImage(A.desk,0,0);
+  // 光の風圧：輪が広がり、机の星屑を押し流す
+  const evs=P.events.filter(e=>t>e.t0), RR=(e,dt)=>e.str*430*(1-Math.exp(-dt/380)); // 輪はカードの縁から外へ、机の上に収まる大きさまで
+  for(const d of A.dust){ let dx=0,dy=0,b=0; for(const e of evs){ const dt=t-e.t0, R=RR(e,dt), vx=d.x-e.x, vy=d.y-e.y, dd=Math.hypot(vx,vy)||1, ex=Math.max(0,dd-Math.max(e.w,e.h)*.42);
+      if(R>ex){ const m=e.str*150*Math.exp(-ex/650)*rvCl((R-ex)/240); dx+=vx/dd*m; dy+=vy/dd*m; } b+=Math.exp(-Math.pow((R-ex)/80,2))*e.str*Math.max(0,1-dt/1800); }
+    x.globalAlpha=Math.min(1,d.a*(.72+.28*Math.sin(t*.0016+d.ph))+b*.7); x.fillStyle=d.col; x.beginPath(); x.arc(d.x+dx,d.y+dy,d.r*(1+b),0,6.283); x.fill(); }
+  x.globalAlpha=1;
+  for(const e of evs) for(const [dl,k] of e.rings){ const dt=t-e.t0-dl; if(dt<0||dt>1400) continue; const R=RR(e,dt), al=Math.pow(1-dt/1400,2)*Math.pow(1-R/(e.str*430+1),1.2)*Math.min(1,e.str*1.2)*k; // 広がるほど薄く
+    x.save(); x.translate(e.x,e.y); x.rotate(e.rot); x.strokeStyle=e.col; for(const [lw,a] of [[36,.08],[14,.16],[3,.3]]){ x.globalAlpha=al*a; x.lineWidth=lw; rvRR(x,-e.w/2-R,-e.h/2-R,e.w+2*R,e.h+2*R,12+R*.9); x.stroke(); } x.restore(); }
+  x.globalAlpha=1;
+  if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
+  rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); }
+function rvPose(P,it,t){ const r=it.rest, T=RV_T[P.v], fl=t<it.drop?Math.sin((t-it.t0)/280)*5:0;
+  if(P.v==='drop'){ const p=t<it.drop?0:rvCl((t-it.drop)/T.fall), h=1-p*p; let s=1+h*.85; const dl=t-it.land; if(dl>0&&dl<200) s*=1-.012*Math.sin(Math.PI*dl/200);
+    return {x:r.x+h*it.dir*70,y:r.y-h*150+fl,rot:r.rot+h*it.dir*.16,s,sy:1-h*.3,h,a:rvCl((t-it.t0)/220),edge:5+h*30}; }
+  // 写真：減速しながら降り、一度だけ大きく揺れて（ヒラっと）置かれる
+  const p=t<it.drop?0:rvCl((t-it.drop)/T.fall), h=Math.pow(1-p,1.7), sw=Math.cos(1.25*Math.PI*p)*Math.pow(1-p,.8);
+  return {x:r.x+it.dir*150*sw,y:r.y-h*130+fl,rot:r.rot+it.dir*.26*sw,s:1+h*.4,sy:1-.22*Math.abs(Math.sin(1.25*Math.PI*p))*(1-p),h,a:rvCl((t-it.t0)/260),edge:0}; }
+function rvCardDraw(x,it,ps,kind,dim,L){ const W=it.W, H=it.H; x.save(); x.globalAlpha*=ps.a; x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy);
+  if(kind!=='photo'){ const e=ps.edge, g=x.createLinearGradient(0,H/2-6,0,H/2+e); g.addColorStop(0,'#d8bb72'); g.addColorStop(.45,'#8a6c34'); g.addColorStop(1,'#33270f'); x.fillStyle=g; rvRR(x,-W/2+1,-H/2+e,W-2,H,12); x.fill(); } // 厚み：金の小口
+  else{ x.fillStyle='#f3efe6'; rvRR(x,-W/2-16,-H/2-16,W+32,H+32,3); x.fill(); x.fillStyle='rgba(0,0,0,.06)'; x.fillRect(-W/2-16,H/2+10,W+32,6); } // 写真の白い縁
+  x.save(); rvRR(x,-W/2,-H/2,W,H,kind==='photo'?2:12); x.clip();
+  const im=ps.s*ps.sy<=1.05?it.img1:(it.img||it.img1);
+  if(L){ x.drawImage(L.blank,-W/2,-H/2,W,H); if(L.emb>0){ x.globalAlpha=ps.a*L.emb; x.drawImage(it.emb,-W/2,-H/2,W,H); } if(L.col>0){ x.globalAlpha=ps.a*L.col; x.drawImage(im,-W/2,-H/2,W,H); } x.globalAlpha=ps.a;
+    if(L.plate>0){ const g=x.createLinearGradient(0,-H/2,0,H/2); g.addColorStop(0,`rgba(255,236,190,${.1*L.plate})`); g.addColorStop(1,`rgba(255,236,190,${.02*L.plate})`); x.fillStyle=g; x.fillRect(-W/2,-H/2,W,H); }
+    if(L.flash>0){ x.fillStyle=`rgba(255,246,220,${L.flash})`; x.fillRect(-W/2,-H/2,W,H); } }
+  else x.drawImage(im,-W/2,-H/2,W,H);
+  x.restore(); if(dim>0){ x.fillStyle=`rgba(2,3,10,${dim})`; const b=kind==='photo'?16:0; rvRR(x,-W/2-b,-H/2-b,W+2*b,H+2*b,kind==='photo'?3:12); x.fill(); } // 下になったカードは沈める（写真は白い縁ごと）
+  x.restore(); }
+function rvShadowDraw(x,A,it,ps,kind){ const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), S=rvShadowOf(A,w,h), sc=1+ps.h*.22;
+  x.save(); x.translate(ps.x+8+ps.h*60,ps.y+14+ps.h*110); x.rotate(ps.rot); x.scale(sc,sc*ps.sy); x.globalAlpha=ps.a;
+  rvSprite(x,S.hard,w,h,(1-ps.h)*(kind==='photo'?.45:.7)); rvSprite(x,S.soft,w,h,.25+ps.h*.35); x.restore(); }
+function rvGlowDraw(x,A,it,ps,a,kind){ if(a<=0) return; const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), G=rvGlowOf(A,w,h,it.rk);
+  x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvSprite(x,G,w,h,a*(it.rk.myth?.55:1),'lighter'); x.restore(); } // 虹の光は重ねて明るいので弱める
+function rvDrawPile(x,P,t){ const kind=P.v, its=P.items;
+  its.forEach((it,k)=>{ if(t<it.t0) return; const ps=rvPose(P,it,t); let dim=0; for(let j=k+1;j<its.length;j++) if(t>its[j].land) dim+=.34*rvCl((t-its[j].land)/380); dim=Math.min(.6,dim);
+    rvShadowDraw(x,P.A,it,ps,kind);
+    // 光：いちばんのカードは溜めのあいだ強まり、着地で強く光って、そのまま残る。ほかのカードは着地で一度だけ
+    const dl=t-it.land; let ga=0; if(it.best){ ga=t<it.drop?rvCl((t-it.t0)/RV_T[kind].charge)*.85:dl<0?.85:.45+.55*Math.exp(-dl/500); } else if(dl>0) ga=.42*Math.exp(-dl/420)*(1-dim);
+    rvGlowDraw(x,P.A,it,ps,ga*ps.a,kind); rvCardDraw(x,it,ps,kind,dim); }); }
+function rvDrawFoil(x,P,t){ for(const it of P.items){ if(t<it.t0) continue; let X=RV_CX+(1-rvOC(rvCl((t-it.t0)/380)))*1150;
+    if(it.nx){ const po=rvCl((t-it.nx)/380); if(po>=1) continue; X-=rvIC(po)*1150; }
+    const tp=t-it.press, t2=it.press2?t-it.press2:-1; let s=1; if(tp>=0&&tp<170) s=1-.016*Math.sin(Math.PI*tp/170); if(t2>=0&&t2<170) s=1-.016*Math.sin(Math.PI*t2/170);
+    const ps={x:X,y:RV_CY,rot:0,s,sy:1,h:0,a:1,edge:6};
+    const plate=it.best&&tp<0?rvCl((t-it.t0-380)/it.off):tp<0?rvCl((t-it.t0-220)/160):0;
+    const flash=Math.max(tp>=0&&tp<300?Math.pow(1-tp/300,2)*.35:0,t2>=0&&t2<420?Math.pow(1-t2/420,2)*.3:0);
+    rvShadowDraw(x,P.A,it,ps,'foil');
+    let ga=0; if(it.best) ga=tp<0?plate*.8:.45+.45*Math.exp(-Math.max(0,t2<0?tp:t2)/600); else if(tp>0) ga=.38*Math.exp(-(tp-500)/500)*rvCl((tp-500)/200);
+    rvGlowDraw(x,P.A,it,ps,ga,'foil');
+    rvCardDraw(x,it,ps,'foil',0,{blank:P.blank||(P.blank=rvBlank(it.W,it.H)),emb:rvCl((tp-120)/380),col:rvCl((tp-520)/360),plate,flash}); } }
+/* ---- 名前・★・秘境レベル（カードの下） ---- */
+function rvLS(x,v){ if('letterSpacing' in x) x.letterSpacing=v; }
+function rvFoilText(x,txt,cx,y,size,dt,long){ // 金の箔：縦の金のグラデーションで塗り、光の帯を横切らせる
+  if(dt<0) return; const a=rvCl(dt/150), sc=1+.05*(1-rvOC(rvCl(dt/170))); x.save(); x.globalAlpha*=a; x.translate(cx,y); x.scale(sc,sc); x.textAlign='center';
+  let g=x.createLinearGradient(0,-size*.85,0,size*.1); g.addColorStop(0,'#fff4cc'); g.addColorStop(.42,'#e8c56c'); g.addColorStop(.55,'#a67a2e'); g.addColorStop(1,'#f0d48a'); x.fillStyle=g; x.fillText(txt,0,0);
+  const sd=long?1300:750, p=(dt-120)/sd; if(p>0&&p<1){ const w=x.measureText(txt).width, sx=-w/2-160+p*(w+320); g=x.createLinearGradient(sx-110,0,sx+110,0); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,.95)'); g.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=g; x.fillText(txt,0,0); }
+  x.restore(); }
+function rvStarPath(x,R){ x.beginPath(); for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, r=i%2?R*.44:R; x.lineTo(Math.cos(a)*r,Math.sin(a)*r); } x.closePath(); }
+function rvDrawStars(x,it,t,cy,stamp){ const rk=it.rk, n=rk.stars, tot=n+(rk.plus?1:0); if(!tot) return; const R=27, gap=70, x0=RV_CX-(tot-1)*gap/2;
+  for(let k=0;k<tot;k++){ const tk=it.starAt+k*(stamp?135:105), p=(t-tk)/(stamp?170:260); if(p<=0) continue; const q=rvCl(p), sc=stamp?1.7-.7*rvOC(q):rvOB(q), col=rk.myth?RV_RB[k%5]:rk.col;
+    x.save(); x.globalAlpha*=stamp?q:rvCl(q*2.2); x.translate(x0+k*gap,cy); x.scale(sc,sc); x.fillStyle=col; x.shadowColor=col; x.shadowBlur=it.best?22:14;
+    if(k<n){ rvStarPath(x,R); x.fill(); } else { const b=R*.2, l=R*.72; rvRR(x,-l,-b,l*2,b*2,b); x.fill(); rvRR(x,-b,-l,b*2,l*2,b); x.fill(); } // ★5+ の「＋」
+    x.restore();
+    if(stamp&&p>.9&&p<2.6){ const r=(p-.9)/1.7; x.save(); x.globalAlpha*=(1-r)*.5; x.strokeStyle=col; x.lineWidth=2; x.beginPath(); x.arc(x0+k*gap,cy,R*(1.15+r*.9),0,6.283); x.stroke(); x.restore(); } } } // 印を押した跡の輪
+function rvDrawInfo(x,P,t){ for(const it of P.items){ const foil=P.v==='foil', a=rvCl((t-it.infoIn)/(foil?1:420))*(it.nx?1-rvCl((t-it.nx)/260):1); if(a<=0) continue;
+    const up=foil?0:(1-rvOC(rvCl((t-it.infoIn)/560)))*16, st=it.st, mm=fmtAge(st.age||0).match(/^([\d.,]+[KMB]?)\s*(.*)$/);
+    x.save(); x.globalAlpha=a; x.textAlign='center'; x.textBaseline='alphabetic';
+    x.font=`700 68px ${RV_MINCHO}`; rvLS(x,'6px'); const nm=it.c.name||'（名前なし）';
+    if(foil) rvFoilText(x,nm,RV_CX,1240,68,t-it.infoIn,it.best); else { x.fillStyle='#f4ecd6'; x.shadowColor='rgba(0,0,0,.6)'; x.shadowBlur=12; x.fillText(nm,RV_CX,1240+up); x.shadowBlur=0; }
+    rvDrawStars(x,it,t,1334+up,foil);
+    const la=foil?rvCl((t-it.infoIn-80)/300):1; x.globalAlpha=a*la; x.font=`400 22px ${RV_SANS}`; rvLS(x,'8px'); x.fillStyle='#8f8a7c'; x.fillText('秘境レベル',RV_CX,1428+up);
+    // 数字は大きく、単位は小さく。2つを並べて中央に
+    const num=mm?mm[1]:fmtAge(st.age||0), unit=mm?mm[2]:''; x.font=`400 70px ${RV_SANS}`; rvLS(x,'1px'); const w1=x.measureText(num).width; x.font=`400 28px ${RV_SANS}`; rvLS(x,'5px'); const w2=unit?x.measureText(unit).width+12:0, x1=RV_CX-(w1+w2)/2;
+    x.textAlign='left'; x.globalAlpha=a;
+    if(foil){ x.font=`400 70px ${RV_SANS}`; rvLS(x,'1px'); rvFoilText(x,num,x1+w1/2,1508,70,t-it.infoIn-60,it.best); x.textAlign='left'; }
+    else{ x.font=`400 70px ${RV_SANS}`; rvLS(x,'1px'); x.fillStyle='#f6efdc'; x.fillText(num,x1,1508+up); }
+    if(unit){ x.globalAlpha=a*la; x.font=`400 28px ${RV_SANS}`; rvLS(x,'5px'); x.fillStyle='#c9c1ad'; x.fillText(unit,x1+w1+12,1508+up); }
+    if(it.rk.myth){ x.textAlign='center'; x.font=`700 22px ${RV_SANS}`; rvLS(x,'7px'); const g=x.createLinearGradient(RV_CX-220,0,RV_CX+220,0); RV_RB.slice(0,5).forEach((c,i)=>g.addColorStop(i/4,c)); x.fillStyle=g; x.globalAlpha=a*la; x.fillText(it.rk.dawn?'SINCE THE DAWN OF TIME':'ONCE IN A CENTURY',RV_CX,1562+up); }
+    rvLS(x,'0px'); x.restore(); } }
+function rvDrawFrame(x,P,t){ x.save(); x.textAlign='center'; x.globalAlpha=rvCl(t/500)*.85; x.font=`700 30px ${RV_MINCHO}`; rvLS(x,'12px'); x.fillStyle='#e9d39a'; x.fillText('命ノ星座カード',RV_CX,150);
+  if(P.mode==='all'&&P.items.length>1){ let k=0; P.items.forEach((it,i)=>{ if(t>=it.t0) k=i; }); x.globalAlpha=rvCl(t/500)*.55; x.font=`400 22px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#b9b2a3'; x.fillText(`${k+1} / ${P.items.length}`,RV_CX,200); }
+  const fa=rvCl((t-P.E)/650); if(fa>0){ x.globalAlpha=fa; x.font=`700 30px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#e9d39a'; x.fillText('#命ノ星座カード',RV_CX,1760); x.globalAlpha=fa*.7; x.font=`400 24px ${RV_SANS}`; rvLS(x,'1px'); x.fillStyle='#b9b2a3'; x.fillText(SITE_URL.replace(/^https:\/\//,'').replace(/\/$/,''),RV_CX,1812); }
+  rvLS(x,'0px'); x.restore(); }
+/* ---- 流す ---- */
+function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); window.RV=null; if(R.onClose) R.onClose(); }
+async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.length) return; v=REVEAL_VARS[v]?v:'drop'; const mode=opt.mode==='one'?'one':'all';
+  const ag=c=>{ const a=charStats(c).age||0; return isFinite(a)?a:1e15; }, ord=cs.slice().sort((a,b)=>ag(a)-ag(b)), list=mode==='one'?[ord[ord.length-1]]:ord;
+  const ov=cardEl('div',{class:'rv-ov',role:'dialog','aria-modal':'true','aria-label':'カードの登場'}), cv=cardEl('canvas',{class:'rv-cv',width:RVW,height:RVH}), bar=cardEl('div',{class:'rv-bar'}), skip=cardEl('button',{class:'rv-skip',type:'button'},'スキップ');
+  bar.hidden=true; ov.append(skip,cv,bar); document.body.appendChild(ov);
+  const R=window.RV={ov,dead:false,ovf:document.body.style.overflow,onClose:opt.onClose}, x=cv.getContext('2d'); document.body.style.overflow='hidden';
+  R.key=e=>{ if(e.key==='Escape'){ e.preventDefault(); if(R.ended) rvClose(); else R.jump=true; } }; document.addEventListener('keydown',R.key); skip.addEventListener('click',()=>{ R.jump=true; }); skip.focus();
+  // 準備：机を出して、カードの絵と書体を用意する
+  const A=rvAssets(); x.drawImage(A.desk,0,0); x.textAlign='center'; x.font=`400 24px ${RV_SANS}`; x.fillStyle='rgba(185,178,163,.6)'; x.fillText('カードを用意しています…',RV_CX,RV_CY);
+  const fonts=Promise.all([document.fonts.load(`700 68px ${RV_MINCHO}`,list.map(c=>c.name||'').join('')+'命ノ星座カード（名前なし）'),document.fonts.load(`400 70px ${RV_SANS}`,'0123456789.,秘境レベルDAYSWEKMONTHYRAX'),document.fonts.load(`700 30px ${RV_SANS}`,'#命ノ星座カード')]).catch(()=>{});
+  const items=await Promise.all(list.map(async c=>{ const st=charStats(c); return {c,st,rk:rvRank(st.age||0),img:await rvCardImg(c)}; }));
+  await Promise.race([fonts,new Promise(r=>setTimeout(r,2500))]); if(R.dead) return;
+  const P=rvPlan(items,v,mode); R.P=P; R.drawAt=t=>{ R.hold=true; rvDraw(x,P,t); }; // drawAt：好きな時刻の1コマを描いて止める（確認・動画の書き出し用）
+  const end=()=>{ R.ended=true; skip.remove(); bar.hidden=false;
+    bar.innerHTML=(opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':'')+`<button class="btn primary" type="button" data-rvok>${esc(opt.okLabel||'カードを見る')}</button>`;
+    bar.querySelector('[data-rvok]').addEventListener('click',rvClose); const re=bar.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay); bar.querySelector('[data-rvok]').focus(); };
+  if(rvStill()||R.jump){ rvDraw(x,P,P.total); return end(); }
+  const t0=performance.now(); const step=now=>{ if(R.dead) return; if(R.hold) return; const t=R.jump?P.total:Math.min(P.total,now-t0); rvDraw(x,P,t); if(t>=P.total) return end(); requestAnimationFrame(step); }; requestAnimationFrame(step); }
+/* ---- 試作の見比べ：#reveal で開くと、見本のキャラで流す操作盤を出す（保存はしない） ---- */
 function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜蘭','ナヒーダ','鍾離','雷電将軍','フリーナ','ヌヴィレット','楓原万葉','胡桃'], BANDS=[[1,7],[7,30],[30,90],[90,365],[365,1095],[1095,36500],[36500,Infinity]];
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const SUBS={flower:['CR','CD','ATK%','DEF'],plume:['CR','CD','ATK%','HP'],sands:['CR','CD','EM','DEF'],goblet:['CR','CD','ATK%','HP%'],circlet:['CD','ATK%','EM','DEF']}, MAIN={flower:'HP',plume:'ATK',sands:'ATK%',goblet:'DMG_炎',circlet:'CR'};
@@ -745,17 +661,20 @@ function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜�
   const make=(name,lv)=>{ const pieces={}; for(const s of SLOTS){ const [a,b,c2,x]=SUBS[s], e=Math.max(0,Math.min(5,Math.round(lv+(RN()-.5)*2))), q=lv>3.5?3:lv>2?2:1, t=()=>Math.max(0,Math.min(3,q-(RN()<.35?1:0)+(RN()<.2?1:0)));
       const r={[a]:[t()],[b]:[t()],[c2]:[t()],[x]:[RN()*4|0]}; for(let i=0;i<5;i++){ if(i<e){ const k=[a,b,c2][RN()*(s==='circlet'?2:3)|0]; r[k].push(t()); } else r[x].push(RN()*4|0); }
       pieces[s]=P(MAIN[s],[a,b,c2,x].map(k=>[k,r[k]])); } return {id:'rvdemo-'+name,name,set:'燃え盛る炎の魔女4',eff:['ATK%','CR','CD'],date:'見本',pieces}; };
-  const pick=(name,band)=>{ const [lo,hi]=BANDS[band]; let bestc=null, bd=1e99; for(let k=0;k<60;k++){ const c=make(name,band*.85+RN()*1.2); const a=charStats(c).age||0; if(a>=lo&&a<hi) return c; const dd=Math.abs(Math.log((isFinite(a)?a:1e9)+1)-Math.log(Math.min(lo*2,1e9))); if(dd<bd){ bd=dd; bestc=c; } } return bestc; };
+  const pick=(name,band)=>{ const [lo,hi]=BANDS[band]; let bc=null, bd=1e99; for(let k=0;k<60;k++){ const c=make(name,band*.85+RN()*1.2), a=charStats(c).age||0; if(a>=lo&&a<hi) return c; const dd=Math.abs(Math.log((isFinite(a)?a:1e9)+1)-Math.log(Math.min(lo*2,1e9))); if(dd<bd){ bd=dd; bc=c; } } return bc; };
   const out=[]; for(let i=0;i<n-1;i++) out.push(pick(names[i%names.length],Math.min(top-1,RN()*Math.max(1,top)|0)));
   out.push(pick('スカーク',top)); return out; }
 function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{class:'rv-demo',id:'rvDemo'});
-  const st={v:'e',n:6,top:5}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']];
+  const st={v:'drop',m:'all',n:6,top:5}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']], B=(k,v,t,on)=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-${k}="${v}" aria-pressed="${on}">${t}</button>`;
+  const play=()=>{ const cs=rvDemoChars(st.m==='one'?1:st.n,st.top); const go=()=>revealPlay(cs,st.v,{mode:st.m,replay:go,okLabel:'閉じる'}); go(); };
   const draw=()=>{ box.innerHTML=`<div class="row"><b>演出の試作</b><span class="note">見本のキャラで流します（保存はしません）</span><button class="btn" style="margin-left:auto;padding:2px 8px;font-size:11px" data-x>閉じる</button></div>
-    <div class="row">案 ${Object.entries(REVEAL_VARS).map(([k,t])=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-v="${k}" aria-pressed="${st.v===k}">${t}</button>`).join('')}</div>
-    <div class="row">人数 ${[1,3,6,10].map(k=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-n="${k}" aria-pressed="${st.n===k}">${k}人</button>`).join('')}　最後 ${tops.map(([k,t])=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-t="${k}" aria-pressed="${st.top===k}">${t}</button>`).join('')}</div>
-    <div class="row"><button class="btn primary" data-go>▶ 流す</button><span class="note">端末で「視差効果を減らす」を選んでいると、最後のカードだけが出ます</span></div>`;
-    box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ st.v=b.dataset.v; draw(); }); box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ st.n=+b.dataset.n; draw(); }); box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ st.top=+b.dataset.t; draw(); });
-    box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=()=>{ rvAudioPrime(); revealPlay(rvDemoChars(st.n,st.top),st.v); }; };
+    <div class="row">案 ${Object.entries(REVEAL_VARS).map(([k,t])=>B('v',k,t,st.v===k)).join('')}</div>
+    <div class="row">${B('m','all','全員',st.m==='all')}${B('m','one','1枚',st.m==='one')}　人数 ${[3,6,10].map(k=>B('n',k,k+'人',st.n===k)).join('')}</div>
+    <div class="row">最後 ${tops.map(([k,t])=>B('t',k,t,st.top===k)).join('')}</div>
+    <div class="row"><button class="btn primary" data-go>▶ 流す</button><span class="note">端末で「視差効果を減らす」を選んでいると、最後の絵だけが出ます</span></div>`;
+    box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ st.v=b.dataset.v; draw(); }); box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ st.m=b.dataset.m; draw(); });
+    box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ st.n=+b.dataset.n; draw(); }); box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ st.top=+b.dataset.t; draw(); });
+    box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=play; };
   draw(); document.body.appendChild(box); }
 /* ---- 共有：スマホは画像ごと共有シートへ。できなければ画像を保存して、X の投稿画面を開くボタン ---- */
 async function cardShare(){ const msg=$('cMsg'), c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const st=charStats(c), tr=tierOf(st.age||0);
