@@ -540,8 +540,8 @@ function rvSprite(x,sp,w,h,alpha,op){ if(alpha<=0) return; x.save(); if(op) x.gl
 /* ---- 段取り：1枚ずつの時刻を決める ---- */
 // drop の pre＝カードはまだ画面の外で、影だけが近づいてくる時間
 const RV_T={drop:{lead:250,pre:430,preBest:1450,fall:230,read:1050,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
-// テンポ：1枚目はふつうの速さ（儀式の形を見せる）→ 2枚目から速め → 3枚目からは駆け足 → いちばんのカードの直前の1枚で少し落とす（溜めにつなぐ）。sp＝時間の倍率
-function rvTempo(k,m){ if(m<=1||k===0) return 1; if(k===m-1) return .7; if(k===1) return .75; return .4; }
+// テンポ：いちばんのカードの直前の1枚までは、同じ駆け足で → 直前の1枚だけ少し落とす（溜めにつなぐ）。sp＝時間の倍率
+function rvTempo(k,m){ if(m<=1) return 1; return k===m-1?.7:.34; }
 function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
   items.forEach((it,k)=>{ const best=k===n-1; it.best=best; it.t0=t; it.dir=rvRnd(k,7)<.5?-1:1;
     if(v==='photo'){ it.W=900; it.H=506; } else { it.W=980; it.H=551; }
@@ -567,7 +567,15 @@ function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompos
     x.save(); x.translate(e.x,e.y); x.rotate(e.rot); x.strokeStyle=e.col; for(const [lw,a] of [[36,.08],[14,.16],[3,.3]]){ x.globalAlpha=al*a; x.lineWidth=lw; rvRR(x,-e.w/2-R,-e.h/2-R,e.w+2*R,e.h+2*R,12+R*.9); x.stroke(); } x.restore(); }
   x.globalAlpha=1;
   if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
+  if(P.v==='drop') rvDrawStreak(x,P,t);
   rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); }
+// 落ちるカード：直前の1枚から最後の1枚へ移るとき、右上から細い光が一筋、落ちる場所へ刺さって小さくきらめく（白金。ランクは匂わせない）
+function rvDrawStreak(x,P,t){ const its=P.items, b=its[its.length-1]; if(its.length<2) return; const u=(t-(b.t0-120))/440; if(u<0||u>1) return;
+  const S=[RVW+90,-160], E=[b.rest.x+70,b.rest.y-60], at=f=>[S[0]+(E[0]-S[0])*f,S[1]+(E[1]-S[1])*f], hd=at(rvOC(rvCl(u/.32))), tl=at(rvCl((u-.12)/.55)), fa=1-rvCl((u-.45)/.55);
+  x.save(); x.globalCompositeOperation='lighter'; const g=x.createLinearGradient(tl[0],tl[1],hd[0],hd[1]); g.addColorStop(0,'rgba(255,246,224,0)'); g.addColorStop(1,'rgba(255,246,224,1)');
+  x.strokeStyle=g; x.lineCap='round'; for(const [lw,a] of [[16,.12],[5,.35],[1.8,.95]]){ x.globalAlpha=a*fa; x.lineWidth=lw; x.beginPath(); x.moveTo(tl[0],tl[1]); x.lineTo(hd[0],hd[1]); x.stroke(); }
+  const k=rvCl((u-.28)/.72); if(k>0){ const r=34*(1-k*.6), al=(1-k)*fa; x.globalAlpha=al; x.fillStyle='#fff6e0'; x.shadowColor='#ffe8b0'; x.shadowBlur=22; x.beginPath(); for(let i=0;i<8;i++){ const a=i*Math.PI/4, rr=i%2?r*.16:r; x.lineTo(E[0]+Math.cos(a)*rr,E[1]+Math.sin(a)*rr); } x.closePath(); x.fill(); }
+  x.restore(); }
 function rvPose(P,it,t){ const r=it.rest, T=RV_T[P.v], fl=t<it.drop?Math.sin((t-it.t0)/280)*5:0;
   // 落ちるカード：はじめはカメラより上にあって画面に映らず、影だけが机に落ちて近づいてくる（h：1.6→0.5）。最後に一気に落ちる（0.5→0）
   if(P.v==='drop'){ const pre=t<it.drop; let h; if(pre){ const q=rvCl((t-it.t0)/(it.drop-it.t0)); h=1.6-1.1*q*q*(3-2*q); } else { const p=rvCl((t-it.drop)/it.fall); h=.5*(1-p*p); }
