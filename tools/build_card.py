@@ -179,6 +179,38 @@ CSS = r"""
 a.btn{text-decoration:none; display:inline-block}
 .clock{font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:0 8px; margin-left:6px; letter-spacing:0}
 @media (max-width:760px){ .ckv{grid-template-columns:1fr} .ckv dt{margin-top:6px} .cnav button{padding:6px 10px; font-size:13px} }
+/* ===== ガチャふうの演出（v2.1 試作） ===== */
+.rv-ov{position:fixed; inset:0; z-index:9000; background:radial-gradient(ellipse at 50% 45%,#141838 0%,#070816 60%,#020309 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:56px 16px 24px; overflow:auto; color:#e6dfcf; animation:rvIn .35s ease-out}
+@keyframes rvIn{from{opacity:0}}
+.rv-skip{position:fixed; top:12px; right:12px; z-index:2; background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer}
+.rv-skip:hover{background:rgba(255,255,255,.16)}
+.rv-flip{position:relative; width:100%; aspect-ratio:16/9; transform-style:preserve-3d; transition:transform .7s cubic-bezier(.3,.1,.2,1)}
+.rv-flip.on{transform:rotateY(180deg)}
+.rv-face{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:6px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(233,211,154,.2)}
+.rv-face svg{display:block; width:100%; height:100%}
+.rv-front{transform:rotateY(180deg)}
+/* ランク色の光（--rv に色、虹のときは .myth）。カードの後ろでぼかして光らせる */
+.rv-aura{position:relative}
+.rv-aura::before{content:''; position:absolute; inset:-6%; border-radius:30px; background:var(--rv,#fff); filter:blur(26px); opacity:0; transition:opacity .5s; pointer-events:none}
+.rv-aura.myth::before{background:conic-gradient(from 0deg,#ff8fb1,#ffd27a,#8ff0c4,#8fbaff,#d59bff,#ff8fb1); animation:rvSpin 3s linear infinite}
+.rv-aura.lit::before{opacity:.55} .rv-aura.hint::before{animation:rvPulse 1.1s ease-in-out infinite} .rv-aura.myth.hint::before{animation:rvSpin 3s linear infinite, rvPulse 1.1s ease-in-out infinite}
+@keyframes rvPulse{0%,100%{opacity:.25; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.03)}}
+@keyframes rvSpin{to{filter:blur(26px) hue-rotate(360deg)}}
+.rv-stage{width:min(100%,980px,calc((100dvh - 190px)*16/9)); min-width:min(100%,280px)}
+.rv-cap{text-align:center; margin-top:18px; min-height:74px}
+.rv-cap .n{font-size:clamp(18px,3vw,26px); letter-spacing:.06em} .rv-cap .a{font-size:14px; color:#b9b2a3; margin-top:2px}
+.rv-cap .btns{justify-content:center; margin-top:12px}
+.rv-cap > *{animation:rvUp .5s ease-out both}
+@keyframes rvUp{from{opacity:0; transform:translateY(8px)}}
+.rv-grid{display:grid; grid-template-columns:repeat(var(--cols,3),minmax(0,1fr)); gap:14px; width:min(100%,960px)}
+.rv-cell{display:grid; gap:6px} .rv-cell .rv-face{border-radius:4px}
+.rv-cell .c{font-size:12px; text-align:center; min-height:1.4em; opacity:0; transition:opacity .3s} .rv-cell.open .c{opacity:1}
+.rv-cell .c b{font-weight:700}
+.rv-sky circle,.rv-sky line{transition:opacity .35s}
+.rv-demo{position:fixed; left:50%; bottom:12px; transform:translateX(-50%); z-index:8000; background:rgba(10,12,28,.94); border:1px solid rgba(233,211,154,.4); border-radius:10px; padding:10px 12px; display:grid; gap:6px; font-size:12px; width:min(calc(100% - 24px),560px); box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.rv-demo .row{gap:6px; flex-wrap:wrap; align-items:center}
+.rv-demo button[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi)}
+@media (prefers-reduced-motion: reduce){ .rv-ov,.rv-cap > *{animation:none} .rv-flip{transition:none} .rv-aura.hint::before,.rv-aura.myth::before{animation:none} }
 </style>
 """
 s = s.replace("<div class=\"wrap\">", CSS + "<div class=\"wrap\">", 1)
@@ -308,6 +340,7 @@ function cardAppInit(){
   portraitLoadAll().then(()=>{ renderChars(); });
   homeInit(pHome); cardShowPage('home');
   renderChars();
+  if(h0==='reveal'||window.REVEAL_DEMO) revealDemoPanel(); // showTab が先に # を書き換えるので、開いたときの値（h0）で見る
   if(location.hash) try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
 }
 /* ---- 動画から取り込む：枠（scan/index.html?embed=1）とのやりとり ---- */
@@ -466,10 +499,109 @@ async function homeGo(e){ if(e) e.preventDefault(); const msg=$('homeMsg'), btn=
   const why=($('enkaMsg').querySelector('p')||$('enkaMsg')).innerText.trim();
   msg.innerHTML=`<p class="err">${esc(why||'取得できませんでした。')}</p><p style="margin-top:4px"><a href="#" id="homeAlt">ほかの方法で取り込む（動画・スクショ・手で受け渡す）</a></p>`;
   $('homeAlt').addEventListener('click',ev=>{ ev.preventDefault(); cardShowPage('scan'); }); }
-/* いちばん秘境レベルが高いキャラのカードを出す。ガチャふうの演出は、あとでここに差し込む */
+/* いちばん秘境レベルが高いキャラのカードを出す。下にカードのページを用意してから、上に演出を重ねる */
 function homeReveal(names){ const cs=[...new Set(names)].map(n=>CHARS.find(c=>c.name===n)).filter(Boolean); if(!cs.length) return;
   const best=homeBest(cs); CH_OPEN=best.c.id; renderChars(); cardShowPage('card');
-  $('cMsg').innerHTML=`${cs.length}人を取り込みました。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name)}</b> でした。◀ ▶ でほかのキャラも見られます。`; }
+  $('cMsg').innerHTML=`${cs.length}人を取り込みました。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name)}</b> でした。◀ ▶ でほかのキャラも見られます。`;
+  revealPlay(cs,revealVar()); }
+/* ================= ガチャふうの演出（v2.1 試作。案を見比べてから1つに絞る） =================
+   A 星座：いちばんのキャラだけ。裏面に部位の星が低い順に灯り、線でつながり、ランク色に光ってから表に返る
+   B 10連めくり：取り込んだ全員の裏面を並べ、秘境レベルの低い順にめくる。最後の1枚はランク色で匂わせてからめくる
+   C 10連＋星座：Bの順にめくり、最後の1枚だけAの星座で返す
+   どれもスキップできる。端末で「視差効果を減らす」を選んでいる人には、演出なしで最後のカードだけを出す。
+   試作の見比べ：URLの末尾に #reveal を付けて開くと、見本のキャラで流せる操作盤が出る。?reveal=a|b|c で本番の流れの案を切り替え */
+const REVEAL_VARS={a:'A 星座',b:'B 10連めくり',c:'C 10連＋星座'};
+function revealVar(){ const q=(new URLSearchParams(location.search).get('reveal')||'').toLowerCase(); return REVEAL_VARS[q]?q:'c'; }
+function rvStill(){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
+function rvRank(a){ const t=a>0?tierOf(a):TIERS[0]; return {t,col:t[2],myth:!isFinite(a)||a>=36500}; } // 100年以上（上限も）は虹
+function rvAuraAttr(a){ const r=rvRank(a); return `class="rv-aura${r.myth?' myth':''}" style="--rv:${r.col}"`; }
+// 1つのページにカードを何枚も並べるので、SVGの中のidを1枚ずつ付け替える（同じidが並ぶと、隠れた側の模様を拾ってしまう）
+var RV_UID=0;
+function rvUniq(svg){ const k='_rv'+(++RV_UID); return svg.replace(/\bid="([^"]+)"/g,`id="$1${k}"`).replace(/url\(#([^)]+)\)/g,`url(#$1${k})`).replace(/href="#([^"]+)"/g,`href="#$1${k}"`); }
+function rvFront(c){ return rvUniq(cardSVG(c,charStats(c),'SK')); }
+// 裏面：カードと同じ夜空に金の枠、真ん中に五つ星の紋（部位の数）
+function rvBack(){ const k=++RV_UID; let sd=11; const RN=()=>{ sd=(sd*9301+49297)%233280; return sd/233280; }; let dots='';
+  for(let i=0;i<70;i++) dots+=`<circle cx="${(RN()*1200).toFixed(0)}" cy="${(RN()*675).toFixed(0)}" r="${(RN()*1.4+.3).toFixed(1)}" fill="#fff" opacity="${(RN()*.5+.15).toFixed(2)}"/>`;
+  const P=[...Array(5)].map((_,i)=>{ const a=(-90+i*72)*Math.PI/180; return [600+70*Math.cos(a),330+70*Math.sin(a)]; }), star=[0,2,4,1,3].map(i=>P[i].map(v=>v.toFixed(1)).join(',')).join(' ');
+  return `<svg viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="rvB${k}" cx=".5" cy=".48" r=".8"><stop offset="0" stop-color="#1b1d48"/><stop offset=".55" stop-color="#0b0e22"/><stop offset="1" stop-color="#04050b"/></radialGradient></defs>
+    <rect width="1200" height="675" fill="url(#rvB${k})"/>${dots}
+    <rect x="16" y="16" width="1168" height="643" rx="10" fill="none" stroke="#e9d39a" stroke-opacity=".6" stroke-width="2.5"/><rect x="30" y="30" width="1140" height="615" rx="6" fill="none" stroke="#e9d39a" stroke-opacity=".22"/>
+    <circle cx="600" cy="330" r="112" fill="none" stroke="#e9d39a" stroke-opacity=".45" stroke-width="1.5"/><circle cx="600" cy="330" r="124" fill="none" stroke="#e9d39a" stroke-opacity=".2" stroke-dasharray="2 6"/>
+    <polygon points="${star}" fill="none" stroke="#e9d39a" stroke-opacity=".5" stroke-width="1.2"/>${P.map(([x,y])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#f5e6bd"/>`).join('')}
+    <text x="600" y="510" text-anchor="middle" font-family='"Murecho","M PLUS 1p",sans-serif' font-size="22" font-weight="700" letter-spacing=".5em" fill="#e9d39a" fill-opacity=".7">命ノ星座</text></svg>`; }
+// 星の位置：カードの星座（中心・半径・部位の向き・ランクの帯ごとの目盛り）と同じ計算
+function rvStars(st){ const cx0=360, cy0=361, R0=58, R=246, BND=[1,7,30,90,365,1095,10950], ANG={flower:-90,plume:-18,sands:54,goblet:126,circlet:198};
+  const rad=d=>{ if(!(d>1)) return R0; if(d>=10950) return R; let k=0; while(k<5&&d>=BND[k+1]) k++; return R0+(k+(Math.log(d)-Math.log(BND[k]))/(Math.log(BND[k+1])-Math.log(BND[k])))/6*(R-R0); };
+  return SLOTS.map(s=>{ const d=st.slots[s].age, r=rad(isFinite(d)?d:1e9), a=ANG[s]*Math.PI/180; return {s,d,has:d>0,x:cx0+r*Math.cos(a),y:cy0+r*Math.sin(a)}; }); }
+const rvWait=(R,ms)=>new Promise(res=>{ if(R.dead) return res(); const t=setTimeout(res,ms); R.timers.push(t); });
+function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; R.timers.forEach(clearTimeout); R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); window.RV=null; if(R.onClose) R.onClose(); }
+async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.length) return;
+  const v2=c=>{ const a=charStats(c).age||0; return isFinite(a)?a:1e15; }, ord=cs.slice().sort((x,y)=>v2(x)-v2(y)), best=ord[ord.length-1];
+  const ov=cardEl('div',{class:'rv-ov',role:'dialog','aria-modal':'true','aria-label':'カードの発表'});
+  const R=window.RV={ov,dead:false,timers:[],ovf:document.body.style.overflow,onClose:opt.onClose}; document.body.style.overflow='hidden';
+  const skip=cardEl('button',{class:'rv-skip',type:'button'},'スキップ'); ov.appendChild(skip); const body=cardEl('div',{style:'width:100%;display:grid;justify-items:center'}); ov.appendChild(body); document.body.appendChild(ov);
+  const finish=()=>{ if(R.done) return; R.done=true; R.dead=true; R.timers.forEach(clearTimeout); skip.remove(); rvFinal(R,body,best,ord.length); };
+  skip.addEventListener('click',finish); R.key=e=>{ if(e.key==='Escape'){ e.preventDefault(); R.done?rvClose():finish(); } }; document.addEventListener('keydown',R.key); skip.focus();
+  // 立ち絵（同梱・自分で選んだもの）の切り出しを先に済ませる。待つのは長くても2.5秒
+  await Promise.race([Promise.all(ord.map(c=>{ applyBundled(c); if(!CARD_IMG[c.id]||(c.id in CARD_FIT)) return null; return fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]).then(u=>{ CARD_FIT[c.id]=u||''; }); })),new Promise(r=>setTimeout(r,2500))]);
+  if(R.dead) return; if(rvStill()) return finish();
+  if(v!=='a'&&ord.length>1) await rvGrid(R,body,ord,{holdLast:v==='c'});
+  if(R.dead) return;
+  if(v==='b'&&ord.length>1){ await rvWait(R,700); return finish(); }
+  await rvConstellation(R,body,best); if(R.dead) return; await rvWait(R,900); finish(); }
+/* 10連：裏面を並べて低い順にめくる。最後の1枚は光で匂わせる（holdLast＝めくらずに残して、星座の演出へ渡す） */
+async function rvGrid(R,body,ord,o){ const n=ord.length, cols=n<=2?n:n<=4?2:n<=9?3:4;
+  body.innerHTML=`<div class="rv-grid" style="--cols:${cols}">${ord.map((c,i)=>`<div class="rv-cell"><div ${rvAuraAttr(charStats(c).age||0)}><div class="rv-flip"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front"></div></div></div><div class="c"></div></div>`).join('')}</div>`;
+  const cells=[...body.querySelectorAll('.rv-cell')]; await rvWait(R,500);
+  for(let i=0;i<n;i++){ if(R.dead) return; const c=ord[i], el=cells[i], st=charStats(c), last=i===n-1, rk=rvRank(st.age||0);
+    if(last){ el.querySelector('.rv-aura').classList.add('lit','hint'); await rvWait(R,o.holdLast?1100:1600); if(o.holdLast||R.dead) return; }
+    el.querySelector('.rv-front').innerHTML=rvFront(c); el.querySelector('.rv-flip').classList.add('on'); el.classList.add('open');
+    el.querySelector('.c').innerHTML=`${esc(c.name||'')}　<b style="color:${rk.col}">${esc(st.age>0?rk.t[1]:'—')}</b>`;
+    if(last){ const a=el.querySelector('.rv-aura'); a.classList.remove('hint'); }
+    await rvWait(R,last?900:Math.max(220,900/n)+(rk.t[0]>=365?250:0)); } }
+/* 星座：裏面に部位の星が低い順に灯り、線でつながり、真ん中がランク色に光ってから表に返る */
+async function rvConstellation(R,body,c){ const st=charStats(c), rk=rvRank(st.age||0), S=rvStars(st), on=S.filter(p=>p.has).sort((x,y)=>(isFinite(x.d)?x.d:1e15)-(isFinite(y.d)?y.d:1e15));
+  const sky=`<svg class="rv-sky" viewBox="0 0 1200 675" style="position:absolute;inset:0;width:100%;height:100%"><defs><filter id="rvGl" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="rvCore"><stop offset="0" stop-color="${rk.myth?'#fff':rk.col}" stop-opacity=".9"/><stop offset="1" stop-color="${rk.myth?'#cbb8ff':rk.col}" stop-opacity="0"/></radialGradient></defs>
+    <rect width="1200" height="675" fill="#05060f" opacity=".55"/>
+    ${S.map((p,i)=>{ const q=S[(i+1)%5]; return p.has&&q.has?`<line data-ln="${i}" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}" stroke="#c4d8ff" stroke-width="2" stroke-opacity=".75" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`:''; }).join('')}
+    <circle data-core cx="360" cy="361" r="150" fill="url(#rvCore)" opacity="0"/>
+    ${S.filter(p=>p.has).map(p=>`<g data-st="${p.s}" opacity="0"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="16" fill="${rvRank(p.d).myth?'#fff':rvRank(p.d).col}" opacity=".35" filter="url(#rvGl)"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${rvRank(p.d).myth?'#fff':rvRank(p.d).col}" filter="url(#rvGl)"/></g>`).join('')}</svg>`;
+  body.innerHTML=`<div class="rv-stage"><div ${rvAuraAttr(st.age||0)}><div class="rv-flip"><div class="rv-face rv-back">${rvBack()}${sky}</div><div class="rv-face rv-front">${rvFront(c)}</div></div></div><div class="rv-cap"></div></div>`;
+  const svg=body.querySelector('.rv-sky'), A=(el,k,o)=>el&&el.animate?el.animate(k,Object.assign({fill:'forwards'},o)):null;
+  A(svg.querySelector('rect'),[{opacity:0},{opacity:.55}],{duration:500}); await rvWait(R,600);
+  for(const p of on){ if(R.dead) return; const g=svg.querySelector(`[data-st="${p.s}"]`); A(g,[{opacity:0,transform:'scale(.2)'},{opacity:1,transform:'scale(1.25)',offset:.6},{opacity:1,transform:'scale(1)'}],{duration:480,easing:'ease-out'}); g.style.transformOrigin=`${p.x}px ${p.y}px`; g.style.transformBox='view-box'; await rvWait(R,rvRank(p.d).t[0]>=365?520:380); }
+  for(const ln of svg.querySelectorAll('[data-ln]')){ if(R.dead) return; A(ln,[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:220,easing:'ease-in-out'}); await rvWait(R,170); }
+  await rvWait(R,250); if(R.dead) return;
+  const au=body.querySelector('.rv-aura'); au.classList.add('lit','hint'); A(svg.querySelector('[data-core]'),[{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'scale(1)'}],{duration:900,easing:'ease-out'}); svg.querySelector('[data-core]').style.cssText='transform-origin:360px 361px;transform-box:view-box';
+  await rvWait(R,rk.t[0]>=1095?1700:1200); if(R.dead) return;
+  au.classList.remove('hint'); body.querySelector('.rv-flip').classList.add('on'); }
+/* 最後の画面：いちばんのカードを表で大きく。スキップしたときもここ */
+function rvFinal(R,body,c,n){ const st=charStats(c), rk=rvRank(st.age||0);
+  if(!body.querySelector('.rv-stage')||!body.querySelector('.rv-flip.on')){ body.innerHTML=`<div class="rv-stage"><div ${rvAuraAttr(st.age||0)}><div class="rv-flip on" style="transition:none"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front">${rvFront(c)}</div></div></div><div class="rv-cap"></div></div>`;
+    const f=body.querySelector('.rv-stage'); if(f.animate&&!rvStill()) f.animate([{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'scale(1)'}],{duration:450,easing:'ease-out'}); }
+  body.querySelector('.rv-aura').classList.add('lit'); body.querySelector('.rv-aura').classList.remove('hint');
+  body.querySelector('.rv-cap').innerHTML=`<div class="n">${n>1?`${n}人の中で、いちばんは `:''}<b class="gold">${esc(c.name||'（名前なし）')}</b></div><div class="a">秘境レベル <b style="color:${rk.col}">${esc(fmtAge(st.age))}</b>（${esc(rk.t[1])}）</div><div class="btns"><button class="btn primary" type="button" data-rvok>カードを見る</button></div>`;
+  const ok=body.querySelector('[data-rvok]'); ok.addEventListener('click',rvClose); ok.focus(); }
+/* ---- 試作の見比べ：#reveal で開くと、見本のキャラで演出を流す操作盤を出す（保存はしない） ---- */
+function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜蘭','ナヒーダ','鍾離','雷電将軍','フリーナ','ヌヴィレット','楓原万葉','胡桃'], BANDS=[[1,7],[7,30],[30,90],[90,365],[365,1095],[1095,36500],[36500,Infinity]];
+  const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
+  const SUBS={flower:['CR','CD','ATK%','DEF'],plume:['CR','CD','ATK%','HP'],sands:['CR','CD','EM','DEF'],goblet:['CR','CD','ATK%','HP%'],circlet:['CD','ATK%','EM','DEF']}, MAIN={flower:'HP',plume:'ATK',sands:'ATK%',goblet:'DMG_炎',circlet:'CR'};
+  let sd=Date.now()%233280; const RN=()=>{ sd=(sd*9301+49297)%233280; return sd/233280; };
+  const make=(name,lv)=>{ const pieces={}; for(const s of SLOTS){ const [a,b,c2,x]=SUBS[s], e=Math.max(0,Math.min(5,Math.round(lv+(RN()-.5)*2))), q=lv>3.5?3:lv>2?2:1, t=()=>Math.max(0,Math.min(3,q-(RN()<.35?1:0)+(RN()<.2?1:0)));
+      const r={[a]:[t()],[b]:[t()],[c2]:[t()],[x]:[RN()*4|0]}; for(let i=0;i<5;i++){ if(i<e){ const k=[a,b,c2][RN()*(s==='circlet'?2:3)|0]; r[k].push(t()); } else r[x].push(RN()*4|0); }
+      pieces[s]=P(MAIN[s],[a,b,c2,x].map(k=>[k,r[k]])); } return {id:'rvdemo-'+name,name,set:'燃え盛る炎の魔女4',eff:['ATK%','CR','CD'],date:'見本',pieces}; };
+  const pick=(name,band)=>{ const [lo,hi]=BANDS[band]; let bestc=null, bd=1e99; for(let k=0;k<60;k++){ const c=make(name,band*.85+RN()*1.2); const a=charStats(c).age||0; if(a>=lo&&a<hi) return c; const dd=Math.abs(Math.log((isFinite(a)?a:1e9)+1)-Math.log(Math.min(lo*2,1e9))); if(dd<bd){ bd=dd; bestc=c; } } return bestc; };
+  const out=[]; for(let i=0;i<n-1;i++) out.push(pick(names[i%names.length],Math.min(top-1,RN()*Math.max(1,top)|0)));
+  out.push(pick('スカーク',top)); return out; }
+function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{class:'rv-demo',id:'rvDemo'});
+  const st={v:'c',n:6,top:5}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']];
+  const draw=()=>{ box.innerHTML=`<div class="row"><b>演出の試作</b><span class="note">見本のキャラで流します（保存はしません）</span><button class="btn" style="margin-left:auto;padding:2px 8px;font-size:11px" data-x>閉じる</button></div>
+    <div class="row">案 ${Object.entries(REVEAL_VARS).map(([k,t])=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-v="${k}" aria-pressed="${st.v===k}">${t}</button>`).join('')}</div>
+    <div class="row">人数 ${[1,3,6,10].map(k=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-n="${k}" aria-pressed="${st.n===k}">${k}人</button>`).join('')}　最後 ${tops.map(([k,t])=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-t="${k}" aria-pressed="${st.top===k}">${t}</button>`).join('')}</div>
+    <div class="row"><button class="btn primary" data-go>▶ 流す</button><span class="note">端末で「視差効果を減らす」を選んでいると、最後のカードだけが出ます</span></div>`;
+    box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ st.v=b.dataset.v; draw(); }); box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ st.n=+b.dataset.n; draw(); }); box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ st.top=+b.dataset.t; draw(); });
+    box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=()=>revealPlay(rvDemoChars(st.n,st.top),st.v); };
+  draw(); document.body.appendChild(box); }
 /* ---- 共有：スマホは画像ごと共有シートへ。できなければ画像を保存して、X の投稿画面を開くボタン ---- */
 async function cardShare(){ const msg=$('cMsg'), c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const st=charStats(c), tr=tierOf(st.age||0);
   const text=`${c.name}の聖遺物は「秘境レベル ${fmtAge(st.age)}（${tr[1]}）」でした #命ノ星座カード`;
