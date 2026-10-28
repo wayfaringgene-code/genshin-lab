@@ -180,7 +180,7 @@ a.btn{text-decoration:none; display:inline-block}
 .clock{font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:0 8px; margin-left:6px; letter-spacing:0}
 @media (max-width:760px){ .ckv{grid-template-columns:1fr} .ckv dt{margin-top:6px} .cnav button{padding:6px 10px; font-size:13px} }
 /* ===== ガチャふうの演出（v2.1 試作） ===== */
-.rv-ov{position:fixed; inset:0; z-index:9000; background:radial-gradient(ellipse at 50% 45%,#141838 0%,#070816 60%,#020309 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:56px 16px 24px; overflow:auto; color:#e6dfcf; animation:rvIn .35s ease-out}
+.rv-ov{position:fixed; inset:0; z-index:9000; background:radial-gradient(ellipse at 50% 45%,#141838 0%,#070816 60%,#020309 100%); display:flex; flex-direction:column; align-items:center; justify-content:safe center; padding:56px 16px 24px; overflow:auto; color:#e6dfcf; animation:rvIn .35s ease-out}
 @keyframes rvIn{from{opacity:0}}
 .rv-skip{position:fixed; top:12px; right:12px; z-index:2; background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer}
 .rv-skip:hover{background:rgba(255,255,255,.16)}
@@ -196,7 +196,8 @@ a.btn{text-decoration:none; display:inline-block}
 .rv-aura.lit::before{opacity:.55} .rv-aura.hint::before{animation:rvPulse 1.1s ease-in-out infinite} .rv-aura.myth.hint::before{animation:rvSpin 3s linear infinite, rvPulse 1.1s ease-in-out infinite}
 @keyframes rvPulse{0%,100%{opacity:.25; transform:scale(.97)} 50%{opacity:.9; transform:scale(1.03)}}
 @keyframes rvSpin{to{filter:blur(26px) hue-rotate(360deg)}}
-.rv-stage{width:min(100%,980px,calc((100dvh - 190px)*16/9)); min-width:min(100%,280px)}
+.rv-stage{position:relative; width:min(100%,980px,calc((100dvh - 190px)*16/9)); min-width:min(100%,280px)}
+.rv-d .rv-stage{width:min(100%,980px,calc((100dvh - 340px)*16/9))}
 .rv-cap{text-align:center; margin-top:18px; min-height:74px}
 .rv-cap .n{font-size:clamp(18px,3vw,26px); letter-spacing:.06em} .rv-cap .a{font-size:14px; color:#b9b2a3; margin-top:2px}
 .rv-cap .btns{justify-content:center; margin-top:12px}
@@ -210,7 +211,25 @@ a.btn{text-decoration:none; display:inline-block}
 .rv-demo{position:fixed; left:50%; bottom:12px; transform:translateX(-50%); z-index:8000; background:rgba(10,12,28,.94); border:1px solid rgba(233,211,154,.4); border-radius:10px; padding:10px 12px; display:grid; gap:6px; font-size:12px; width:min(calc(100% - 24px),560px); box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .rv-demo .row{gap:6px; flex-wrap:wrap; align-items:center}
 .rv-demo button[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi)}
-@media (prefers-reduced-motion: reduce){ .rv-ov,.rv-cap > *{animation:none} .rv-flip{transition:none} .rv-aura.hint::before,.rv-aura.myth::before{animation:none} }
+/* D ドパ：閃光・揺れ・数字のスロット・光の粒・タップでめくる */
+.rv-flash{position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0; background:#fff}
+.rv-fx{position:fixed; inset:0; z-index:4; pointer-events:none; width:100%; height:100%}
+.rv-snd{position:fixed; top:12px; left:12px; z-index:2; background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer}
+.rv-d{width:100%; display:grid; justify-items:center; gap:10px}
+.rv-num{font-variant-numeric:tabular-nums; font-size:clamp(44px,11vw,110px); line-height:1; letter-spacing:.02em; font-weight:700; color:var(--rv,#e6dfcf); text-shadow:0 0 24px color-mix(in srgb,var(--rv,#fff) 70%,transparent), 0 0 2px #000; min-height:1.1em; text-align:center}
+.rv-num small{font-size:.32em; letter-spacing:.14em; display:block; color:#b9b2a3; text-shadow:none; margin-bottom:6px}
+.rv-num.myth{background:linear-gradient(90deg,#ff8fb1,#ffd27a,#8ff0c4,#8fbaff,#d59bff,#ff8fb1); background-size:200% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:none; animation:rvRainbow 1.6s linear infinite}
+.rv-num.myth small{-webkit-text-fill-color:#b9b2a3}
+@keyframes rvRainbow{to{background-position:200% 0}}
+.rv-deck{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; width:min(100%,980px); min-height:48px}
+.rv-deck .t{width:clamp(64px,9vw,112px); border-radius:3px; overflow:hidden; box-shadow:0 0 0 1px rgba(233,211,154,.25); position:relative}
+.rv-deck .t svg{display:block; width:100%; height:auto}
+.rv-deck .t i{position:absolute; left:0; right:0; bottom:0; font-style:normal; font-size:10px; text-align:center; background:rgba(0,0,0,.6); color:#fff; padding:1px 0}
+.rv-tap{position:absolute; left:0; right:0; bottom:8%; text-align:center; font-size:clamp(14px,2.4vw,20px); letter-spacing:.2em; color:#fff; text-shadow:0 0 10px #000; animation:rvTap .9s ease-in-out infinite; pointer-events:none}
+@keyframes rvTap{0%,100%{opacity:.5; transform:translateY(0)} 50%{opacity:1; transform:translateY(-4px)}}
+.rv-stage.tapme{cursor:pointer}
+.rv-aura.lit.hot::before{opacity:.95; filter:blur(34px)}
+@media (prefers-reduced-motion: reduce){ .rv-ov,.rv-cap > *{animation:none} .rv-flip{transition:none} .rv-aura.hint::before,.rv-aura.myth::before,.rv-num.myth,.rv-tap{animation:none} }
 </style>
 """
 s = s.replace("<div class=\"wrap\">", CSS + "<div class=\"wrap\">", 1)
@@ -493,6 +512,7 @@ function homeBest(cs){ const v=a=>isFinite(a)?a:1e15; return cs.map(c=>({c,a:cha
 async function homeGo(e){ if(e) e.preventDefault(); const msg=$('homeMsg'), btn=$('homeGo'), uid=$('homeUid').value.replace(/\D/g,'');
   if(!/^\d{9,10}$/.test(uid)){ msg.textContent='UIDは9けたか10けたの数字です（ゲームのメニュー画面の右下などに出ています）。'; return; }
   $('enkaUid').value=uid; try{ store.set('enkaUid',uid); }catch(err){}
+  rvAudioPrime(); // 演出の効果音は、ボタンを押した中で鳴らせる状態にしておかないと鳴らない（iOS）
   btn.disabled=true; msg.textContent='Enka に問い合わせています…'; let names=null;
   try{ names=await enkaFetch(); }catch(err){} finally{ btn.disabled=false; }
   if(names&&names.length){ msg.textContent=''; homeReveal(names); return; }
@@ -508,10 +528,12 @@ function homeReveal(names){ const cs=[...new Set(names)].map(n=>CHARS.find(c=>c.
    A 星座：いちばんのキャラだけ。裏面に部位の星が低い順に灯り、線でつながり、ランク色に光ってから表に返る
    B 10連めくり：取り込んだ全員の裏面を並べ、秘境レベルの低い順にめくる。最後の1枚はランク色で匂わせてからめくる
    C 10連＋星座：Bの順にめくり、最後の1枚だけAの星座で返す
+   D ドパ：テンポよく。低い順のキャラを閃光つきで連続めくり → 最後の1枚は光の色が段階的に上がる（匂わせ→昇格）→ 秘境レベルの数字がスロットのように回って止まる → タップでめくると光の粒が弾ける。
+     効果音（ブラウザの中で合成。🔊で消せる）と振動（対応する端末だけ）つき
    どれもスキップできる。端末で「視差効果を減らす」を選んでいる人には、演出なしで最後のカードだけを出す。
-   試作の見比べ：URLの末尾に #reveal を付けて開くと、見本のキャラで流せる操作盤が出る。?reveal=a|b|c で本番の流れの案を切り替え */
-const REVEAL_VARS={a:'A 星座',b:'B 10連めくり',c:'C 10連＋星座'};
-function revealVar(){ const q=(new URLSearchParams(location.search).get('reveal')||'').toLowerCase(); return REVEAL_VARS[q]?q:'c'; }
+   試作の見比べ：URLの末尾に #reveal を付けて開くと、見本のキャラで流せる操作盤が出る。?reveal=a|b|c|d で本番の流れの案を切り替え */
+const REVEAL_VARS={d:'D ドパ',a:'A 星座',b:'B 10連めくり',c:'C 10連＋星座'};
+function revealVar(){ const q=(new URLSearchParams(location.search).get('reveal')||'').toLowerCase(); return REVEAL_VARS[q]?q:'d'; }
 function rvStill(){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
 function rvRank(a){ const t=a>0?tierOf(a):TIERS[0]; return {t,col:t[2],myth:!isFinite(a)||a>=36500}; } // 100年以上（上限も）は虹
 function rvAuraAttr(a){ const r=rvRank(a); return `class="rv-aura${r.myth?' myth':''}" style="--rv:${r.col}"`; }
@@ -534,7 +556,7 @@ function rvStars(st){ const cx0=360, cy0=361, R0=58, R=246, BND=[1,7,30,90,365,1
   const rad=d=>{ if(!(d>1)) return R0; if(d>=10950) return R; let k=0; while(k<5&&d>=BND[k+1]) k++; return R0+(k+(Math.log(d)-Math.log(BND[k]))/(Math.log(BND[k+1])-Math.log(BND[k])))/6*(R-R0); };
   return SLOTS.map(s=>{ const d=st.slots[s].age, r=rad(isFinite(d)?d:1e9), a=ANG[s]*Math.PI/180; return {s,d,has:d>0,x:cx0+r*Math.cos(a),y:cy0+r*Math.sin(a)}; }); }
 const rvWait=(R,ms)=>new Promise(res=>{ if(R.dead) return res(); const t=setTimeout(res,ms); R.timers.push(t); });
-function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; R.timers.forEach(clearTimeout); R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); window.RV=null; if(R.onClose) R.onClose(); }
+function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; R.timers.forEach(clearTimeout); R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); if(R.fxFit) removeEventListener('resize',R.fxFit); window.RV=null; if(R.onClose) R.onClose(); }
 async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.length) return;
   const v2=c=>{ const a=charStats(c).age||0; return isFinite(a)?a:1e15; }, ord=cs.slice().sort((x,y)=>v2(x)-v2(y)), best=ord[ord.length-1];
   const ov=cardEl('div',{class:'rv-ov',role:'dialog','aria-modal':'true','aria-label':'カードの発表'});
@@ -545,6 +567,7 @@ async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!c
   // 立ち絵（同梱・自分で選んだもの）の切り出しを先に済ませる。待つのは長くても2.5秒
   await Promise.race([Promise.all(ord.map(c=>{ applyBundled(c); if(!CARD_IMG[c.id]||(c.id in CARD_FIT)) return null; return fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]).then(u=>{ CARD_FIT[c.id]=u||''; }); })),new Promise(r=>setTimeout(r,2500))]);
   if(R.dead) return; if(rvStill()) return finish();
+  if(v==='d'){ await rvDopa(R,body,ord); if(!R.dead) finish(); return; }
   if(v!=='a'&&ord.length>1) await rvGrid(R,body,ord,{holdLast:v==='c'});
   if(R.dead) return;
   if(v==='b'&&ord.length>1){ await rvWait(R,700); return finish(); }
@@ -575,13 +598,79 @@ async function rvConstellation(R,body,c){ const st=charStats(c), rk=rvRank(st.ag
   const au=body.querySelector('.rv-aura'); au.classList.add('lit','hint'); A(svg.querySelector('[data-core]'),[{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'scale(1)'}],{duration:900,easing:'ease-out'}); svg.querySelector('[data-core]').style.cssText='transform-origin:360px 361px;transform-box:view-box';
   await rvWait(R,rk.t[0]>=1095?1700:1200); if(R.dead) return;
   au.classList.remove('hint'); body.querySelector('.rv-flip').classList.add('on'); }
+/* ---- D ドパ ---- */
+// 効果音：音のファイルは持たず、その場で合成する（短い電子音）。ページを触った直後（ボタンを押した中）に rvAudioPrime() で鳴らせる状態にしておく
+var RV_AC=null;
+function rvSoundOn(){ return !!+store.get('rvSound',1); }
+function rvAudioPrime(){ if(rvStill()||!rvSoundOn()) return; try{ if(!RV_AC) RV_AC=new (window.AudioContext||window.webkitAudioContext)(); if(RV_AC.state==='suspended') RV_AC.resume(); }catch(e){} }
+function rvSnd(kind,k){ if(!rvSoundOn()||rvStill()||!RV_AC||RV_AC.state!=='running') return; const ac=RV_AC, t=ac.currentTime;
+  const tone=(f,t0,d,type,g,f2)=>{ try{ const o=ac.createOscillator(), v=ac.createGain(); o.type=type||'sine'; o.frequency.setValueAtTime(f,t0); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t0+d); v.gain.setValueAtTime(0,t0); v.gain.linearRampToValueAtTime(g,t0+.012); v.gain.exponentialRampToValueAtTime(.0001,t0+d); o.connect(v).connect(ac.destination); o.start(t0); o.stop(t0+d+.03); }catch(e){} };
+  switch(kind){
+    case 'tick': tone(1400+Math.random()*300,t,.035,'square',.035); break;                         // スロットの刻み
+    case 'flip': tone(700,t,.09,'triangle',.14,1100); tone(2100,t+.02,.06,'sine',.06); break;      // 連続めくり
+    case 'big': tone(520,t,.25,'triangle',.18,1040); tone(1560,t+.05,.3,'sine',.12); break;        // ★5以上をめくった
+    case 'step': { const f=440*Math.pow(2,(k||0)/5); tone(f,t,.16,'triangle',.16,f*1.5); tone(f*2,t+.03,.12,'sine',.06); break; } // 光の色が1段上がる
+    case 'myth': [0,.08,.16,.24].forEach((d,i)=>tone(880*Math.pow(2,i*4/12),t+d,.9,'sine',.12)); tone(220,t,.7,'sawtooth',.05,330); break; // 虹に化けた
+    case 'slam': tone(90,t,.35,'sine',.5,38); tone(1760,t+.02,.4,'triangle',.18); tone(2640,t+.02,.25,'sine',.08); break; // 数字が止まる
+    case 'open': [523,659,784,1047,1319].forEach((f,i)=>{ tone(f,t+i*.07,.55,'triangle',.14); tone(f*2,t+i*.07,.3,'sine',.05); }); tone(60,t,.4,'sine',.35,30); break; // めくった
+  } }
+function rvVib(p){ try{ if(!rvStill()&&navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function rvFlash(R,col,ms,op){ const f=R.flash; if(!f||!f.animate) return; f.style.background=col||'#fff'; f.animate([{opacity:op==null?.5:op},{opacity:0}],{duration:ms||180,easing:'ease-out'}); }
+function rvShake(R,px,ms){ const el=R.body; if(!el||!el.animate||rvStill()) return; const k=[]; for(let i=0;i<8;i++) k.push({transform:`translate(${((Math.random()*2-1)*px).toFixed(1)}px,${((Math.random()*2-1)*px).toFixed(1)}px)`}); k.push({transform:'translate(0,0)'}); el.animate(k,{duration:ms||260,easing:'linear'}); }
+// 光の粒：画面全体のキャンバスに描く。1回ずつ飛ばして、消えるまで描き続ける
+function rvFxInit(R){ const cv=cardEl('canvas',{class:'rv-fx'}); R.ov.appendChild(cv); R.fx={cv,ps:[],run:false};
+  R.fxFit=()=>{ const d=Math.min(2,devicePixelRatio||1); cv.width=Math.round(innerWidth*d); cv.height=Math.round(innerHeight*d); cv._d=d; }; R.fxFit(); addEventListener('resize',R.fxFit); }
+function rvBurst(R,x,y,cols,n,pow){ const F=R.fx; if(!F) return; for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, s=(Math.random()*.6+.4)*pow; F.ps.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-pow*.25,life:1,dec:.012+Math.random()*.02,r:2+Math.random()*3.5,col:cols[i%cols.length],spin:Math.random()<.3}); }
+  if(F.run) return; F.run=true; const cx=F.cv.getContext('2d');
+  const step=()=>{ if(R.dead&&!R.done){ F.run=false; return; } const d=F.cv._d||1; cx.clearRect(0,0,F.cv.width,F.cv.height); F.ps=F.ps.filter(p=>p.life>0);
+    for(const p of F.ps){ p.x+=p.vx; p.y+=p.vy; p.vy+=.32; p.vx*=.985; p.life-=p.dec; cx.globalAlpha=Math.max(0,p.life); cx.fillStyle=p.col; cx.beginPath();
+      if(p.spin){ const r=p.r*2.2*p.life; cx.moveTo((p.x)*d,(p.y-r)*d); cx.lineTo((p.x+r*.35)*d,p.y*d); cx.lineTo(p.x*d,(p.y+r)*d); cx.lineTo((p.x-r*.35)*d,p.y*d); cx.closePath(); } else cx.arc(p.x*d,p.y*d,p.r*d*(.4+p.life*.6),0,Math.PI*2); cx.fill(); }
+    cx.globalAlpha=1; if(F.ps.length) requestAnimationFrame(step); else F.run=false; }; requestAnimationFrame(step); }
+function rvCenter(el){ const b=el.getBoundingClientRect(); return [b.left+b.width/2,b.top+b.height/2]; }
+const RV_RAINBOW=['#ff8fb1','#ffd27a','#8ff0c4','#8fbaff','#d59bff','#fff'];
+async function rvDopa(R,body,ord){ const n=ord.length, best=ord[n-1], st=charStats(best), age=st.age||0, rk=rvRank(age), tIdx=TIERS.indexOf(rk.t);
+  R.flash=cardEl('div',{class:'rv-flash'}); R.ov.appendChild(R.flash); rvFxInit(R); R.body=body;
+  const snd=cardEl('button',{class:'rv-snd',type:'button','aria-label':'効果音'},rvSoundOn()?'🔊':'🔇'); R.ov.appendChild(snd); snd.addEventListener('click',()=>{ store.set('rvSound',rvSoundOn()?0:1); snd.textContent=rvSoundOn()?'🔊':'🔇'; rvAudioPrime(); });
+  body.innerHTML=`<div class="rv-d"><div class="rv-num" style="--rv:#e6dfcf"></div><div class="rv-stage"><div class="rv-aura" style="--rv:${TIERS[0][2]}"><div class="rv-flip" style="transition-duration:.32s"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front"></div></div></div></div><div class="rv-cap"></div><div class="rv-deck"></div></div>`;
+  const stage=body.querySelector('.rv-stage'), aura=body.querySelector('.rv-aura'), flip=body.querySelector('.rv-flip'), front=body.querySelector('.rv-front'), cap=body.querySelector('.rv-cap'), deck=body.querySelector('.rv-deck'), num=body.querySelector('.rv-num');
+  const resetFlip=()=>{ flip.style.transition='none'; flip.classList.remove('on'); void flip.offsetWidth; flip.style.transition=''; };
+  await rvWait(R,350);
+  // 1. 連続めくり：低い順に、閃光つきでテンポよく。めくったカードは下の列へ
+  for(let i=0;i<n-1;i++){ if(R.dead) return; const c=ord[i], s2=charStats(c), r2=rvRank(s2.age||0), big=r2.t[0]>=365;
+    aura.style.setProperty('--rv',r2.col); aura.classList.toggle('myth',r2.myth); aura.classList.add('lit'); front.innerHTML=rvFront(c); flip.classList.add('on');
+    rvFlash(R,r2.col,big?260:140,big?.55:.3); rvVib(big?[30,30,60]:14); rvSnd(big?'big':'flip'); const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,r2.myth?RV_RAINBOW:[r2.col,'#fff'],big?40:12,big?9:5); if(big) rvShake(R,5,220);
+    cap.innerHTML=`<div class="n">${esc(c.name||'')}　<b style="color:${r2.col}">${esc(s2.age>0?r2.t[1]:'—')}</b></div>`;
+    await rvWait(R,big?720:400); if(R.dead) return;
+    const th=cardEl('div',{class:'t'}); th.appendChild(front.firstElementChild); th.insertAdjacentHTML('beforeend',`<i>${esc(c.name||'')} ${esc(s2.age>0?r2.t[1]:'')}</i>`); deck.appendChild(th); resetFlip(); aura.classList.remove('lit'); cap.innerHTML=''; await rvWait(R,90); }
+  // 2. 最後の1枚：溜め。光の色が1段ずつ上がる（★3から）。本当のランクの1つ手前でひと呼吸置いて、昇格
+  aura.classList.remove('myth'); cap.innerHTML=`<div class="n">${n>1?'最後の1枚':''}</div>`; front.innerHTML=''; await rvWait(R,500); if(R.dead) return;
+  const from=Math.min(2,tIdx), steps=[]; for(let k=from;k<=tIdx;k++) steps.push(k); if(rk.myth) steps.push('myth');
+  for(let i=0;i<steps.length;i++){ if(R.dead) return; const k=steps[i], last=i===steps.length-1, before=i===steps.length-2;
+    if(k==='myth'){ aura.classList.add('myth','hot'); num.classList.add('myth'); rvFlash(R,'#fff',600,.9); rvVib([80,40,80,40,200]); rvSnd('myth'); rvShake(R,9,500); const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,RV_RAINBOW,120,13); }
+    else{ aura.style.setProperty('--rv',TIERS[k][2]); num.style.setProperty('--rv',TIERS[k][2]); aura.classList.add('lit'); if(last) aura.classList.add('hot'); rvFlash(R,TIERS[k][2],last?420:160,last?.7:.35); rvVib(last?[40,30,90]:18+k*8); rvSnd('step',k); if(last){ rvShake(R,6,320); const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,[TIERS[k][2],'#fff'],60,10); } }
+    if(before){ aura.classList.add('hint'); await rvWait(R,900); aura.classList.remove('hint'); } else await rvWait(R,last?700:300); }
+  if(R.dead) return;
+  // 3. 数字のスロット：秘境レベルが高速で回って、だんだん遅くなり、ドンと止まる
+  const lo=0, hi=Math.log(Math.max(8,(isFinite(age)?age:3e6)*1.6)); let dt=35; num.innerHTML=`<small>秘境レベル</small><span></span>`; const sp=num.querySelector('span');
+  for(let el=0;el<1500&&!R.dead;el+=dt){ sp.textContent=fmtAge(Math.exp(lo+Math.random()*(hi-lo))); rvSnd('tick'); await rvWait(R,dt); dt=Math.min(140,dt*1.09); }
+  if(R.dead) return; sp.textContent=fmtAge(age); num.animate&&num.animate([{transform:'scale(1.6)',opacity:.4},{transform:'scale(.96)',opacity:1,offset:.7},{transform:'scale(1)'}],{duration:320,easing:'ease-out'});
+  rvFlash(R,rk.myth?'#fff':rk.col,320,.75); rvShake(R,10,380); rvVib([60,40,140]); rvSnd('slam'); { const [cx,cy]=rvCenter(num); rvBurst(R,cx,cy,rk.myth?RV_RAINBOW:[rk.col,'#fff'],50,9); }
+  await rvWait(R,650); if(R.dead) return;
+  // 4. タップでめくる（3秒待っても押されなければ自動で）
+  stage.classList.add('tapme'); aura.classList.add('hint'); stage.insertAdjacentHTML('beforeend','<div class="rv-tap">TAP</div>'); front.innerHTML=rvFront(best);
+  await new Promise(res=>{ const go=()=>{ R.ov.removeEventListener('pointerdown',on); res(); }; const on=e=>{ if(e.target.closest('button')) return; go(); }; R.ov.addEventListener('pointerdown',on); R.timers.push(setTimeout(go,3000)); });
+  if(R.dead) return; stage.classList.remove('tapme'); aura.classList.remove('hint'); const tp=stage.querySelector('.rv-tap'); if(tp) tp.remove();
+  flip.style.transitionDuration='.55s'; flip.classList.add('on'); rvFlash(R,'#fff',500,.95); rvShake(R,12,520); rvVib([30,30,30,30,260]); rvSnd('open');
+  { const [cx,cy]=rvCenter(stage); rvBurst(R,cx,cy,rk.myth?RV_RAINBOW:[rk.col,'#fff','#ffe8a8'],160,15); R.timers.push(setTimeout(()=>rvBurst(R,cx,cy,rk.myth?RV_RAINBOW:[rk.col,'#fff'],60,8),250)); }
+  await rvWait(R,900); }
 /* 最後の画面：いちばんのカードを表で大きく。スキップしたときもここ */
 function rvFinal(R,body,c,n){ const st=charStats(c), rk=rvRank(st.age||0);
   if(!body.querySelector('.rv-stage')||!body.querySelector('.rv-flip.on')){ body.innerHTML=`<div class="rv-stage"><div ${rvAuraAttr(st.age||0)}><div class="rv-flip on" style="transition:none"><div class="rv-face rv-back">${rvBack()}</div><div class="rv-face rv-front">${rvFront(c)}</div></div></div><div class="rv-cap"></div></div>`;
     const f=body.querySelector('.rv-stage'); if(f.animate&&!rvStill()) f.animate([{opacity:0,transform:'scale(.92)'},{opacity:1,transform:'scale(1)'}],{duration:450,easing:'ease-out'}); }
   body.querySelector('.rv-aura').classList.add('lit'); body.querySelector('.rv-aura').classList.remove('hint');
-  body.querySelector('.rv-cap').innerHTML=`<div class="n">${n>1?`${n}人の中で、いちばんは `:''}<b class="gold">${esc(c.name||'（名前なし）')}</b></div><div class="a">秘境レベル <b style="color:${rk.col}">${esc(fmtAge(st.age))}</b>（${esc(rk.t[1])}）</div><div class="btns"><button class="btn primary" type="button" data-rvok>カードを見る</button></div>`;
-  const ok=body.querySelector('[data-rvok]'); ok.addEventListener('click',rvClose); ok.focus(); }
+  body.querySelector('.rv-cap').innerHTML=`<div class="n">${n>1?`${n}人の中で、いちばんは `:''}<b class="gold">${esc(c.name||'（名前なし）')}</b></div><div class="a">秘境レベル <b style="color:${rk.col}">${esc(fmtAge(st.age))}</b>（${esc(rk.t[1])}）</div><div class="btns"><button class="btn primary" type="button" data-rvok>カードを見る</button>${/^rvdemo-/.test(c.id)?'':'<button class="btn" type="button" data-rvshare>共有する</button>'}</div>`;
+  const ok=body.querySelector('[data-rvok]'); ok.addEventListener('click',rvClose); ok.focus();
+  const sh=body.querySelector('[data-rvshare]'); if(sh) sh.addEventListener('click',()=>{ rvClose(); cardShare(); }); }
 /* ---- 試作の見比べ：#reveal で開くと、見本のキャラで演出を流す操作盤を出す（保存はしない） ---- */
 function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜蘭','ナヒーダ','鍾離','雷電将軍','フリーナ','ヌヴィレット','楓原万葉','胡桃'], BANDS=[[1,7],[7,30],[30,90],[90,365],[365,1095],[1095,36500],[36500,Infinity]];
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
@@ -594,13 +683,13 @@ function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜�
   const out=[]; for(let i=0;i<n-1;i++) out.push(pick(names[i%names.length],Math.min(top-1,RN()*Math.max(1,top)|0)));
   out.push(pick('スカーク',top)); return out; }
 function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{class:'rv-demo',id:'rvDemo'});
-  const st={v:'c',n:6,top:5}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']];
+  const st={v:'d',n:6,top:5}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']];
   const draw=()=>{ box.innerHTML=`<div class="row"><b>演出の試作</b><span class="note">見本のキャラで流します（保存はしません）</span><button class="btn" style="margin-left:auto;padding:2px 8px;font-size:11px" data-x>閉じる</button></div>
     <div class="row">案 ${Object.entries(REVEAL_VARS).map(([k,t])=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-v="${k}" aria-pressed="${st.v===k}">${t}</button>`).join('')}</div>
     <div class="row">人数 ${[1,3,6,10].map(k=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-n="${k}" aria-pressed="${st.n===k}">${k}人</button>`).join('')}　最後 ${tops.map(([k,t])=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-t="${k}" aria-pressed="${st.top===k}">${t}</button>`).join('')}</div>
     <div class="row"><button class="btn primary" data-go>▶ 流す</button><span class="note">端末で「視差効果を減らす」を選んでいると、最後のカードだけが出ます</span></div>`;
     box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ st.v=b.dataset.v; draw(); }); box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ st.n=+b.dataset.n; draw(); }); box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ st.top=+b.dataset.t; draw(); });
-    box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=()=>revealPlay(rvDemoChars(st.n,st.top),st.v); };
+    box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=()=>{ rvAudioPrime(); revealPlay(rvDemoChars(st.n,st.top),st.v); }; };
   draw(); document.body.appendChild(box); }
 /* ---- 共有：スマホは画像ごと共有シートへ。できなければ画像を保存して、X の投稿画面を開くボタン ---- */
 async function cardShare(){ const msg=$('cMsg'), c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const st=charStats(c), tr=tierOf(st.age||0);
