@@ -187,6 +187,26 @@ a.btn{text-decoration:none; display:inline-block}
 .rv-skip{position:fixed; top:12px; right:12px; z-index:2; background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer}
 .rv-bar{display:flex; gap:8px; justify-content:center; min-height:40px; align-items:center}
 .rv-bar[hidden]{display:flex!important; visibility:hidden}
+.rv-hint{font-size:12px; color:rgba(185,178,163,.6); letter-spacing:.08em}
+.rv-ov.rv-ovl{justify-content:flex-start; overflow:auto; padding:0}
+.rv-list{width:min(100%,1000px); padding:24px 16px 40px; margin:0 auto; animation:rvIn .5s ease-out}
+.rv-lh{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+.rv-lh h2{font-family:"Shippori Mincho B1","Hiragino Mincho ProN",serif; font-size:clamp(20px,3.4vw,26px); letter-spacing:.14em; color:#e9d39a; margin:0}
+.rv-lh h2::before{display:none} .rv-lh h2 small{font-family:"Murecho",sans-serif; font-size:13px; letter-spacing:.06em; color:#b9b2a3; margin-left:10px}
+.rv-x{background:rgba(255,255,255,.08); color:#e6dfcf; border:1px solid rgba(233,211,154,.35); border-radius:999px; width:36px; height:36px; font-size:18px; cursor:pointer; flex:none}
+.rv-lg{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px 16px}
+.rv-lc{display:grid; gap:8px; background:none; border:0; padding:0; text-align:left; color:inherit; cursor:pointer; font:inherit}
+.rv-lc .th canvas{display:block; width:100%; height:auto; border-radius:6px; box-shadow:0 0 0 1px rgba(233,211,154,.2), 0 8px 24px rgba(0,0,0,.5); transition:transform .2s}
+.rv-lc:hover .th canvas{transform:translateY(-2px)}
+.rv-lc.best .th canvas{box-shadow:0 0 0 2px #e9d39a, 0 0 28px rgba(233,211,154,.35)}
+.rv-lc .m{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:13px}
+.rv-lc .m b{font-family:"Shippori Mincho B1","Hiragino Mincho ProN",serif; font-size:16px; letter-spacing:.08em; color:#f4ecd6}
+.rv-lc .m i{font-style:normal; font-size:11px; color:#14110a; background:#e9d39a; border-radius:999px; padding:1px 8px; letter-spacing:.1em}
+.rv-lc .m .st{letter-spacing:.06em} .rv-lc .m .st.myth{background:linear-gradient(90deg,#ff9cbc,#ffd27a,#8ff0c4,#8fbaff,#d59bff); -webkit-background-clip:text; background-clip:text; color:transparent!important}
+.rv-lc .m .a{color:#b9b2a3; margin-left:auto; font-variant-numeric:tabular-nums}
+.rv-lf{display:flex; flex-wrap:wrap; gap:10px 14px; justify-content:center; align-items:center; margin-top:24px}
+.rv-off{background:none; border:0; color:#8f8a7c; font-size:12px; text-decoration:underline; cursor:pointer; font:inherit; font-size:12px}
+.rv-off:disabled{text-decoration:none; cursor:default}
 .rv-demo{position:fixed; left:50%; bottom:12px; transform:translateX(-50%); z-index:8000; background:rgba(10,12,28,.94); border:1px solid rgba(233,211,154,.4); border-radius:10px; padding:10px 12px; display:grid; gap:6px; font-size:12px; width:min(calc(100% - 24px),560px); box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .rv-demo .row{gap:6px; flex-wrap:wrap; align-items:center}
 .rv-demo button[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi)}
@@ -240,7 +260,7 @@ function portraitShrink(src){ return new Promise(res=>{ const im=new Image(); im
     const a=cx.getImageData(0,0,w,h).data; let alpha=false; for(let i=3;i<a.length;i+=16) if(a[i]<250){ alpha=true; break; }
     const out=alpha?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',.92); res(out.length<src.length?out:src); }catch(e){ res(src); } }; im.onerror=()=>res(src); im.src=src; }); }
 /* ---- 設定のページ ---- */
-async function cardRenderSettings(){ const box=$('cPortraits'); if(!box) return; const all=(await portraitTx('readonly',st=>st.getAll()))||[];
+async function cardRenderSettings(){ { const rc=$('cRevealOn'); if(rc) rc.checked=!store.get('revealOff',0); } const box=$('cPortraits'); if(!box) return; const all=(await portraitTx('readonly',st=>st.getAll()))||[];
   box.innerHTML=all.length?`<div class="cthumbs">${all.map(p=>{ const c=CHARS.find(x=>x.id===p.id); return `<div class="cthumb"><img src="${p.src}" alt=""><b>${esc((c&&c.name)||p.name||'（削除したキャラ）')}</b><button class="btn" style="padding:3px 10px;font-size:12px" data-pdel="${p.id}">削除</button></div>`; }).join('')}</div>`:'<div class="empty">まだ保存した立ち絵はありません。カードのページの「立ち絵を選ぶ」で選ぶと、ここに並びます。</div>';
   box.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>portraitDelete(b.dataset.pdel))); }
 /* ---- 組み立て ---- */
@@ -308,9 +328,11 @@ function cardAppInit(){
     <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの有効RVを秘境だけで揃えるのにかかる、平均的な人の日数</dd><dt>ランクの境目</dt><dd>★1 〜1週／★2 〜1か月／★3 〜3か月／★4 〜1年／★5 〜3年／★5+ 3年〜（100年以上は ONCE IN A CENTURY、5000年以上は SINCE THE DAWN OF TIME）</dd>
     <dt>確率の出典</dt><dd>KQM「Genshin Impact Artifacts Guide」、Genshin Impact Wiki（Fandom）「Artifact/Distribution」（草元素追加後の値）</dd></dl></div>
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
+    <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
     <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.0。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
+  { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
   document.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
   document.addEventListener('drop',e=>{ if(e.target.closest&&e.target.closest('#cardHost')) return; const fs=e.dataTransfer?[...e.dataTransfer.files]:[]; if(fs.length){ e.preventDefault(); if(CARD_PAGE==='scan'||fs.every(f=>/^video\//.test(f.type))){ cardShowPage('scan'); scanOpen(); $('scanMsg').textContent='動画は、下の枠（録画ファイルをここにドロップ）に落としてください。'; return; } cardShowPage('list'); importShots(fs); } });
@@ -483,7 +505,7 @@ async function homeGo(e){ if(e) e.preventDefault(); const msg=$('homeMsg'), btn=
 function homeReveal(names){ const cs=[...new Set(names)].map(n=>CHARS.find(c=>c.name===n)).filter(Boolean); if(!cs.length) return;
   const best=homeBest(cs); CH_OPEN=best.c.id; renderChars(); cardShowPage('card');
   $('cMsg').innerHTML=`${cs.length}人を取り込みました。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name)}</b> でした。◀ ▶ でほかのキャラも見られます。`;
-  revealPlay(cs,revealVar()); }
+  if(!store.get('revealOff',0)) revealPlay(cs,revealVar()); } // 設定で演出をオフにしていれば、カードのページをそのまま見せる
 /* ================= カードの登場の演出（v2.1 試作。3案を見比べてから1つに絞る） =================
    思想：お気に入りのキャラのカードが、自分のものとして形になる瞬間を祝う。全員を同じ儀式で迎え、ランクの差は色と★の数で静かに見せる。
          いちばんのカードだけ、溜めを少し長く、光を少し強く。見せ場は縦動画（SNS）。アプリの中ではスキップされる前提
@@ -656,24 +678,50 @@ function rvDrawFrame(x,P,t){ x.save(); x.textAlign='center'; x.globalAlpha=rvCl(
   const fa=rvCl((t-P.E)/650); if(fa>0){ x.globalAlpha=fa; x.font=`700 30px ${RV_SANS}`; rvLS(x,'4px'); x.fillStyle='#e9d39a'; x.fillText('#命ノ星座カード',RV_CX,1760); x.globalAlpha=fa*.7; x.font=`400 24px ${RV_SANS}`; rvLS(x,'1px'); x.fillStyle='#b9b2a3'; x.fillText(SITE_URL.replace(/^https:\/\//,'').replace(/\/$/,''),RV_CX,1812); }
   rvLS(x,'0px'); x.restore(); }
 /* ---- 流す ---- */
-function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); window.RV=null; if(R.onClose) R.onClose(); }
+function rvClose(){ const R=window.RV; if(!R) return; R.dead=true; clearTimeout(R.lt); R.ov.remove(); document.body.style.overflow=R.ovf; document.removeEventListener('keydown',R.key); window.RV=null; if(R.onClose) R.onClose(); }
 async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.length) return; v=REVEAL_VARS[v]?v:'drop'; const mode=opt.mode==='one'?'one':'all';
   const ag=c=>{ const a=charStats(c).age||0; return isFinite(a)?a:1e15; }, ord=cs.slice().sort((a,b)=>ag(a)-ag(b)), list=mode==='one'?[ord[ord.length-1]]:ord;
   const ov=cardEl('div',{class:'rv-ov',role:'dialog','aria-modal':'true','aria-label':'カードの登場'}), cv=cardEl('canvas',{class:'rv-cv',width:RVW,height:RVH}), bar=cardEl('div',{class:'rv-bar'}), skip=cardEl('button',{class:'rv-skip',type:'button'},'スキップ');
   bar.hidden=true; ov.append(skip,cv,bar); document.body.appendChild(ov);
   const R=window.RV={ov,dead:false,ovf:document.body.style.overflow,onClose:opt.onClose}, x=cv.getContext('2d'); document.body.style.overflow='hidden';
-  R.key=e=>{ if(e.key==='Escape'){ e.preventDefault(); if(R.ended) rvClose(); else R.jump=true; } }; document.addEventListener('keydown',R.key); skip.addEventListener('click',()=>{ R.jump=true; }); skip.focus();
+  // 操作：画面を押す（Enter・スペース）と次のカードへ。スキップ（Esc）で最後へ。終わったあとに押すと、すぐ一覧へ
+  R.key=e=>{ if(R.list) { if(e.key==='Escape'){ e.preventDefault(); rvClose(); } return; }
+    if(e.key==='Escape'){ e.preventDefault(); if(R.ended) rvList(R); else R.jump=true; } else if(e.key==='Enter'||e.key===' '){ if(e.target.closest&&e.target.closest('button')) return; e.preventDefault(); if(R.ended) rvList(R); else rvNext(R); } };
+  document.addEventListener('keydown',R.key); skip.addEventListener('click',()=>{ R.jump=true; }); skip.focus();
+  ov.addEventListener('pointerdown',e=>{ if(R.list||!R.P||(e.target.closest&&e.target.closest('button'))) return; if(R.ended) rvList(R); else rvNext(R); });
   // 準備：机を出して、カードの絵と書体を用意する
   const A=rvAssets(); x.drawImage(A.desk,0,0); x.textAlign='center'; x.font=`400 24px ${RV_SANS}`; x.fillStyle='rgba(185,178,163,.6)'; x.fillText('カードを用意しています…',RV_CX,RV_CY);
   const fonts=Promise.all([document.fonts.load(`700 68px ${RV_MINCHO}`,list.map(c=>c.name||'').join('')+'命ノ星座カード（名前なし）'),document.fonts.load(`400 70px ${RV_SANS}`,'0123456789.,秘境レベルDAYSWEKMONTHYRAX'),document.fonts.load(`700 30px ${RV_SANS}`,'#命ノ星座カード')]).catch(()=>{});
   const items=await Promise.all(list.map(async c=>{ const st=charStats(c); return {c,st,rk:rvRank(st.age||0),img:await rvCardImg(c)}; }));
   await Promise.race([fonts,new Promise(r=>setTimeout(r,2500))]); if(R.dead) return;
   const P=rvPlan(items,v,mode); R.P=P; R.drawAt=t=>{ R.hold=true; rvDraw(x,P,t); }; // drawAt：好きな時刻の1コマを描いて止める（確認・動画の書き出し用）
-  const end=()=>{ R.ended=true; skip.remove(); bar.hidden=false;
+  R.items=items; R.opt=opt; R.cv=cv; R.bar=bar;
+  bar.hidden=false; bar.innerHTML=`<span class="rv-hint">${items.length>1?'画面を押すと次のカードへ':'画面を押すと先へ'}</span>`;
+  // 終わり：全員のときは、少し余韻をおいて一覧へ。1枚のときはボタンだけ
+  const end=()=>{ if(R.ended) return; R.ended=true; skip.remove();
+    if(items.length>1){ bar.innerHTML='<span class="rv-hint">画面を押すと、全員のカードの一覧へ</span>'; R.lt=setTimeout(()=>rvList(R),1400); return; }
     bar.innerHTML=(opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':'')+`<button class="btn primary" type="button" data-rvok>${esc(opt.okLabel||'カードを見る')}</button>`;
     bar.querySelector('[data-rvok]').addEventListener('click',rvClose); const re=bar.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay); bar.querySelector('[data-rvok]').focus(); };
-  if(rvStill()||R.jump){ rvDraw(x,P,P.total); return end(); }
-  const t0=performance.now(); const step=now=>{ if(R.dead) return; if(R.hold) return; const t=R.jump?P.total:Math.min(P.total,now-t0); rvDraw(x,P,t); if(t>=P.total) return end(); requestAnimationFrame(step); }; requestAnimationFrame(step); }
+  if(rvStill()||R.jump){ R.t=P.total; rvDraw(x,P,P.total); return end(); }
+  R.off=0; const t0=performance.now(); const step=now=>{ if(R.dead||R.hold) return; const t=R.jump?P.total:Math.min(P.total,now-t0+R.off); R.t=t; rvDraw(x,P,t); if(t>=P.total) return end(); requestAnimationFrame(step); }; requestAnimationFrame(step); }
+// 次へ：いまのカードの続きを飛ばして、次のカードの始まりへ。いちばんのカードの溜め中なら落ちる瞬間へ、着地のあとなら締めへ
+function rvNext(R){ const P=R.P, t=R.t||0, its=P.items, b=its[its.length-1], tg=[];
+  its.forEach(it=>{ if(!it.best) tg.push(it.t0); }); tg.push(P.v==='drop'&&its.length>1?b.t0-300:b.t0); tg.push(P.v==='foil'?b.press:b.drop); tg.push(P.E,P.total);
+  const nx=tg.filter(v=>v>t+40).sort((p,q)=>p-q)[0]; if(nx!=null) R.off+=nx-t; }
+/* 演出のあと：取り込んだ全員のカードを一覧で（秘境レベルの高い順。いちばんのカードは金の枠）。押すとそのカードのページへ */
+function rvList(R){ if(R.list||R.dead) return; R.list=true; clearTimeout(R.lt); const ov=R.ov, opt=R.opt||{}, ag=it=>{ const a=it.st.age||0; return isFinite(a)?a:1e15; };
+  const its=R.items.slice().sort((p,q)=>ag(q)-ag(p)), best=its[0];
+  R.cv.remove(); R.bar.remove(); ov.classList.add('rv-ovl');
+  const box=cardEl('div',{class:'rv-list'}); box.innerHTML=`<div class="rv-lh"><h2>取り込んだカード<small>${its.length}人</small></h2><button class="rv-x" type="button" aria-label="閉じる">×</button></div>
+    <div class="rv-lg">${its.map((it,i)=>`<button class="rv-lc${it===best?' best':''}" type="button" data-i="${i}"><span class="th"></span><span class="m"><b>${esc(it.c.name||'（名前なし）')}</b>${it===best?'<i>いちばん</i>':''}<span class="st${it.rk.myth?' myth':''}" style="color:${it.rk.col}">${'★'.repeat(it.rk.stars)}${it.rk.plus?'+':''}</span><span class="a">${esc(fmtAge(it.st.age||0))}</span></span></button>`).join('')}</div>
+    <div class="rv-lf">${opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':''}<button class="btn primary" type="button" data-rvok>${opt.replay?'閉じる':'いちばんのカードを見る'}</button>${opt.replay?'':'<button class="rv-off" type="button" data-rvoff>次から演出を出さない</button>'}</div>`;
+  ov.appendChild(box);
+  its.forEach((it,i)=>{ const th=box.querySelector(`[data-i="${i}"] .th`), c=rvCanvas(490,276); if(it.img1) c.getContext('2d').drawImage(it.img1,0,0,490,276); th.appendChild(c); });
+  box.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',()=>{ const it=its[+el.dataset.i]; if(opt.replay||!CHARS.some(c=>c.id===it.c.id)) return; CH_OPEN=it.c.id; renderChars(); cardShowPage('card'); rvClose(); }));
+  box.querySelector('.rv-x').addEventListener('click',rvClose); box.querySelector('[data-rvok]').addEventListener('click',rvClose);
+  const re=box.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay);
+  const off=box.querySelector('[data-rvoff]'); if(off) off.addEventListener('click',()=>{ store.set('revealOff',1); off.textContent='次から演出を出しません（設定で戻せます）'; off.disabled=true; });
+  box.querySelector('[data-rvok]').focus(); }
 /* ---- 試作の見比べ：#reveal で開くと、見本のキャラで流す操作盤を出す（保存はしない） ---- */
 function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜蘭','ナヒーダ','鍾離','雷電将軍','フリーナ','ヌヴィレット','楓原万葉','胡桃'], BANDS=[[1,7],[7,30],[30,90],[90,365],[365,1095],[1095,36500],[36500,Infinity]];
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
