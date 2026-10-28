@@ -540,13 +540,15 @@ function rvSprite(x,sp,w,h,alpha,op){ if(alpha<=0) return; x.save(); if(op) x.gl
 /* ---- 段取り：1枚ずつの時刻を決める ---- */
 // drop の pre＝カードはまだ画面の外で、影だけが近づいてくる時間
 const RV_T={drop:{lead:250,pre:430,preBest:1450,fall:230,read:1050,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
+// テンポ：1枚目はふつうの速さ（儀式の形を見せる）→ 2枚目から速め → 3枚目からは駆け足 → いちばんのカードの直前の1枚で少し落とす（溜めにつなぐ）。sp＝時間の倍率
+function rvTempo(k,m){ if(m<=1||k===0) return 1; if(k===m-1) return .7; if(k===1) return .75; return .4; }
 function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
   items.forEach((it,k)=>{ const best=k===n-1; it.best=best; it.t0=t; it.dir=rvRnd(k,7)<.5?-1:1;
     if(v==='photo'){ it.W=900; it.H=506; } else { it.W=980; it.H=551; }
     it.img1=rvScaled(it.img,it.W,it.H); if(v==='foil') it.emb=rvEmboss(it.img,it.W,it.H);
     it.rest=best?{x:RV_CX,y:RV_CY,rot:0}:{x:RV_CX+(rvRnd(k,8)-.5)*90,y:RV_CY+(rvRnd(k,9)-.5)*70,rot:(rvRnd(k,10)-.5)*.24};
     if(v==='foil'){ it.off=best?T.charge:0; it.press=t+380+it.off; it.infoIn=it.press+770; it.starAt=it.infoIn+430; it.press2=best?it.infoIn+900:0; it.land=it.press; t+=T.read+it.off; }
-    else{ it.drop=t+(v==='drop'?(best?T.preBest:T.pre):(best?T.charge:0)); it.land=it.drop+T.fall; it.infoIn=it.land+(v==='drop'?220:100); it.starAt=it.infoIn+260; t=it.land+T.read;
+    else{ const sp=it.sp=best?1:rvTempo(k,n-1); it.drop=t+(v==='drop'?(best?T.preBest:T.pre*sp):(best?T.charge:0)); it.fall=v==='drop'?(best?T.fall:Math.max(140,T.fall*Math.sqrt(sp))):T.fall*(best?1:Math.max(.6,sp)); it.land=it.drop+it.fall; it.infoIn=it.land+(v==='drop'?220:100)*sp; it.starAt=it.infoIn+260*sp; t=it.land+T.read*sp;
       const w=it.W+(v==='photo'?32:0), h=it.H+(v==='photo'?32:0);
       ev.push({t0:it.land,x:it.rest.x,y:it.rest.y,rot:it.rest.rot,w,h,col:it.rk.myth?'#efe6ff':it.rk.col,str:(v==='photo'?.42:.72)*(best?1.4:1),rings:best?[[0,1],[220,.6]]:[[0,1]]}); } });
   items.forEach((it,k)=>{ it.nx=k<n-1?items[k+1].t0:0; });
@@ -568,11 +570,11 @@ function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompos
   rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); }
 function rvPose(P,it,t){ const r=it.rest, T=RV_T[P.v], fl=t<it.drop?Math.sin((t-it.t0)/280)*5:0;
   // 落ちるカード：はじめはカメラより上にあって画面に映らず、影だけが机に落ちて近づいてくる（h：1.6→0.5）。最後に一気に落ちる（0.5→0）
-  if(P.v==='drop'){ const pre=t<it.drop; let h; if(pre){ const q=rvCl((t-it.t0)/(it.drop-it.t0)); h=1.6-1.1*q*q*(3-2*q); } else { const p=rvCl((t-it.drop)/T.fall); h=.5*(1-p*p); }
+  if(P.v==='drop'){ const pre=t<it.drop; let h; if(pre){ const q=rvCl((t-it.t0)/(it.drop-it.t0)); h=1.6-1.1*q*q*(3-2*q); } else { const p=rvCl((t-it.drop)/it.fall); h=.5*(1-p*p); }
     let s=1+h*.85; const dl=t-it.land; if(dl>0&&dl<200) s*=1-.012*Math.sin(Math.PI*dl/200);
     return {x:r.x+h*it.dir*70,y:r.y-h*150,rot:r.rot+h*it.dir*.16,s,sy:1-Math.min(h,.6)*.3,h,a:pre?0:1,sa:rvCl((t-it.t0)/300),edge:5+Math.min(h,.6)*30}; }
   // 写真：減速しながら降り、一度だけ大きく揺れて（ヒラっと）置かれる
-  const p=t<it.drop?0:rvCl((t-it.drop)/T.fall), h=Math.pow(1-p,1.7), sw=Math.cos(1.25*Math.PI*p)*Math.pow(1-p,.8);
+  const p=t<it.drop?0:rvCl((t-it.drop)/it.fall), h=Math.pow(1-p,1.7), sw=Math.cos(1.25*Math.PI*p)*Math.pow(1-p,.8);
   return {x:r.x+it.dir*150*sw,y:r.y-h*130+fl,rot:r.rot+it.dir*.26*sw,s:1+h*.4,sy:1-.22*Math.abs(Math.sin(1.25*Math.PI*p))*(1-p),h,a:rvCl((t-it.t0)/260),edge:0}; }
 function rvCardDraw(x,it,ps,kind,dim,L,lit){ const W=it.W, H=it.H; x.save(); x.globalAlpha*=ps.a; x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy);
   if(kind!=='photo'){ const e=ps.edge, g=x.createLinearGradient(0,H/2-6,0,H/2+e); g.addColorStop(0,'#d8bb72'); g.addColorStop(.45,'#8a6c34'); g.addColorStop(1,'#33270f'); x.fillStyle=g; rvRR(x,-W/2+1,-H/2+e,W-2,H,12); x.fill(); } // 厚み：金の小口
@@ -620,13 +622,13 @@ function rvFoilText(x,txt,cx,y,size,dt,long){ // 金の箔：縦の金のグラ�
   x.restore(); }
 function rvStarPath(x,R){ x.beginPath(); for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, r=i%2?R*.44:R; x.lineTo(Math.cos(a)*r,Math.sin(a)*r); } x.closePath(); }
 function rvDrawStars(x,it,t,cy,stamp){ const rk=it.rk, n=rk.stars, tot=n+(rk.plus?1:0); if(!tot) return; const R=27, gap=70, x0=RV_CX-(tot-1)*gap/2;
-  for(let k=0;k<tot;k++){ const tk=it.starAt+k*(stamp?135:105), p=(t-tk)/(stamp?170:260); if(p<=0) continue; const q=rvCl(p), sc=stamp?1.7-.7*rvOC(q):rvOB(q), col=rk.myth?RV_RB[k%5]:rk.col;
+  for(let k=0;k<tot;k++){ const sp=it.sp||1, tk=it.starAt+k*(stamp?135:105*sp), p=(t-tk)/(stamp?170:260*Math.sqrt(sp)); if(p<=0) continue; const q=rvCl(p), sc=stamp?1.7-.7*rvOC(q):rvOB(q), col=rk.myth?RV_RB[k%5]:rk.col;
     x.save(); x.globalAlpha*=stamp?q:rvCl(q*2.2); x.translate(x0+k*gap,cy); x.scale(sc,sc); x.fillStyle=col; x.shadowColor=col; x.shadowBlur=it.best?22:14;
     if(k<n){ rvStarPath(x,R); x.fill(); } else { const b=R*.2, l=R*.72; rvRR(x,-l,-b,l*2,b*2,b); x.fill(); rvRR(x,-b,-l,b*2,l*2,b); x.fill(); } // ★5+ の「＋」
     x.restore();
     if(stamp&&p>.9&&p<2.6){ const r=(p-.9)/1.7; x.save(); x.globalAlpha*=(1-r)*.5; x.strokeStyle=col; x.lineWidth=2; x.beginPath(); x.arc(x0+k*gap,cy,R*(1.15+r*.9),0,6.283); x.stroke(); x.restore(); } } } // 印を押した跡の輪
-function rvDrawInfo(x,P,t){ for(const it of P.items){ const foil=P.v==='foil', a=rvCl((t-it.infoIn)/(foil?1:420))*(it.nx?1-rvCl((t-it.nx)/260):1); if(a<=0) continue;
-    const up=foil?0:(1-rvOC(rvCl((t-it.infoIn)/560)))*16, st=it.st, mm=fmtAge(st.age||0).match(/^([\d.,]+[KMB]?)\s*(.*)$/);
+function rvDrawInfo(x,P,t){ for(const it of P.items){ const foil=P.v==='foil', sp=it.sp||1, a=rvCl((t-it.infoIn)/(foil?1:420*sp))*(it.nx?1-rvCl((t-it.nx)/(200*Math.min(1,sp*1.6))):1); if(a<=0) continue;
+    const up=foil?0:(1-rvOC(rvCl((t-it.infoIn)/(560*sp))))*16, st=it.st, mm=fmtAge(st.age||0).match(/^([\d.,]+[KMB]?)\s*(.*)$/);
     x.save(); x.globalAlpha=a; x.textAlign='center'; x.textBaseline='alphabetic';
     x.font=`700 68px ${RV_MINCHO}`; rvLS(x,'6px'); const nm=it.c.name||'（名前なし）';
     if(foil) rvFoilText(x,nm,RV_CX,1240,68,t-it.infoIn,it.best); else { x.fillStyle='#f4ecd6'; x.shadowColor='rgba(0,0,0,.6)'; x.shadowBlur=12; x.fillText(nm,RV_CX,1240+up); x.shadowBlur=0; }
