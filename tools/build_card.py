@@ -40,6 +40,12 @@ rep("$('chPano').innerHTML=rows.some(", "if(!CARD_APP) $('chPano').innerHTML=row
 rep("${charDetailHTML(c,st)}", "${CARD_APP?'':charDetailHTML(c,st)}")
 rep("{ const er=$('effRev'); if(er){", "{ const er=$('effRev'); if(er&&!CARD_APP){")
 
+# --- 保存場所の共有：GitHub Pages ではキャラ版（ルート）とカードアプリ（/card/）が同じ保存場所を使う（v1.5） ---
+#     キャラのデータは共有したいが、見た目の設定は書き換えない：カードアプリは cardVar・tlStyle を保存せず、決まった値で描く
+assert s.count("store.get('cardVar','X3G')") == 5
+s = s.replace("store.get('cardVar','X3G')", "(CARD_APP?'SK':store.get('cardVar','X3G'))")
+rep("const tls=store.get('tlStyle','score')", "const tls=CARD_APP?'score':store.get('tlStyle','score')")
+
 # --- 描画のたびに、カードをカードのページへ移す（描画の前に前回のカードを外し、idの重複を防ぐ） ---
 rep("function renderChars(){\n  const rows=CHARS.map(c=>({c,st:charStats(c)}));", "function renderChars(){\n  if(CARD_APP&&$('cardHost')) $('cardHost').innerHTML='';\n  const rows=CHARS.map(c=>({c,st:charStats(c)}));")
 rep("$('evCompare').value=''; showTab('eval'); }));\n}\n/* ---------- 目標から逆算", "$('evCompare').value=''; showTab('eval'); }));\n  if(CARD_APP) cardAfterRender();\n}\n/* ---------- 目標から逆算")
@@ -207,7 +213,6 @@ function cardAppInit(){
   document.body.classList.add('mode-card');
   // 見た目は決定済みの値に固定（試作用の切り替えは出さない）
   CC_LABEL='glass'; CC_FONT='murecho'; CC_FRAME='gold'; CC_LINE='star'; CC_MYTH='m1'; CC_MYTHLANG='en'; CC_UNITS='en3c'; CC_SLOTID='badge';
-  store.set('cardVar','SK'); store.set('tlStyle','score');
   const head=document.querySelector('header.top'); head.querySelector('h1').innerHTML='<small>秘境で何日回ると、どこまで行く？</small>命ノ星座カード';
   const nav=cardEl('div',{class:'tabs cnav',role:'tablist','aria-label':'ページ'},
     '<button role="tab" data-page="list">キャラ一覧</button><button role="tab" data-page="card">カード</button><button role="tab" data-page="scan">取り込む</button><button role="tab" data-page="set">設定</button>');
@@ -268,7 +273,7 @@ function cardAppInit(){
     <dt>確率の出典</dt><dd>KQM「Genshin Impact Artifacts Guide」、Genshin Impact Wiki（Fandom）「Artifact/Distribution」（草元素追加後の値）</dd></dl></div>
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v1.4。計算は聖遺物厳選ラボと共通です。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v1.5。計算は聖遺物厳選ラボと共通です。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   // ドラッグで取り込み（どのページでも）
   document.addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
@@ -346,7 +351,7 @@ function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
 /* UIDで取得：Enka に問い合わせる（中継の設定があれば中継、なければ直接）。
    Enka の決まり：応答の ttl（秒）が切れるまでは同じUIDを取り直さない → この端末に応答を取っておき、ttl の間はそれを使う。
    つながらないとき（このページからの通信が許されていない・CORS・ネットワーク）は、手で受け渡す手順を開いて案内する */
-const ENKA_PROXY=''; // 中継（例：Cloudflare Workers）を置いたら、そのURL（末尾に UID を足す形）をここに。空なら直接
+const ENKA_PROXY=(location.hostname==='wayfaringgene-code.github.io'||location.hostname==='localhost')?'https://enka-proxy.wayfaringgene.workers.dev/uid/':''; // 中継（proxy/enka-proxy.js を Cloudflare Workers に置いたもの）。中継が受け付けるページのときだけ使い、それ以外は直接
 var ENKA_BUSY=false;
 async function enkaFetch(){ const box=$('enkaMsg'), uid=$('enkaUid').value.replace(/\D/g,''), btn=$('enkaGet');
   if(!/^\d{9,10}$/.test(uid)){ box.textContent='UIDは9けたか10けたの数字です。'; return; } if(ENKA_BUSY) return;
