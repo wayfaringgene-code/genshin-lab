@@ -2,6 +2,7 @@
 # 使い方: python3 tools/build_portraits.py <集めた画像のフォルダ> [出力のフォルダ（既定 src/portraits）]
 #
 # ・ファイル名は「ゲーム内のキャラ名」か「avatarId」（例：フリーナ.png、10000089.png）。旅人は名前が同じなので avatarId で（空 10000005／蛍 10000007）
+# ・英語名で始まる名前でもよい（例：Skirk_Wish.webp、Raiden_Shogun_Card.png）。記号と大文字小文字は無視し、いちばん長く一致する英語名を使う
 # ・背景が透明な画像（キャラだけ切り抜かれたもの）がいちばんきれいに入る。背景つきでも使えるが、横長の枠でそのまま貼る形になる
 # ・長い辺 1600px に縮めて WebP（透明を保つ）で保存し、portraits.json に登録する。すでに登録済みのキャラは画像だけ差し替え、
 #   portraits.json に手で書いた zoom（大きさ、%）・pos（位置 {dx,dy}）はそのまま残す
@@ -18,6 +19,16 @@ tables = json.load(open(os.path.join(ROOT, 'tools', 'enka_tables.json'), encodin
 avatar = tables['avatar']                      # avatarId → 名前
 by_name = {}
 for k, v in avatar.items(): by_name.setdefault(v, []).append(k)
+import re
+norm = lambda t: re.sub(r'[^0-9a-z]', '', t.lower())
+by_en = {}
+for k, v in tables.get('avatar_en', {}).items():
+    if k.isdigit(): by_en.setdefault(norm(v), set()).add(k)
+def en_match(stem):
+    st = norm(stem); best = None
+    for n, ids in by_en.items():
+        if n and st.startswith(n) and (best is None or len(n) > len(best[0])): best = (n, ids)
+    return best
 man_path = os.path.join(dst, 'portraits.json')
 manifest = json.load(open(man_path, encoding='utf-8')) if os.path.exists(man_path) else {}
 
@@ -30,6 +41,8 @@ for fn in sorted(os.listdir(src)):
     if stem.isdigit() and stem in avatar: aid = stem
     elif stem in by_name and len(by_name[stem]) == 1: aid = by_name[stem][0]
     elif stem in by_name: ambiguous.append(f'{fn}（候補：{", ".join(by_name[stem])}）'); continue
+    elif en_match(stem) and len(en_match(stem)[1]) == 1: aid = next(iter(en_match(stem)[1]))
+    elif en_match(stem): ambiguous.append(f'{fn}（候補：{", ".join(sorted(en_match(stem)[1]))}）'); continue
     else: unknown.append(fn); continue
     im = Image.open(os.path.join(src, fn)).convert('RGBA')
     k = min(1.0, MAX / max(im.size))
