@@ -681,7 +681,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
   const play=()=>{ const cs=rvDemoChars(st.m==='one'?1:st.n,st.top); const go=()=>revealPlay(cs,st.v,{mode:st.m,replay:go,okLabel:'閉じる'}); go(); };
   const draw=()=>{ box.innerHTML=`<div class="row"><b>演出の試作</b><span class="note">見本のキャラで流します（保存はしません）</span><button class="btn" style="margin-left:auto;padding:2px 8px;font-size:11px" data-x>閉じる</button></div>
     <div class="row">案 ${Object.entries(REVEAL_VARS).map(([k,t])=>B('v',k,t,st.v===k)).join('')}</div>
-    <div class="row">${B('m','all','全員',st.m==='all')}${B('m','one','1枚',st.m==='one')}　人数 ${[3,6,10].map(k=>B('n',k,k+'人',st.n===k)).join('')}</div>
+    <div class="row">${B('m','all','全員',st.m==='all')}${B('m','one','1枚',st.m==='one')}　人数 ${[3,6,8,12].map(k=>B('n',k,k+'人',st.n===k)).join('')}</div>
     <div class="row">最後 ${tops.map(([k,t])=>B('t',k,t,st.top===k)).join('')}</div>
     <div class="row"><button class="btn primary" data-go>▶ 流す</button><span class="note">端末で「視差効果を減らす」を選んでいると、最後の絵だけが出ます</span></div>`;
     box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ st.v=b.dataset.v; draw(); }); box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ st.m=b.dataset.m; draw(); });
