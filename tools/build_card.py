@@ -578,7 +578,7 @@ function rvGlowOf(A,w,h,rk){ const k=w+'x'+h+(rk.myth?'myth':rk.col); if(A.glow[
 function rvSprite(x,sp,w,h,alpha,op){ if(alpha<=0) return; x.save(); if(op) x.globalCompositeOperation=op; x.globalAlpha*=alpha; x.drawImage(sp.cv,-w/2-sp.pad,-h/2-sp.pad); x.restore(); }
 /* ---- 段取り：1枚ずつの時刻を決める ---- */
 // drop の pre＝カードはまだ画面の外で、影だけが近づいてくる時間
-const RV_T={drop:{lead:250,pre:430,preBest:1450,fall:230,read:1050,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
+const RV_T={drop:{lead:250,pre:430,preBest:2000,fall:230,read:1050,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
 // テンポ：いちばんのカードの直前の1枚までは、同じ駆け足で → 直前の1枚だけ少し落とす（溜めにつなぐ）。sp＝時間の倍率
 function rvTempo(k,m){ if(m<=1) return 1; return k===m-1?.7:.34; }
 function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
@@ -620,7 +620,9 @@ function rvStarsOf(st){ const cx0=360, cy0=361, R0=58, R=246, BND=[1,7,30,90,365
   const rad=d=>{ if(!(d>1)) return R0; if(d>=10950) return R; let k=0; while(k<5&&d>=BND[k+1]) k++; return R0+(k+(Math.log(d)-Math.log(BND[k]))/(Math.log(BND[k+1])-Math.log(BND[k])))/6*(R-R0); };
   return SLOTS.map(s=>{ const d=st.slots[s].age, r=rad(isFinite(d)?d:1e9), a=ANG[s]*Math.PI/180; return {s,has:d>0,x:cx0+r*Math.cos(a),y:cy0+r*Math.sin(a)}; }); }
 function rvDrawSeal(x,P,t){ const Q=rvPreQ(P,t); if(!Q||!/stars|both/.test(P.pre)||Q.u>1) return; const {b,q,u}=Q, S=b.stars||(b.stars=rvStarsOf(b.st)), on=S.filter(p=>p.has), kx=b.W/1200, ky=b.H/675;
-  const X=p=>b.rest.x+(p.x-600)*kx, Y=p=>b.rest.y+(p.y-337.5)*ky, T=k=>.12+k*.15, fade=u<0?1:1-u, burst=u<0?0:u;
+  // 星座は、はじめひと回り大きく（1.3倍）灯り、溜めが進むにつれて中心へ集まって、着地の瞬間にカードの星座の大きさにぴたりと収まる
+  const C=[b.rest.x+(360-600)*kx,b.rest.y+(361-337.5)*ky], cq=rvCl((q-.05)/.92), sz=u<0?1.3-.3*cq*cq*(3-2*cq):1;
+  const X=p=>C[0]+(b.rest.x+(p.x-600)*kx-C[0])*sz, Y=p=>C[1]+(b.rest.y+(p.y-337.5)*ky-C[1])*sz, T=k=>.12+k*.15, fade=u<0?1:1-u, burst=u<0?0:u;
   x.save(); x.globalCompositeOperation='lighter'; x.lineCap='round';
   // 線：5つ灯ったあとに、花→羽→砂→杯→冠→花の順でつながる
   const lp=rvCl((q-.8)/.17); if(lp>0) for(let i=0;i<5;i++){ const p1=S[i], p2=S[(i+1)%5]; if(!p1.has||!p2.has) continue; const f=rvCl(lp*5-i); if(f<=0) continue;
@@ -656,7 +658,7 @@ function rvShadowDraw(x,A,it,ps,kind){ const w=it.W+(kind==='photo'?32:0), h=it.
   rvSprite(x,S.hard,w,h,Math.max(0,1-ps.h)*(kind==='photo'?.45:.5)); rvSprite(x,S.soft,w,h,kind==='drop'?Math.min(.34,.08+(1.6-ps.h)*.24):.25+ps.h*.35); x.restore(); } // 影：遠いほど薄くぼやけ、近づくほど濃くくっきり
 function rvGlowDraw(x,A,it,ps,a,kind){ if(a<=0) return; const w=it.W+(kind==='photo'?32:0), h=it.H+(kind==='photo'?32:0), G=rvGlowOf(A,w,h,it.rk);
   x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvSprite(x,G,w,h,a*(it.rk.myth?.55:1),'lighter'); x.restore(); } // 虹の光は重ねて明るいので弱める
-function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?.2*rvCl((t-b.t0)/450)*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードを少し暗く
+function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?(.2*rvCl((t-b.t0)/450)+.38*(q=>q*q*(3-2*q))(rvCl((t-b.t0)/(b.drop-b.t0))))*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードをだんだん深く沈める（下のカードの星座が、天板に灯る星座と二重に見えないように）
   // いちばんのカードを待つあいだ、落ちる場所の机からランク色の光が漏れてくる（机のカードの下から、縁にだけ見える）
   if(kind==='drop'&&t>=b.t0&&t<b.land){ const q=rvCl((t-b.t0)/(b.drop-b.t0)), hb=q*.5+.38*Math.exp(-Math.pow((q-.4)/.07,2))+.5*Math.exp(-Math.pow((q-.72)/.07,2))+(q>.84?(q-.84)/.16*.45:0); rvGlowDraw(x,P.A,b,{x:b.rest.x,y:b.rest.y,rot:0,s:1.04,sy:1},Math.min(1,hb)*.95,kind); } // 光はドクン、ドクンと2回脈打ってから最大に
   // 映り込み：天板に映ったカード。カードが高いほど縁から離れて薄く、着地で縁にぴたりと合う（上に重なったカードに隠れる分は見えない）
