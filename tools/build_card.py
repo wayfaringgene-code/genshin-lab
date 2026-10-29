@@ -189,7 +189,11 @@ a.btn{text-decoration:none; display:inline-block}
 .rv-bar[hidden]{display:flex!important; visibility:hidden}
 .rv-hint{font-size:12px; color:rgba(185,178,163,.6); letter-spacing:.08em}
 .rv-ov.rv-ovl{justify-content:flex-start; overflow:auto; padding:0}
-.rv-list{width:min(100%,1000px); padding:24px 16px 40px; margin:0 auto; animation:rvIn .5s ease-out}
+.rv-list{position:relative; z-index:1; width:min(100%,1000px); padding:24px 16px 40px; margin:0 auto}
+.rv-list .th{display:block; position:relative; transform-origin:50% 50%; will-change:transform}
+.rv-list .rv-lh,.rv-list .m,.rv-list .rv-lf{transition:opacity .5s ease}
+.rv-list.spread .rv-lh,.rv-list.spread .m,.rv-list.spread .rv-lf{opacity:0}
+.rv-list.spread .th canvas{transition:none}
 .rv-lh{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
 .rv-lh h2{font-family:"Shippori Mincho B1","Hiragino Mincho ProN",serif; font-size:clamp(20px,3.4vw,26px); letter-spacing:.14em; color:#e9d39a; margin:0}
 .rv-lh h2::before{display:none} .rv-lh h2 small{font-family:"Murecho",sans-serif; font-size:13px; letter-spacing:.06em; color:#b9b2a3; margin-left:10px}
@@ -588,9 +592,10 @@ function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompos
   for(const e of evs) for(const [dl,k] of e.rings){ const dt=t-e.t0-dl; if(dt<0||dt>1400) continue; const R=RR(e,dt), al=Math.pow(1-dt/1400,2)*Math.pow(1-R/(e.str*430+1),1.2)*Math.min(1,e.str*1.2)*k; // 広がるほど薄く
     x.save(); x.translate(e.x,e.y); x.rotate(e.rot); x.strokeStyle=e.col; for(const [lw,a] of [[36,.08],[14,.16],[3,.3]]){ x.globalAlpha=al*a; x.lineWidth=lw; rvRR(x,-e.w/2-R,-e.h/2-R,e.w+2*R,e.h+2*R,12+R*.9); x.stroke(); } x.restore(); }
   x.globalAlpha=1;
-  if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
-  if(P.v==='drop') rvDrawStreak(x,P,t);
-  rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); }
+  if(!P.noCards){ if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
+    if(P.v==='drop') rvDrawStreak(x,P,t);
+  }
+  rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); } // noCards：一覧へ広げるとき、カードは上に重ねた一覧に任せて、机と文字だけを描く（机ごとゆっくり消える）
 // 落ちるカード：直前の1枚から最後の1枚へ移るとき、机の一番上のカードの表面を、斜めの光沢（反射光）が一度だけ横切る（白。ランクは匂わせない）
 function rvDrawStreak(x,P,t){ const its=P.items, b=its[its.length-1], it=its[its.length-2]; if(!it) return; const u=(t-(b.t0-300))/820; if(u<0||u>1) return;
   const ps=rvPose(P,it,t), W=it.W, H=it.H, a=-.62, vx=Math.cos(a+Math.PI/2), vy=Math.sin(a+Math.PI/2), L=(W+H)/2+170, e=u*u*(3-2*u), p=-L+e*2*L, fa=Math.min(1,Math.sin(Math.PI*u)*1.4);
@@ -699,7 +704,7 @@ async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!c
   bar.hidden=false; bar.innerHTML=`<span class="rv-hint">${items.length>1?'画面を押すと次のカードへ':'画面を押すと先へ'}</span>`;
   // 終わり：全員のときは、少し余韻をおいて一覧へ。1枚のときはボタンだけ
   const end=()=>{ if(R.ended) return; R.ended=true; skip.remove();
-    if(items.length>1){ bar.innerHTML='<span class="rv-hint">画面を押すと、全員のカードの一覧へ</span>'; R.lt=setTimeout(()=>rvList(R),1400); return; }
+    if(items.length>1){ bar.innerHTML='<span class="rv-hint">画面を押すと、カードを広げます</span>'; return; }
     bar.innerHTML=(opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':'')+`<button class="btn primary" type="button" data-rvok>${esc(opt.okLabel||'カードを見る')}</button>`;
     bar.querySelector('[data-rvok]').addEventListener('click',rvClose); const re=bar.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay); bar.querySelector('[data-rvok]').focus(); };
   if(rvStill()||R.jump){ R.t=P.total; rvDraw(x,P,P.total); return end(); }
@@ -709,19 +714,30 @@ function rvNext(R){ const P=R.P, t=R.t||0, its=P.items, b=its[its.length-1], tg=
   its.forEach(it=>{ if(!it.best) tg.push(it.t0); }); tg.push(P.v==='drop'&&its.length>1?b.t0-300:b.t0); tg.push(P.v==='foil'?b.press:b.drop); tg.push(P.E,P.total);
   const nx=tg.filter(v=>v>t+40).sort((p,q)=>p-q)[0]; if(nx!=null) R.off+=nx-t; }
 /* 演出のあと：取り込んだ全員のカードを一覧で（秘境レベルの高い順。いちばんのカードは金の枠）。押すとそのカードのページへ */
-function rvList(R){ if(R.list||R.dead) return; R.list=true; clearTimeout(R.lt); const ov=R.ov, opt=R.opt||{}, ag=it=>{ const a=it.st.age||0; return isFinite(a)?a:1e15; };
-  const its=R.items.slice().sort((p,q)=>ag(q)-ag(p)), best=its[0];
-  R.cv.remove(); R.bar.remove(); ov.classList.add('rv-ovl');
-  const box=cardEl('div',{class:'rv-list'}); box.innerHTML=`<div class="rv-lh"><h2>取り込んだカード<small>${its.length}人</small></h2><button class="rv-x" type="button" aria-label="閉じる">×</button></div>
+function rvList(R){ if(R.list||R.dead||!R.P) return; R.list=true; clearTimeout(R.lt); const ov=R.ov, opt=R.opt||{}, P=R.P, ag=it=>{ const a=it.st.age||0; return isFinite(a)?a:1e15; };
+  const its=R.items.slice().sort((p,q)=>ag(q)-ag(p)), best=its[0], still=rvStill();
+  // 机（キャンバス）はいまの場所に留めて、カードだけを消す。その上に一覧を重ねる
+  const r=R.cv.getBoundingClientRect(), k=r.width/RVW; Object.assign(R.cv.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0'});
+  R.bar.remove(); P.noCards=true; rvDraw(R.cv.getContext('2d'),P,P.total); ov.classList.add('rv-ovl'); ov.scrollTop=0;
+  const box=cardEl('div',{class:'rv-list'+(still?'':' spread')}); box.innerHTML=`<div class="rv-lh"><h2>取り込んだカード<small>${its.length}人</small></h2><button class="rv-x" type="button" aria-label="閉じる">×</button></div>
     <div class="rv-lg">${its.map((it,i)=>`<button class="rv-lc${it===best?' best':''}" type="button" data-i="${i}"><span class="th"></span><span class="m"><b>${esc(it.c.name||'（名前なし）')}</b>${it===best?'<i>いちばん</i>':''}<span class="st${it.rk.myth?' myth':''}" style="color:${it.rk.col}">${'★'.repeat(it.rk.stars)}${it.rk.plus?'+':''}</span><span class="a">${esc(fmtAge(it.st.age||0))}</span></span></button>`).join('')}</div>
     <div class="rv-lf">${opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':''}<button class="btn primary" type="button" data-rvok>${opt.replay?'閉じる':'いちばんのカードを見る'}</button>${opt.replay?'':'<button class="rv-off" type="button" data-rvoff>次から演出を出さない</button>'}</div>`;
   ov.appendChild(box);
   its.forEach((it,i)=>{ const th=box.querySelector(`[data-i="${i}"] .th`), c=rvCanvas(490,276); if(it.img1) c.getContext('2d').drawImage(it.img1,0,0,490,276); th.appendChild(c); });
-  box.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',()=>{ const it=its[+el.dataset.i]; if(opt.replay||!CHARS.some(c=>c.id===it.c.id)) return; CH_OPEN=it.c.id; renderChars(); cardShowPage('card'); rvClose(); }));
+  // 広げる：一覧のカードを、机の上で重なっていた位置・角度・大きさに置いてから、自分の場所へ滑らせる（上に重なっていたカードから順に）
+  if(!still){ const n=R.items.length;
+    R.items.forEach((it,pi)=>{ const th=box.querySelector(`[data-i="${its.indexOf(it)}"] .th`), ps=rvPose(P,it,P.total), tr=th.getBoundingClientRect();
+      const dx=r.left+ps.x*k-(tr.left+tr.width/2), dy=r.top+ps.y*k-(tr.top+tr.height/2), sc=it.W*k*ps.s/tr.width;
+      th.style.zIndex=String(pi+1); th.style.transform=`translate(${dx}px,${dy}px) rotate(${ps.rot}rad) scale(${sc})`; th.dataset.d=String((n-1-pi)*55); });
+    void box.offsetWidth;
+    requestAnimationFrame(()=>{ box.querySelectorAll('.th').forEach(th=>{ th.style.transition=`transform .85s cubic-bezier(.22,.8,.24,1) ${th.dataset.d}ms`; th.style.transform='none'; });
+      R.cv.style.transition='opacity 1s ease .1s'; R.cv.style.opacity='0'; R.lt=setTimeout(()=>{ box.classList.remove('spread'); box.querySelectorAll('.th').forEach(th=>{ th.style.zIndex=''; th.style.transition=''; }); },850+(n-1)*55); }); }
+  else R.cv.style.opacity='0';
+  box.querySelectorAll('[data-i]').forEach(el=>el.addEventListener('click',()=>{ if(box.classList.contains('spread')) return; const it=its[+el.dataset.i]; if(opt.replay||!CHARS.some(c=>c.id===it.c.id)) return; CH_OPEN=it.c.id; renderChars(); cardShowPage('card'); rvClose(); }));
   box.querySelector('.rv-x').addEventListener('click',rvClose); box.querySelector('[data-rvok]').addEventListener('click',rvClose);
   const re=box.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay);
   const off=box.querySelector('[data-rvoff]'); if(off) off.addEventListener('click',()=>{ store.set('revealOff',1); off.textContent='次から演出を出しません（設定で戻せます）'; off.disabled=true; });
-  box.querySelector('[data-rvok]').focus(); }
+  box.querySelector('[data-rvok]').focus({preventScroll:true}); }
 /* ---- 試作の見比べ：#reveal で開くと、見本のキャラで流す操作盤を出す（保存はしない） ---- */
 function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜蘭','ナヒーダ','鍾離','雷電将軍','フリーナ','ヌヴィレット','楓原万葉','胡桃'], BANDS=[[1,7],[7,30],[30,90],[90,365],[365,1095],[1095,36500],[36500,Infinity]];
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
