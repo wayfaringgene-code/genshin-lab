@@ -546,13 +546,26 @@ function rvEmboss(src,w,h){ const o=rvScaled(src,w,h), x=o.getContext('2d');
 /* ---- 先に作っておく絵：机・星屑・無地のカード・影・光 ---- */
 var RV_ASSETS=null;
 function rvAssets(){ if(RV_ASSETS) return RV_ASSETS; const desk=rvCanvas(RVW,RVH), x=desk.getContext('2d');
-  // 机：夜空を映した黒い漆。真上から見下ろす
-  let g=x.createRadialGradient(540,760,0,540,760,1350); g.addColorStop(0,'#141733'); g.addColorStop(.5,'#080a1c'); g.addColorStop(1,'#020208'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
-  g=x.createLinearGradient(0,300,RVW,1500); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.48,'rgba(200,210,255,.035)'); g.addColorStop(.52,'rgba(200,210,255,.05)'); g.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
-  for(let i=0;i<320;i++){ const r=rvRnd(i,1), big=r<.06; x.globalAlpha=(big?.35:.08)+rvRnd(i,2)*.3; x.fillStyle=rvRnd(i,3)<.2?'#ffe8b8':'#dfe6ff'; x.beginPath(); x.arc(rvRnd(i,4)*RVW,rvRnd(i,5)*RVH,big?1.6:.5+rvRnd(i,6)*.8,0,6.283); x.fill(); }
-  x.globalAlpha=1; g=x.createRadialGradient(540,860,500,540,860,1250); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.6)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
+  // 机：夜空を映した黒い漆の天板を、真上から見下ろす。紺の地に、左上からの照り返しと斜めのつや、映り込んだ星、隅から流れ込む金粉（蒔絵）
+  let g=x.createRadialGradient(540,820,0,540,820,1400); g.addColorStop(0,'#1f2452'); g.addColorStop(.45,'#0f1234'); g.addColorStop(1,'#05061a'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
+  g=x.createRadialGradient(240,330,0,240,330,760); g.addColorStop(0,'rgba(165,180,255,.13)'); g.addColorStop(1,'rgba(165,180,255,0)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
+  for(const [y0,y1,a] of [[180,1580,.09],[520,1920,.04]]){ g=x.createLinearGradient(0,y0,RVW,y1); g.addColorStop(0,'rgba(210,220,255,0)'); g.addColorStop(.46,'rgba(210,220,255,0)'); g.addColorStop(.5,`rgba(215,225,255,${a})`); g.addColorStop(.54,'rgba(210,220,255,0)'); g.addColorStop(1,'rgba(210,220,255,0)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH); }
+  for(let i=0;i<340;i++){ const r=rvRnd(i,1), big=r<.06; x.globalAlpha=(big?.45:.12)+rvRnd(i,2)*.35; x.fillStyle=rvRnd(i,3)<.2?'#ffe8b8':'#dfe6ff'; x.beginPath(); x.arc(rvRnd(i,4)*RVW,rvRnd(i,5)*RVH,big?1.7:.5+rvRnd(i,6)*.9,0,6.283); x.fill(); }
+  // 金粉：左下と右上の隅から、帯になって流れ込む。真ん中（カードと文字の後ろ）はまばら
+  const seg=(px,py,ax,ay,bx,by)=>{ const vx=bx-ax, vy=by-ay, t=Math.max(0,Math.min(1,((px-ax)*vx+(py-ay)*vy)/(vx*vx+vy*vy))); return Math.hypot(px-ax-t*vx,py-ay-t*vy); };
+  const GOLD=['#e8c877','#f6e2a8','#c9a24f','#ffefc4'];
+  for(const [ax,ay,bx,by,r0] of [[-120,1380,620,2040,260],[560,-80,1200,520,220]]) for(let k=0;k<=6;k++){ const cx=ax+(bx-ax)*k/6, cy=ay+(by-ay)*k/6; g=x.createRadialGradient(cx,cy,0,cx,cy,r0); g.addColorStop(0,'rgba(226,190,110,.07)'); g.addColorStop(1,'rgba(226,190,110,0)'); x.fillStyle=g; x.fillRect(cx-r0,cy-r0,r0*2,r0*2); } // 金粉の帯に沿った淡い金のもや
+  for(let i=0;i<11000;i++){ const px=rvRnd(i,21)*RVW, py=rvRnd(i,22)*RVH, d1=seg(px,py,-120,1380,620,2040), d2=seg(px,py,560,-80,1200,520), d=Math.min(d1/230,d2/190), dens=Math.exp(-d*d)*.95+.035;
+    if(rvRnd(i,23)>dens) continue; const big=rvRnd(i,24)<.02; x.globalAlpha=.28+rvRnd(i,25)*.55; x.fillStyle=GOLD[(rvRnd(i,26)*4)|0];
+    if(big){ const r=1.6+rvRnd(i,27)*1.2; x.shadowColor='#ffe2a0'; x.shadowBlur=6; x.beginPath(); for(let k=0;k<8;k++){ const an=k*Math.PI/4, rr=k%2?r*.35:r*2.2; x.lineTo(px+Math.cos(an)*rr,py+Math.sin(an)*rr); } x.closePath(); x.fill(); x.shadowBlur=0; }
+    else{ const w=1+rvRnd(i,28)*1.8, h=.8+rvRnd(i,29)*1.2; x.save(); x.translate(px,py); x.rotate(rvRnd(i,30)*3.14); x.fillRect(-w/2,-h/2,w,h); x.restore(); } }
+  x.globalAlpha=1; g=x.createRadialGradient(540,880,560,540,880,1300); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.45)'); x.fillStyle=g; x.fillRect(0,0,RVW,RVH);
   const dust=[...Array(150)].map((_,i)=>({x:rvRnd(i,11)*RVW,y:180+rvRnd(i,12)*(RVH-360),r:.7+rvRnd(i,13)*1.7,a:.18+rvRnd(i,14)*.5,ph:rvRnd(i,15)*6.28,col:rvRnd(i,16)<.35?'#f5dfa6':'#e6ecff'}));
   return RV_ASSETS={desk,dust,sh:{},glow:{}}; }
+// 映り込み：カードの下の部分を上下逆さにして、ぼかし（縮めて広げる）、下へ向かって消えるようにした絵
+function rvReflection(src,w,h){ const rh=Math.round(h*.42), sm=rvCanvas(w/6,rh/6), o=rvCanvas(w,rh), y=o.getContext('2d'), s2=sm.getContext('2d');
+  s2.save(); s2.scale(1,-1); s2.drawImage(src,0,0,src.width,src.height,0,-h/6,w/6,h/6); s2.restore();
+  y.imageSmoothingQuality='high'; y.drawImage(sm,0,0,w,rh); y.globalCompositeOperation='destination-in'; const g=y.createLinearGradient(0,0,0,rh); g.addColorStop(0,'rgba(0,0,0,.55)'); g.addColorStop(.35,'rgba(0,0,0,.18)'); g.addColorStop(1,'rgba(0,0,0,0)'); y.fillStyle=g; y.fillRect(0,0,w,rh); return o; }
 function rvBlank(w,h){ const o=rvCanvas(w,h), x=o.getContext('2d'), g=x.createLinearGradient(0,0,w,h); g.addColorStop(0,'#16183a'); g.addColorStop(1,'#090b1d'); x.fillStyle=g; x.fillRect(0,0,w,h);
   x.strokeStyle='rgba(233,211,154,.42)'; x.lineWidth=2; rvRR(x,14,14,w-28,h-28,8); x.stroke(); x.strokeStyle='rgba(233,211,154,.16)'; x.lineWidth=1; rvRR(x,26,26,w-52,h-52,5); x.stroke(); return o; }
 // 影と光：ぼかしは重いので、1回だけ描いて使い回す（shadowBlur で、図形は枠の外に置いて影だけを写す）
@@ -571,7 +584,7 @@ function rvTempo(k,m){ if(m<=1) return 1; return k===m-1?.7:.34; }
 function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
   items.forEach((it,k)=>{ const best=k===n-1; it.best=best; it.t0=t; it.dir=rvRnd(k,7)<.5?-1:1;
     if(v==='photo'){ it.W=900; it.H=506; } else { it.W=980; it.H=551; }
-    it.img1=rvScaled(it.img,it.W,it.H); if(v==='foil') it.emb=rvEmboss(it.img,it.W,it.H);
+    it.img1=rvScaled(it.img,it.W,it.H); if(v!=='foil') it.refl=rvReflection(it.img1,it.W,it.H); if(v==='foil') it.emb=rvEmboss(it.img,it.W,it.H);
     it.rest=best?{x:RV_CX,y:RV_CY,rot:0}:{x:RV_CX+(rvRnd(k,8)-.5)*90,y:RV_CY+(rvRnd(k,9)-.5)*70,rot:(rvRnd(k,10)-.5)*.24};
     if(v==='foil'){ it.off=best?T.charge:0; it.press=t+380+it.off; it.infoIn=it.press+770; it.starAt=it.infoIn+430; it.press2=best?it.infoIn+900:0; it.land=it.press; t+=T.read+it.off; }
     else{ const sp=it.sp=best?1:rvTempo(k,n-1); it.drop=t+(v==='drop'?(best?T.preBest:T.pre*sp):(best?T.charge:0)); it.fall=v==='drop'?(best?T.fall:Math.max(140,T.fall*Math.sqrt(sp))):T.fall*(best?1:Math.max(.6,sp)); it.land=it.drop+it.fall; it.infoIn=it.land+(v==='drop'?220:100)*sp; it.starAt=it.infoIn+260*sp; t=it.land+T.read*sp;
@@ -631,6 +644,9 @@ function rvGlowDraw(x,A,it,ps,a,kind){ if(a<=0) return; const w=it.W+(kind==='ph
 function rvDrawPile(x,P,t){ const kind=P.v, its=P.items, b=its[its.length-1], spot=kind==='drop'&&its.length>1?.2*rvCl((t-b.t0)/450)*(1-rvCl((t-b.land)/600)):0; // いちばんのカードを待つあいだ、机のカードを少し暗く
   // いちばんのカードを待つあいだ、落ちる場所の机からランク色の光が漏れてくる（机のカードの下から、縁にだけ見える）
   if(kind==='drop'&&t>=b.t0&&t<b.land){ const q=rvCl((t-b.t0)/(b.drop-b.t0)), hb=q*.5+.38*Math.exp(-Math.pow((q-.4)/.07,2))+.5*Math.exp(-Math.pow((q-.72)/.07,2))+(q>.84?(q-.84)/.16*.45:0); rvGlowDraw(x,P.A,b,{x:b.rest.x,y:b.rest.y,rot:0,s:1.04,sy:1},Math.min(1,hb)*.95,kind); } // 光はドクン、ドクンと2回脈打ってから最大に
+  // 映り込み：天板に映ったカード。カードが高いほど縁から離れて薄く、着地で縁にぴたりと合う（上に重なったカードに隠れる分は見えない）
+  its.forEach(it=>{ if(t<it.t0||!it.refl) return; const ps=rvPose(P,it,t); if(ps.a<=0) return; const gap=ps.h*240, a=ps.a*(1-Math.min(1,ps.h)*.6)*(kind==='photo'?.7:1);
+    x.save(); x.globalAlpha=a; x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); x.drawImage(it.refl,-it.W/2,it.H/2+(kind==='photo'?32:4)+gap/ps.s,it.W,it.refl.height); x.restore(); });
   its.forEach((it,k)=>{ if(t<it.t0) return; const ps=rvPose(P,it,t); let dim=0; for(let j=k+1;j<its.length;j++) if(t>its[j].land) dim+=.34*rvCl((t-its[j].land)/380); dim=Math.min(.6,dim+(it.best?0:spot));
     rvShadowDraw(x,P.A,it,ps,kind);
     // 光：いちばんのカードは溜めのあいだ強まり、着地で強く光って、そのまま残る。ほかのカードは着地で一度だけ
