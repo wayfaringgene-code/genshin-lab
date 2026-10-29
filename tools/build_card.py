@@ -606,15 +606,30 @@ function rvDraw(x,P,t){ const A=P.A; x.setTransform(1,0,0,1,0,0); x.globalCompos
     x.save(); x.translate(e.x,e.y); x.rotate(e.rot); x.strokeStyle=e.col; for(const [lw,a] of [[36,.08],[14,.16],[3,.3]]){ x.globalAlpha=al*a; x.lineWidth=lw; rvRR(x,-e.w/2-R,-e.h/2-R,e.w+2*R,e.h+2*R,12+R*.9); x.stroke(); } x.restore(); }
   x.globalAlpha=1;
   if(!P.noCards){ if(P.v==='foil') rvDrawFoil(x,P,t); else rvDrawPile(x,P,t);
-    if(P.v==='drop') rvDrawStreak(x,P,t);
+    if(P.v==='drop'){ rvDrawSpot(x,P,t); rvDrawSeal(x,P,t); }
   }
   rvDrawInfo(x,P,t); rvDrawFrame(x,P,t); } // noCards：一覧へ広げるとき、カードは上に重ねた一覧に任せて、机と文字だけを描く（机ごとゆっくり消える）
-// 落ちるカード：直前の1枚から最後の1枚へ移るとき、机の一番上のカードの表面を、斜めの光沢（反射光）が一度だけ横切る（白。ランクは匂わせない）
-function rvDrawStreak(x,P,t){ const its=P.items, b=its[its.length-1], it=its[its.length-2]; if(!it) return; const u=(t-(b.t0-300))/820; if(u<0||u>1) return;
-  const ps=rvPose(P,it,t), W=it.W, H=it.H, a=-.62, vx=Math.cos(a+Math.PI/2), vy=Math.sin(a+Math.PI/2), L=(W+H)/2+170, e=u*u*(3-2*u), p=-L+e*2*L, fa=Math.min(1,Math.sin(Math.PI*u)*1.4);
-  x.save(); x.translate(ps.x,ps.y); x.rotate(ps.rot); x.scale(ps.s,ps.s*ps.sy); rvRR(x,-W/2,-H/2,W,H,12); x.clip(); x.globalCompositeOperation='lighter';
-  const g=x.createLinearGradient(vx*(p-170),vy*(p-170),vx*(p+170),vy*(p+170)); g.addColorStop(0,'rgba(255,248,232,0)'); g.addColorStop(.38,'rgba(255,248,232,.10)'); g.addColorStop(.5,'rgba(255,252,244,.42)'); g.addColorStop(.53,'rgba(255,248,232,.16)'); g.addColorStop(.7,'rgba(255,248,232,.05)'); g.addColorStop(1,'rgba(255,248,232,0)');
-  x.globalAlpha=fa; x.fillStyle=g; x.fillRect(-W/2,-H/2,W,H); x.restore(); }
+// 落ちるカード：いちばんのカードの溜め。見てほしいのは「これから降りてくる場所」（P.pre：spot＝A／stars＝B／both）
+//   A スポットライト：落ちる場所に真上から光の輪が差し、まわりが少し沈む
+//   B 天板に灯る星座：落ちる場所に、そのカードの星座（5部位の星。★の数ではない）が、鼓動に合わせて1つずつ灯り、線でつながる。カードの星座とぴたりと重なって着地し、着地で外へはじける
+function rvPreQ(P,t){ const b=P.items[P.items.length-1]; if(P.v!=='drop'||t<b.t0) return null; return {b,q:rvCl((t-b.t0)/(b.drop-b.t0)),u:t<b.land?-1:(t-b.land)/550}; }
+function rvDrawSpot(x,P,t){ const Q=rvPreQ(P,t); if(!Q||!/spot|both/.test(P.pre)||Q.u>1) return; const {b,q,u}=Q, e=q*q*(3-2*q), f=(u<0?e:1-u)*(P.items.length>1?1:.8), cx=b.rest.x, cy=b.rest.y;
+  x.save(); x.translate(cx,cy); x.scale(1.3,1); let g=x.createRadialGradient(0,0,300,0,0,860); g.addColorStop(0,'rgba(2,3,10,0)'); g.addColorStop(1,`rgba(2,3,10,${.72*f})`); x.fillStyle=g; x.fillRect(-RVW,-RVH,RVW*2,RVH*2); // まわりが沈む
+  x.globalCompositeOperation='lighter'; g=x.createRadialGradient(0,0,0,0,0,500); g.addColorStop(0,`rgba(255,240,212,${.2*f})`); g.addColorStop(.6,`rgba(255,240,212,${.09*f})`); g.addColorStop(1,'rgba(255,240,212,0)'); x.fillStyle=g; x.fillRect(-500,-500,1000,1000); x.restore(); } // 真上からの光
+function rvStarsOf(st){ const cx0=360, cy0=361, R0=58, R=246, BND=[1,7,30,90,365,1095,10950], ANG={flower:-90,plume:-18,sands:54,goblet:126,circlet:198}; // カードの星座と同じ計算（中心・半径・部位の向き・ランクの帯ごとの目盛り）
+  const rad=d=>{ if(!(d>1)) return R0; if(d>=10950) return R; let k=0; while(k<5&&d>=BND[k+1]) k++; return R0+(k+(Math.log(d)-Math.log(BND[k]))/(Math.log(BND[k+1])-Math.log(BND[k])))/6*(R-R0); };
+  return SLOTS.map(s=>{ const d=st.slots[s].age, r=rad(isFinite(d)?d:1e9), a=ANG[s]*Math.PI/180; return {s,has:d>0,x:cx0+r*Math.cos(a),y:cy0+r*Math.sin(a)}; }); }
+function rvDrawSeal(x,P,t){ const Q=rvPreQ(P,t); if(!Q||!/stars|both/.test(P.pre)||Q.u>1) return; const {b,q,u}=Q, S=b.stars||(b.stars=rvStarsOf(b.st)), on=S.filter(p=>p.has), kx=b.W/1200, ky=b.H/675;
+  const X=p=>b.rest.x+(p.x-600)*kx, Y=p=>b.rest.y+(p.y-337.5)*ky, T=k=>.12+k*.15, fade=u<0?1:1-u, burst=u<0?0:u;
+  x.save(); x.globalCompositeOperation='lighter'; x.lineCap='round';
+  // 線：5つ灯ったあとに、花→羽→砂→杯→冠→花の順でつながる
+  const lp=rvCl((q-.8)/.17); if(lp>0) for(let i=0;i<5;i++){ const p1=S[i], p2=S[(i+1)%5]; if(!p1.has||!p2.has) continue; const f=rvCl(lp*5-i); if(f<=0) continue;
+    const x1=X(p1), y1=Y(p1), x2=x1+(X(p2)-x1)*f, y2=y1+(Y(p2)-y1)*f; for(const [lw,a] of [[7,.12],[2,.7]]){ x.globalAlpha=a*fade; x.strokeStyle='#f0d898'; x.lineWidth=lw; x.beginPath(); x.moveTo(x1,y1); x.lineTo(x2,y2); x.stroke(); } }
+  // 星：鼓動に合わせて1つずつ。灯るときに小さくふくらむ。着地で外へ広がって消える
+  on.forEach((p,k)=>{ const v=(q-T(k))/.08; if(v<=0) return; const sc=(v<1?rvOB(rvCl(v)):1)*(1+burst*1.6), r=9*sc, cx=X(p), cy=Y(p);
+    const g=x.createRadialGradient(cx,cy,0,cx,cy,r*5); g.addColorStop(0,`rgba(255,236,190,${.55*fade})`); g.addColorStop(1,'rgba(255,236,190,0)'); x.globalAlpha=1; x.fillStyle=g; x.fillRect(cx-r*5,cy-r*5,r*10,r*10);
+    x.globalAlpha=fade; x.fillStyle='#fff6dc'; x.beginPath(); for(let i=0;i<8;i++){ const a=i*Math.PI/4, rr=i%2?r*.28:r*1.6; x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr); } x.closePath(); x.fill(); });
+  x.restore(); }
 function rvPose(P,it,t){ const r=it.rest, T=RV_T[P.v], fl=t<it.drop?Math.sin((t-it.t0)/280)*5:0;
   // 落ちるカード：はじめはカメラより上にあって画面に映らず、影だけが机に落ちて近づいてくる（h：1.6→0.5）。最後に一気に落ちる（0.5→0）
   if(P.v==='drop'){ const pre=t<it.drop; let h; if(pre){ const q=rvCl((t-it.t0)/(it.drop-it.t0)); h=1.6-1.1*q*q*(3-2*q); } else { const p=rvCl((t-it.drop)/it.fall); h=.5*(1-p*p); }
@@ -715,7 +730,7 @@ async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!c
   const fonts=Promise.all([document.fonts.load(`700 68px ${RV_MINCHO}`,list.map(c=>c.name||'').join('')+'命ノ星座カード（名前なし）'),document.fonts.load(`400 70px ${RV_SANS}`,'0123456789.,秘境レベルDAYSWEKMONTHYRAX'),document.fonts.load(`700 30px ${RV_SANS}`,'#命ノ星座カード')]).catch(()=>{});
   const items=await Promise.all(list.map(async c=>{ const st=charStats(c); return {c,st,rk:rvRank(st.age||0),img:await rvCardImg(c)}; }));
   await Promise.race([fonts,new Promise(r=>setTimeout(r,2500))]); if(R.dead) return;
-  const P=rvPlan(items,v,mode); R.P=P; R.drawAt=t=>{ R.hold=true; rvDraw(x,P,t); }; // drawAt：好きな時刻の1コマを描いて止める（確認・動画の書き出し用）
+  const P=rvPlan(items,v,mode); P.pre=opt.pre||'both'; R.P=P; R.drawAt=t=>{ R.hold=true; rvDraw(x,P,t); }; // drawAt：好きな時刻の1コマを描いて止める（確認・動画の書き出し用）
   R.items=items; R.opt=opt; R.cv=cv; R.bar=bar;
   bar.hidden=false; bar.innerHTML=`<span class="rv-hint">${items.length>1?'画面を押すと次のカードへ':'画面を押すと先へ'}</span>`;
   // 終わり：全員のときは、少し余韻をおいて一覧へ。1枚のときはボタンだけ
@@ -766,15 +781,16 @@ function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜�
   const out=[]; for(let i=0;i<n-1;i++) out.push(pick(names[i%names.length],Math.min(top-1,RN()*Math.max(1,top)|0)));
   out.push(pick('スカーク',top)); return out; }
 function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{class:'rv-demo',id:'rvDemo'});
-  const st={v:'drop',m:'all',n:6,top:5}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']], B=(k,v,t,on)=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-${k}="${v}" aria-pressed="${on}">${t}</button>`;
-  const play=()=>{ const cs=rvDemoChars(st.m==='one'?1:st.n,st.top); const go=()=>revealPlay(cs,st.v,{mode:st.m,replay:go,okLabel:'閉じる'}); go(); };
+  const st={v:'drop',m:'all',n:6,top:5,pre:'both'}, tops=[[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級（虹）']], B=(k,v,t,on)=>`<button class="btn" style="padding:3px 10px;font-size:12px" data-${k}="${v}" aria-pressed="${on}">${t}</button>`;
+  const play=()=>{ const cs=rvDemoChars(st.m==='one'?1:st.n,st.top); const go=()=>revealPlay(cs,st.v,{mode:st.m,pre:st.pre,replay:go,okLabel:'閉じる'}); go(); };
   const draw=()=>{ box.innerHTML=`<div class="row"><b>演出の試作</b><span class="note">見本のキャラで流します（保存はしません）</span><button class="btn" style="margin-left:auto;padding:2px 8px;font-size:11px" data-x>閉じる</button></div>
     <div class="row">案 ${Object.entries(REVEAL_VARS).map(([k,t])=>B('v',k,t,st.v===k)).join('')}</div>
     <div class="row">${B('m','all','全員',st.m==='all')}${B('m','one','1枚',st.m==='one')}　人数 ${[3,6,8,12].map(k=>B('n',k,k+'人',st.n===k)).join('')}</div>
     <div class="row">最後 ${tops.map(([k,t])=>B('t',k,t,st.top===k)).join('')}</div>
+    <div class="row">溜め（案2） ${[['spot','A スポットライト'],['stars','B 星座'],['both','A＋B']].map(([k,t])=>B('p',k,t,st.pre===k)).join('')}</div>
     <div class="row"><button class="btn primary" data-go>▶ 流す</button><span class="note">端末で「視差効果を減らす」を選んでいると、最後の絵だけが出ます</span></div>`;
     box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ st.v=b.dataset.v; draw(); }); box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ st.m=b.dataset.m; draw(); });
-    box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ st.n=+b.dataset.n; draw(); }); box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ st.top=+b.dataset.t; draw(); });
+    box.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ st.n=+b.dataset.n; draw(); }); box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ st.top=+b.dataset.t; draw(); }); box.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{ st.pre=b.dataset.p; draw(); });
     box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=play; };
   draw(); document.body.appendChild(box); }
 /* ---- 共有：スマホは画像ごと共有シートへ。できなければ画像を保存して、X の投稿画面を開くボタン ---- */
