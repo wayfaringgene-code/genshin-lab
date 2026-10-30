@@ -1429,6 +1429,25 @@ const SLOT_COL={flower:'#e58aa0',plume:'#7fb0ea',sands:'#e2b659',goblet:'#6cc7a0
 const SLOT_SHORT={flower:'花',plume:'羽',sands:'砂',goblet:'杯',circlet:'冠'};
 let CHARS=store.get('chars',[]); let CH_OPEN=null, CH_EDIT=null;
 function saveChars(){ store.set('chars',CHARS); }
+/* ---------- 有効OPは「名前＋セット」ごとに1つ（v2.2） ----------
+   同じ名前で同じセットのキャラは、有効OPを共有する。どの画面で直しても、同じ組み合わせのキャラ全員に効く。
+   セットの見分け方：4セットはセット名、2セット＋2セットは2セット効果の組み合わせ（「攻撃力+18%＋攻撃力+18%」）。空欄は「名前だけ」で1つ。
+   EFF_MAP（保存名 effMap）＝{キー:{eff,at}}。初めて開いたときは、いまのキャラから作る（同じキーで食い違えば、日付の新しいほう） */
+const SET_BONUS2=/*__SET_BONUS__*/{}; // セット名→2セット効果（tools/set_bonus.json を、組み立てのときに埋め込む）
+function setKeyOf(set){ const parts=String(set||'').split('＋').map(x=>x.trim()).filter(Boolean); if(!parts.length) return '';
+  const four=parts.map(x=>/^(.+?)4$/.exec(x)).find(Boolean); if(four) return four[1];
+  return parts.map(x=>{ const m=/^(.+?)2$/.exec(x); return m?(SET_BONUS2[m[1]]||m[1]+'2'):x; }).sort().join('＋'); }
+function effKeyOf(c){ return String(c&&c.name||'').trim()+'｜'+setKeyOf(c&&c.set); }
+let EFF_MAP=store.get('effMap',{})||{};
+function effOf(c){ const m=EFF_MAP[effKeyOf(c)]; return m&&Array.isArray(m.eff)&&m.eff.length?m.eff.slice():null; }
+function effPut(c){ if(!c||!Array.isArray(c.eff)) return; const k=effKeyOf(c), eff=c.eff.slice(); EFF_MAP[k]={eff,at:Date.now()}; store.set('effMap',EFF_MAP);
+  for(const x of CHARS) if(x!==c&&effKeyOf(x)===k){ x.eff=eff.slice(); delete x.effGuess; }
+  if(typeof effPutMore==='function') effPutMore(k,eff); } // カードアプリでは、ホームのUIDのカードにも効かせる
+(function effInit(){ const at=c=>{ const d=Date.parse(c.date||''); return isFinite(d)?d:0; }; let changed=false;
+  for(const c of CHARS){ if(!Array.isArray(c.eff)||!c.eff.length||c.effGuess) continue; const k=effKeyOf(c), m=EFF_MAP[k];
+    if(!m||(m.init&&at(c)>m.at)){ EFF_MAP[k]={eff:c.eff.slice(),at:at(c),init:true}; changed=true; } }
+  if(changed) store.set('effMap',EFF_MAP);
+  let fix=false; for(const c of CHARS){ const e=effOf(c); if(e&&e.join()!==(c.eff||[]).join()){ c.eff=e; delete c.effGuess; fix=true; } } if(fix) saveChars(); })();
 function estPiece(main,subs){ // +20の1個：表示値からロール数を逆算 → {ok, four, det:[{s,n,u}]}（uは10%単位の推定）
   if(!main||subs.length!==4) return {ok:false,msg:'未入力'};
   if(subs.some(x=>x.v===''||isNaN(parseFloat(x.v)))) return {ok:false,msg:'サブOPの値が未入力'};
@@ -1665,7 +1684,7 @@ function timelineSVG(rows,mode){ // 部位は段で見分け、色はランク�
     // 名札
     const nx=8, nw=LN-50;
     // 名札：枠で囲まず、カードの名前と同じく文字そのものを主役に（ランクは透けたチップで）
-    g+=(!r.c.name&&r.c.face?`<image href="${r.c.face}" x="${nx+9}" y="${y-17}" height="18" width="${nw-10}" preserveAspectRatio="xMinYMid meet"/>`:(r.c.face?`<clipPath id="tlFace${i}"><circle cx="${nx+19}" cy="${y-7}" r="9"/></clipPath><image href="${r.c.face}" x="${nx+10}" y="${y-16}" height="18" width="18" preserveAspectRatio="xMinYMid slice" clip-path="url(#tlFace${i})"/>`:'')+`<text x="${nx+(r.c.face?32:12)}" y="${y-2}" font-size="15" font-weight="700" letter-spacing=".02em" fill="${C.ink}">${esc(r.c.name||'（名前なし）')}</text>`)+(r.st.age>0?`<rect x="${nx+11}" y="${y+4}" width="${[...tr[1]].length*7+12}" height="14" rx="7" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-opacity=".75"/><text x="${nx+17}" y="${y+14.5}" font-size="9.5" font-weight="700" letter-spacing=".04em" fill="${col}" ${neon?'filter="url(#tlNeonTxt)"':''}>${tr[1]}</text>`:`<text x="${nx+12}" y="${y+14}" font-size="10" fill="${C.muted}">—</text>`);
+    g+=(!r.c.name&&r.c.face?`<image href="${r.c.face}" x="${nx+9}" y="${y-17}" height="18" width="${nw-10}" preserveAspectRatio="xMinYMid meet"/>`:(r.c.face?`<clipPath id="tlFace${i}"><circle cx="${nx+19}" cy="${y-7}" r="9"/></clipPath><image href="${r.c.face}" x="${nx+10}" y="${y-16}" height="18" width="18" preserveAspectRatio="xMinYMid slice" clip-path="url(#tlFace${i})"/>`:'')+`<text x="${nx+(r.c.face?32:12)}" y="${y-2}" font-size="15" font-weight="700" letter-spacing=".02em" fill="${C.ink}">${esc(r.c.name||'（名前なし）')}</text>`)+(r.st.age>0?`<rect x="${nx+11}" y="${y+4}" width="${[...tr[1]].length*7+12}" height="14" rx="7" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-opacity=".75"/><text x="${nx+17}" y="${y+14.5}" font-size="9.5" font-weight="700" letter-spacing=".04em" fill="${col}" ${neon?'filter="url(#tlNeonTxt)"':''}>${tr[1]}</text>`+(()=>{ const sl=setKeyOf(r.c.set); if(!sl) return ''; const x0=nx+11+[...tr[1]].length*7+12+7, mw=LN-46-x0, w=[...sl].reduce((a,ch)=>a+(ch.charCodeAt(0)<128?5.2:9),0); return `<text x="${x0}" y="${y+14.5}" font-size="9" fill="${C.muted}"${w>mw?` textLength="${mw}" lengthAdjust="spacingAndGlyphs"`:''}><title>${esc(sl)}</title>${esc(sl)}</text>`; })():`<text x="${nx+12}" y="${y+14}" font-size="10" fill="${C.muted}">—</text>`);
     { // 名札の下に、有効OPをチップで並べる（入りきらなければ2行目へ）。押すと変更の窓が開く
       const lay=effChipLayout(r.c,LN), ch=13, rowH=16, top=y+23; let out='', last=0;
       for(const l of lay.items){ const cy=top+l.line*rowH; last=Math.max(last,cy);
@@ -2129,8 +2148,8 @@ function effReviewHTML(){ const list=CHARS.slice().sort((a,b)=>((b.effGuess||EFF
 function effReviewBind(){ const box=$('effRevBody'); if(!box) return;
   const only=$('effRevOnly'); if(only) only.addEventListener('change',()=>{ store.set('effRevOnly',only.checked); renderChars(); });
   box.querySelectorAll('[data-effs]').forEach(el=>el.addEventListener('change',()=>{ const c=CHARS.find(x=>x.id===el.closest('tr').dataset.effc); if(!c) return; const s=el.dataset.effs;
-    c.eff=el.checked?SUBS.filter(x=>x===s||c.eff.includes(x)):c.eff.filter(x=>x!==s); delete c.effGuess; EFFREV_KEEP.add(c.id); saveChars(); renderChars(); }));
-  box.querySelectorAll('[data-effok]').forEach(el=>el.addEventListener('click',()=>{ const c=CHARS.find(x=>x.id===el.closest('tr').dataset.effc); if(!c) return; delete c.effGuess; saveChars(); renderChars(); })); }
+    c.eff=el.checked?SUBS.filter(x=>x===s||c.eff.includes(x)):c.eff.filter(x=>x!==s); delete c.effGuess; EFFREV_KEEP.add(c.id); effPut(c); saveChars(); renderChars(); }));
+  box.querySelectorAll('[data-effok]').forEach(el=>el.addEventListener('click',()=>{ const c=CHARS.find(x=>x.id===el.closest('tr').dataset.effc); if(!c) return; delete c.effGuess; effPut(c); saveChars(); renderChars(); })); }
 let EFFPOP=null; // {id,x,y}
 function effPopRender(){ let el=$('effPop'); if(!EFFPOP){ if(el) el.remove(); return; } const c=CHARS.find(x=>x.id===EFFPOP.id); if(!c){ EFFPOP=null; if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='effPop'; el.className='effpop'; el.setAttribute('role','dialog'); document.body.appendChild(el); }
@@ -2138,8 +2157,8 @@ function effPopRender(){ let el=$('effPop'); if(!EFFPOP){ if(el) el.remove(); re
     <div class="checks" style="margin-top:6px">${effOptsFor(c).map(s=>`<label class="chk"><input type="checkbox" data-effp="${s}" ${c.eff.includes(s)?'checked':''}><span>${effChip(s)}</span></label>`).join('')}</div>
     ${c.effGuess?`<p class="note" style="margin:6px 0 0"><b class="err">推定</b>：装備から見立てたものです。<button class="btn" style="padding:1px 8px;font-size:12px" data-effpok>これでよい</button></p>`:''}`;
   const w=Math.min(340,window.innerWidth-24); el.style.width=w+'px'; el.style.left=Math.max(12,Math.min(EFFPOP.x,window.innerWidth-w-12))+'px'; el.style.top=Math.max(12,Math.min(EFFPOP.y+8,window.innerHeight-140))+'px';
-  el.querySelectorAll('[data-effp]').forEach(i=>i.addEventListener('change',()=>{ const s=i.dataset.effp; c.eff=i.checked?SUBS.filter(x=>x===s||c.eff.includes(x)):c.eff.filter(x=>x!==s); delete c.effGuess; saveChars(); renderChars(); }));
-  const ok=el.querySelector('[data-effpok]'); if(ok) ok.addEventListener('click',()=>{ delete c.effGuess; saveChars(); renderChars(); });
+  el.querySelectorAll('[data-effp]').forEach(i=>i.addEventListener('change',()=>{ const s=i.dataset.effp; c.eff=i.checked?SUBS.filter(x=>x===s||c.eff.includes(x)):c.eff.filter(x=>x!==s); delete c.effGuess; effPut(c); saveChars(); renderChars(); }));
+  const ok=el.querySelector('[data-effpok]'); if(ok) ok.addEventListener('click',()=>{ delete c.effGuess; effPut(c); saveChars(); renderChars(); });
   el.querySelector('[data-effclose]').addEventListener('click',()=>{ EFFPOP=null; effPopRender(); }); }
 document.addEventListener('click',e=>{ if(EFFPOP&&!e.target.closest('#effPop')&&!e.target.closest('[data-effedit]')){ EFFPOP=null; effPopRender(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&EFFPOP){ EFFPOP=null; effPopRender(); } });
@@ -2473,7 +2492,7 @@ function constellationCardSVG(c,st,mode){
     if(MV){ const tw2=MTW(MV); let xs=out?bl-4:bl+bw+4-tw2; xs=Math.max(16,Math.min(650-tw2,xs)); g+=MTX(xs, ly-18, MV, 'start'); } }); // 名札のすぐ上に呼び名（文字だけ）
   // キャラ名は左上（星図の外側）。右の札は「秘境レベル」から始める（見出しを詰めて、部位の欄を広く）
   g+=`<text x="44" y="78" font-family='${disp}' font-size="${[...nm].length>6?32:40}" font-weight="800" fill="#f3ead6" paint-order="stroke" stroke="#05060d" stroke-width="4" stroke-opacity=".6">${esc(nm)}</text>`;
-  g+=`<text x="46" y="104" font-family='${sans}' font-size="13" fill="#9aa6bb" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${el==='?'?'元素未詳':`<tspan fill="${ec0}">●</tspan> ${el}元素`}${c.set?`　${esc(c.set)}`:''}</text>`;
+  g+=`<text x="46" y="104" font-family='${sans}' font-size="13" fill="#9aa6bb" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${el==='?'?'元素未詳':`<tspan fill="${ec0}">●</tspan> ${el}元素`}${c.set?`　${esc(setKeyOf(c.set))}`:''}</text>`;
   // 有効OP：名前のすぐ下に、金のチップで（このカードの評価の前提なので、しっかり見せる。推定のときは「推定」を先頭に）
   { const nmW=[...nm].reduce((a,c2)=>a+(/[ -~]/.test(c2)?.55:1),0)*([...nm].length>6?32:40), x0=44+nmW+22; let ex=x0, ey=54; const ch=21, EJ={'HP%':'HP%','ATK%':'攻撃力%','DEF%':'防御力%','ER':'元素チャージ','EM':'元素熟知','CR':'会心率','CD':'会心ダメージ'}, tw=t=>[...t].reduce((a,c2)=>a+(/[ -~]/.test(c2)?7.2:12.5),0);
     // キャラ名の右に並べる。区切り線（x=650）の手前で折り返す
@@ -2635,7 +2654,7 @@ function renderChars(){
   { const er=$('effRev'); if(er){ er.hidden=!CHARS.length; const nG=CHARS.filter(c=>c.effGuess).length; $('effRevSum').innerHTML=`有効OPの見直し${nG?`<small class="err" style="margin-left:6px">推定 ${nG}人</small>`:''}`; $('effRevBody').innerHTML=effReviewHTML(); effReviewBind(); } }
   const cur=rows.find(r=>r.c.id===CH_OPEN);
   $('chList').innerHTML=cur?(({c,st})=>`<div class="chcard open"><div class="chhead" style="cursor:default">
-      <span class="chname">${c.face?`<img class="chface${c.name?' ico':''}" src="${c.face}" alt="">`:''}${c.face&&!c.name?'':esc(c.name||'（名前なし）')}<small>${esc(c.set||'')}${c.date?`${c.set?'・':''}${c.date}の版`:''}</small></span>
+      <span class="chname">${c.face?`<img class="chface${c.name?' ico':''}" src="${c.face}" alt="">`:''}${c.face&&!c.name?'':esc(c.name||'（名前なし）')}<small>${esc(setKeyOf(c.set))}${c.date?`${c.set?'・':''}${c.date}の版`:''}</small></span>
       <span class="chmeta">${c.effGuess?'<span class="err" title="有効OPは装備からの推定です">有効OP推定</span>・':''}秘境 ${fmtAge(st.age)}レベル・有効RV ${Math.round(st.tot)}%・スコア ${st.score.toFixed(1)}（${STYPES[st.stype][0]}）${st.filled<5?`・入力 ${st.filled}/5部位`:''}</span></div>
       ${charDetailHTML(c,st)}
       ${window.LAB_MODE==='card'?'':`<div class="chdetail labcardlink" style="border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between;gap:8px 14px"><div style="min-width:0"><h3 style="margin:0 0 2px;font-size:14px">カードを作る</h3><p class="note">カード画像は「命ノ星座カード」で作れます。データは別々に保存されるので、下の「データの引っ越し」で書き出して、命ノ星座カードの「設定 → データの引っ越し」で読み込んでください。</p></div><a class="btn primary" href="https://claude.ai/artifact/CWeeXV4M4vmh2rh7JRabbP" target="_blank" rel="noopener" style="text-decoration:none">命ノ星座カードを開く</a></div></div>`}<div class="chdetail${window.LAB_MODE==='card'?'':' labcard-off'}" style="border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0;font-size:14px">カード（ラフ）</h3><div class="row" style="gap:8px"><button class="btn" data-ccexp="png" title="2400×1350のPNGで保存">PNGで保存</button><button class="btn" data-ccexp="webp" title="2400×1350のWebPで保存（軽い）">WebP</button><span id="ccExpMsg" style="font-size:11px;color:var(--mut)"></span><div class="seg" role="group" aria-label="カードの案">${Object.entries(CARD_VARIANTS).map(([k,v])=>`<button data-card="${k}" aria-pressed="${store.get('cardVar','X3G')===k}">${v}</button>`).join('')}</div><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cardImg" accept="image/*" hidden></label>${CH_OPEN&&CARD_FIT[CH_OPEN]&&/^SKB?$/.test(store.get('cardVar','X3G'))?`<label class="row" style="gap:6px;font-size:12px;color:var(--mut)">立ち絵の大きさ<input type="range" id="cardZoom" min="60" max="170" step="5" value="${CARD_ZOOM[CH_OPEN]||100}" style="width:110px"></label><span style="font-size:11px;color:var(--mut)">絵はドラッグで移動（ダブルクリックで戻す）</span>`:''}${/^SKB?$/.test(store.get('cardVar','X3G'))?`<div class="seg" role="group" aria-label="星の名札">${Object.entries(CC_LABELS).map(([k,v])=>`<button data-cclab="${k}" aria-pressed="${CC_LABEL===k}">${v}</button>`).join('')}</div><div class="seg" role="group" aria-label="書体">${Object.entries(CC_FONTS).map(([k,v])=>`<button data-ccfont="${k}" aria-pressed="${CC_FONT===k}">${v}</button>`).join('')}</div><div class="seg" role="group" aria-label="外枠">${Object.entries(CC_FRAMES).map(([k,v])=>`<button data-ccframe="${k}" aria-pressed="${CC_FRAME===k}">${v}</button>`).join('')}</div><div class="seg" role="group" aria-label="星座の線の色">${Object.entries(CC_LINES).map(([k,v])=>`<button data-ccline="${k}" aria-pressed="${CC_LINE===k}">${v}</button>`).join('')}</div><div class="seg" role="group" aria-label="五角形の面">${Object.entries(CC_FILLS).map(([k,v])=>`<button data-ccfill="${k}" aria-pressed="${CC_FILL===k}">${v}</button>`).join('')}</div><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">凡例<select id="ccLegSel">${Object.entries(CC_LEGS).map(([k,v])=>`<option value="${k}"${CC_LEG===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">★の札<select id="ccBadgeSel">${Object.entries(CC_BADGES).map(([k,v])=>`<option value="${k}"${CC_BADGE===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">30年超えの演出<select id="ccMythSel">${Object.entries(CC_MYTHS).map(([k,v])=>`<option value="${k}"${CC_MYTH===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">部位の見分け<select id="ccSlotIdSel">${Object.entries(CC_SLOTIDS).map(([k,v])=>`<option value="${k}"${CC_SLOTID===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">カードの単位<select id="ccUnitSel">${Object.entries(CC_UNITSS).map(([k,v])=>`<option value="${k}"${CC_UNITS===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">激レアの呼び名<select id="ccMythLangSel"><option value="en"${CC_MYTHLANG==='en'?' selected':''}>英語</option><option value="jp"${CC_MYTHLANG==='jp'?' selected':''}>日本語</option></select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">右上の物差し<select id="ccSclSel">${Object.entries(CC_SCLS).map(([k,v])=>`<option value="${k}"${CC_SCL===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">見出し<select id="ccHdrSel">${Object.entries(CC_HDRS).map(([k,v])=>`<option value="${k}"${CC_HDR===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">部位の物差し<select id="ccPscSel">${Object.entries(CC_PSCS).map(([k,v])=>`<option value="${k}"${CC_PSC===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">頂点の名札<select id="ccVlblSel">${Object.entries(CC_VLBLS).map(([k,v])=>`<option value="${k}"${CC_VLBL===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">外周<select id="ccDialSel">${Object.entries(CC_DIALS).map(([k,v])=>`<option value="${k}"${CC_DIAL===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">区間<select id="ccSectSel">${Object.entries(CC_SECTS).map(([k,v])=>`<option value="${k}"${CC_SECT===k?' selected':''}>${v}</option>`).join('')}</select></label><label class="f" style="grid-auto-flow:column;align-items:center;gap:6px">軸<select id="ccAxisSel">${Object.entries(CC_AXES).map(([k,v])=>`<option value="${k}"${CC_AXIS===k?' selected':''}>${v}</option>`).join('')}</select></label><div class="seg" role="group" aria-label="目盛り">${Object.entries(CC_TICKS).map(([k,v])=>`<button data-cctick="${k}" aria-pressed="${CC_TICK===k}">${v}</button>`).join('')}</div>`:''}<label class="btn" style="cursor:pointer">${CARD_FONT?'書体を選び直す':'書体を選ぶ'}<input type="file" id="cardFont" accept=".ttf,.otf,.woff,.woff2,font/*" hidden></label></div></div>
@@ -2965,7 +2984,8 @@ function renderEditor(){ const c=CH_EDIT; if(!c){ $('chEditor').hidden=true; ret
   h+=`<p class="note">+20の聖遺物の表示値をそのまま入れます（%系は小数第1位）。空の部位は「まだなし」として計算します。</p><div class="btns"><button class="btn primary" id="ceSave">保存</button><button class="btn" id="ceCancel">閉じる</button></div>`;
   $('chEditor').innerHTML=h; editorRead(); editorPreview();
   $('chEditor').querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{ const mainChanged=el.dataset.main; editorRead(); if(mainChanged){ renderEditor(); } else editorPreview(); }));
-  $('ceSave').addEventListener('click',()=>{ editorRead(); delete CH_EDIT.effGuess; learnName(CH_EDIT.name); const i=CHARS.findIndex(x=>x.id===CH_EDIT.id); if(i>=0) CHARS[i]=CH_EDIT; else CHARS.push(CH_EDIT); saveChars(); CH_OPEN=CH_EDIT.id; CH_EDIT=null; $('chEditor').hidden=true; renderChars(); });
+  $('ceSave').addEventListener('click',()=>{ editorRead(); delete CH_EDIT.effGuess; learnName(CH_EDIT.name); const i=CHARS.findIndex(x=>x.id===CH_EDIT.id), effEdited=i<0||(CHARS[i].eff||[]).join()!==CH_EDIT.eff.join(); if(i>=0) CHARS[i]=CH_EDIT; else CHARS.push(CH_EDIT);
+    { const e=effOf(CH_EDIT); if(effEdited||!e) effPut(CH_EDIT); else CH_EDIT.eff=e; } saveChars(); CH_OPEN=CH_EDIT.id; CH_EDIT=null; $('chEditor').hidden=true; renderChars(); });
   $('ceCancel').addEventListener('click',()=>{ CH_EDIT=null; $('chEditor').hidden=true; });
 }
 function editorRead(){ const c=CH_EDIT; const q=sel=>$('chEditor').querySelector(sel);
@@ -3198,7 +3218,7 @@ function impSave(){ impRead(); let skipped=0, last=null; IMP.groups.forEach(g=>l
       if(had&&!same&&c.date!==today()){ c.hist=c.hist||[]; c.hist.push({date:c.date||'',pieces:JSON.parse(JSON.stringify(c.pieces)),eff:c.eff.slice()}); }
       Object.assign(c.pieces,pieces); c.pimg=Object.assign({},c.pimg,arts); delete c.effGuess; c.eff=g.eff.slice(); if(g.stype) c.stype=g.stype; else delete c.stype; if(!same||!c.date) c.date=today(); if(g.name) c.name=g.name; if(!c.sig){ c.sig=g.owner; c.face=g.face; } }
     else { c=Object.assign(blankChar(),{name:g.name,eff:g.eff.slice(),pieces,pimg:arts,face:g.face,sig:g.owner,date:today()}); if(g.stype) c.stype=g.stype; CHARS.push(c); }
-    last=c.id; }
+    effPut(c); last=c.id; }
   saveChars(); IMP=null; renderImport(); if(last) CH_OPEN=last; renderChars();
   if(skipped){ const b=$('chImport'); b.hidden=false; b.innerHTML=`<p class="note"><span class="err">${skipped}個</span>は部位・メインOP・サブOPがそろっていなかったので保存しませんでした。</p>`; }
 }
@@ -3229,7 +3249,7 @@ function moveImport(txt){ let d; try{ d=JSON.parse(String(txt).trim()); }catch(e
   const snap=x=>({date:x.date||'',pieces:JSON.parse(JSON.stringify(x.pieces||{})),eff:(x.eff||[]).slice()});
   let add=0, upd=0, same=0; for(const c of list){ if(!c||typeof c!=='object'||!c.id||!c.pieces) continue; const hadEff=Array.isArray(c.eff); if(!hadEff){ const g=guessEff(c.pieces); c.eff=g||S.eff.slice(); c.effGuess=true; } /* 有効OPを持たないデータ（ビデオスキャナーなど）は、まとめる先の設定を残す */
     const m=CHARS.find(x=>x.id===c.id)||(c.name&&CHARS.find(x=>x.name===c.name))||(c.sig&&CHARS.find(x=>x.sig&&SHOT.sameOwner(x.sig,c.sig)))||null;
-    if(!m){ CHARS.push(c); add++; continue; }
+    if(!m){ CHARS.push(c); if(hadEff) effPut(c); else { const e=effOf(c); if(e){ c.eff=e; delete c.effGuess; } } add++; continue; }
     const hs=[...(m.hist||[]),...(c.hist||[])], sameDay=(c.date||'')===(m.date||''), inNew=(c.date||'')>=(m.date||''); /* 同じ日なら、読み込んだほうを「いま」にして上書き（取り込みと同じ扱い） */
     const has=(x,k)=>x.pieces&&x.pieces[k]&&(x.pieces[k].subs||[]).some(q=>q.v!==''), sk=(x,k)=>JSON.stringify([x.pieces[k].main,x.pieces[k].subs.map(q=>q.s+q.v)]);
     const inc=SLOTS.filter(k=>has(c,k)), diff=inc.some(k=>!has(m,k)||sk(m,k)!==sk(c,k));
@@ -3237,7 +3257,8 @@ function moveImport(txt){ let d; try{ d=JSON.parse(String(txt).trim()); }catch(e
     if(c.pimg){ m.pimg=m.pimg||{}; for(const k of SLOTS) if(!m.pimg[k]&&c.pimg[k]&&has(m,k)&&has(c,k)&&sk(m,k)===sk(c,k)) m.pimg[k]=c.pimg[k]; }
     if(!m.name&&c.name) m.name=c.name; if(!m.set&&c.set) m.set=c.set; if(!m.face&&c.face){ m.face=c.face; m.sig=c.sig; }
     const seen=new Set([pk(m)]), out=[]; hs.sort((x,y)=>(x.date||'').localeCompare(y.date||'')).forEach(h=>{ const k=(h.date||'')+pk(h); if(seen.has(pk(h))&&false) return; if(seen.has(k)) return; seen.add(k); if(pk(h)!==pk(m)) out.push(h); });
-    if(out.length) m.hist=out; else delete m.hist; }
+    if(out.length) m.hist=out; else delete m.hist;
+    if(hadEff&&diff&&inNew) effPut(m); else { const e=effOf(m); if(e){ m.eff=e; delete m.effGuess; } } }
   if(d&&Array.isArray(d.nameDict)) d.nameDict.forEach(learnName);
   saveChars(); renderChars(); return `読み込みました（新しく追加 ${add}人・同じキャラにまとめた ${upd}人・中身が同じで変更なし ${same}人）`; }
 $('mvOut').addEventListener('click',()=>{ $('mvText').value=moveExport(); $('mvCopy').hidden=false; $('mvFile').hidden=false; $('mvMsg').textContent=`${CHARS.length}人ぶんを書き出しました。コピーするか、ファイルに保存してください。`; $('mvText').select(); });

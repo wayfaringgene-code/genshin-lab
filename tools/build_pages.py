@@ -45,6 +45,10 @@ def pages_head(s, title, app, icon, mode_script=''):
 if os.path.isdir(OUT): shutil.rmtree(OUT)
 os.makedirs(OUT)
 lab = read(os.path.join(SRC, 'lab.html'))
+# 2セット効果の表（tools/set_bonus.json。build_set_bonus.py で作る）をラボに埋め込む。カードは build_card.py が同じように埋め込む
+SET_BONUS = read(os.path.join(TOOLS, 'set_bonus.json')); import json as _json; _json.loads(SET_BONUS)
+assert lab.count('/*__SET_BONUS__*/{}') == 1
+lab_built = lab.replace('/*__SET_BONUS__*/{}', SET_BONUS.strip())
 
 SITE = 'https://wayfaringgene-code.github.io/genshin-lab/'
 OGP = (f'<meta name="description" content="原神の聖遺物が「秘境を何日回った人のレベル」かを測って、カードにします。UIDを入れるだけ・ログイン不要。">\n'
@@ -68,7 +72,7 @@ if os.path.exists(os.path.join(SRC, 'og.png')):
     shutil.copy(os.path.join(SRC, 'og.png'), OUT)
 
 # 聖遺物ラボ：キャラ（/lab/）。カードへのリンクは、サイトのトップ（../）に向ける
-chars = pages_head(lab, '聖遺物ラボ：キャラ', '聖遺物ラボ', '../apple-touch-icon.png', "<script>window.LAB_MODE='chars';</script>\n")
+chars = pages_head(lab_built, '聖遺物ラボ：キャラ', '聖遺物ラボ', '../apple-touch-icon.png', "<script>window.LAB_MODE='chars';</script>\n")
 assert chars.count(ARTIFACT_CARD_URL) == 1
 write(os.path.join(OUT, 'lab', 'index.html'), chars.replace(ARTIFACT_CARD_URL, '../').replace(' target="_blank" rel="noopener" style="text-decoration:none">命ノ星座カードを開く', ' style="text-decoration:none">命ノ星座カードを開く'))
 
