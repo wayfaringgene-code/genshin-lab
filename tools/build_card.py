@@ -26,7 +26,10 @@ rep("function fmtWait(d,L){ L=WAIT_UNITS[L]?L:'jp';",
 
 # --- 一覧の行を押したら、カードのページへ ---
 rep("if(CH_OPEN) $('chList').scrollIntoView({behavior:'smooth',block:'nearest'}); };",
-    "if(CH_OPEN){ if(CARD_APP) cardShowPage('card'); else $('chList').scrollIntoView({behavior:'smooth',block:'nearest'}); } };")
+    "if(CH_OPEN){ if(CARD_APP){ store.set('cardLast',CH_OPEN); cardShowPage('card'); } else $('chList').scrollIntoView({behavior:'smooth',block:'nearest'}); } };")
+# --- キャラ一覧の行に「カードを作成」の札（行のどこを押しても同じ。v2.2） ---
+rep("stroke=\"${neon?col:'#e9d39a'}\" stroke-opacity=\"${neon?.6:.16}\" ${neon?'filter=\"url(#tlGlow)\"':''}/>`;",
+    "stroke=\"${neon?col:'#e9d39a'}\" stroke-opacity=\"${neon?.6:.16}\" ${neon?'filter=\"url(#tlGlow)\"':''}/>`+(CARD_APP?`<g class=\"tl-mk\"><rect x=\"${LN-24+pw+28+MW+CW2-96}\" y=\"${y-laneH/2-8}\" width=\"88\" height=\"16\" rx=\"8\" fill=\"#1c1810\" stroke=\"#e9d39a\" stroke-opacity=\".75\"/><text x=\"${LN-24+pw+28+MW+CW2-52}\" y=\"${y-laneH/2+3.5}\" text-anchor=\"middle\" font-size=\"10\" font-weight=\"700\" fill=\"#f3e3b4\">カードを作成 ›</text></g>`:'');")
 rep("const go=()=>{ CH_OPEN=CH_OPEN===b.dataset.open?null:b.dataset.open;",
     "const go=()=>{ CH_OPEN=(CH_OPEN===b.dataset.open&&!CARD_APP)?null:b.dataset.open;")
 
@@ -58,6 +61,16 @@ rep("const end=()=>{ drag=null; svg.style.cursor='grab'; };",
     "const end=()=>{ if(drag) portraitSave(id); drag=null; svg.style.cursor='grab'; };")
 rep("svg.addEventListener('dblclick',e=>{ CARD_POS[id]={dx:0,dy:0};",
     "svg.addEventListener('dblclick',e=>{ CARD_POS[id]={dx:0,dy:0}; portraitSave(id);")
+
+# --- セット欄を選ぶ形に（v2.2）：4セットはセット名、2セット＋2セットは2セット効果。値は UID と同じ形（「〇〇4」）か、効果（「攻撃力+18%＋攻撃力+18%」） ---
+rep('<label class="f" for="ceSet">狙いのセット（秘境）<input type="text" id="ceSet" value="${esc(c.set)}" placeholder="任意"></label>',
+    '${CARD_APP?`<label class="f">セット${setPickHTML(c.set,\'id="ceSet"\')}</label>`:`<label class="f" for="ceSet">狙いのセット（秘境）<input type="text" id="ceSet" value="${esc(c.set)}" placeholder="任意"></label>`}')
+rep("  $('chEditor').innerHTML=h; editorRead(); editorPreview();", "  $('chEditor').innerHTML=h; if(CARD_APP) setPickBind($('chEditor')); editorRead(); editorPreview();")
+rep('      <label class="f" style="max-width:520px">スコアの型<select data-istype>', '      ${CARD_APP?`<label class="f" style="max-width:520px">セット${setPickHTML(g.set||\'\',\'data-iset\')}</label>`:\'\'}<label class="f" style="max-width:520px">スコアの型<select data-istype>')
+rep("  box.innerHTML=h;\n  box.querySelectorAll('[data-islot]')", "  box.innerHTML=h; if(CARD_APP) setPickBind(box);\n  box.querySelectorAll('[data-islot]')")
+rep("g.name=ge.querySelector('[data-iname]').value.trim(); g.stype=ge.querySelector('[data-istype]').value;", "g.name=ge.querySelector('[data-iname]').value.trim(); g.stype=ge.querySelector('[data-istype]').value; { const st=ge.querySelector('[data-iset]'); if(st) g.set=st.value; }")
+rep("if(g.name) c.name=g.name; if(!c.sig){ c.sig=g.owner; c.face=g.face; } }", "if(g.name) c.name=g.name; if(g.set) c.set=g.set; if(!c.sig){ c.sig=g.owner; c.face=g.face; } }")
+rep("else { c=Object.assign(blankChar(),{name:g.name,eff:g.eff.slice(),pieces,", "else { c=Object.assign(blankChar(),{name:g.name,set:g.set||'',eff:g.eff.slice(),pieces,")
 
 # --- 貼り付けで取り込み：キャラの画面が隠れていても受け付ける ---
 rep("if($('view-chars').hidden) return;", "if(!CARD_APP&&$('view-chars').hidden) return;")
@@ -211,6 +224,25 @@ a.btn{text-decoration:none; display:inline-block}
 .rv-lf{display:flex; flex-wrap:wrap; gap:10px 14px; justify-content:center; align-items:center; margin-top:24px}
 .rv-off{background:none; border:0; color:#8f8a7c; font-size:12px; text-decoration:underline; cursor:pointer; font:inherit; font-size:12px}
 .rv-off:disabled{text-decoration:none; cursor:default}
+.rv-ov{transition:background-color .9s ease}
+.rv-ov.rv-fade{background-color:transparent}
+.rv-fly canvas{position:fixed; border-radius:6px; transform-origin:50% 50%; box-shadow:0 8px 24px rgba(0,0,0,.5)}
+/* UIDのショーケース（v2.2） */
+.ushow{margin-top:14px}
+.ushow-h{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:flex-end; justify-content:space-between; margin-bottom:12px}
+.ushow-h h2{font-family:"Shippori Mincho B1","Hiragino Mincho ProN",serif; font-size:clamp(20px,3.2vw,26px); letter-spacing:.12em; color:#e9d39a; margin:0 0 4px}
+.ushow-h h2::before{display:none}
+.ushow .th{display:block; aspect-ratio:16/9; border-radius:6px; background:#0b0e22}
+.ushow .rv-lg{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))} .ushow .rv-lc{min-width:0} .ushow .rv-lc .m .a{white-space:nowrap}
+.ushow .th canvas{display:block; width:100%; height:auto}
+.ushow .m{transition:opacity .5s ease}
+.ushow.landing .th canvas{visibility:hidden} .ushow.landing .m{opacity:0}
+.uv-ov{position:fixed; inset:0; z-index:8500; background:rgba(2,3,9,.86); overflow:auto; padding:16px; animation:rvIn .25s ease-out}
+.uv-box{width:min(100%,980px); margin:0 auto; background:var(--panel,#0c0f22); border:1px solid rgba(233,211,154,.25); border-radius:12px; padding:14px 16px 18px; display:grid; gap:12px}
+.uv-h{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.uv-h b{font-family:"Shippori Mincho B1","Hiragino Mincho ProN",serif; font-size:20px; letter-spacing:.1em; margin-right:10px}
+.uv-card svg{display:block; width:100%; height:auto; border-radius:6px; box-shadow:0 12px 36px rgba(0,0,0,.55)}
+.uv-sec{border-top:1px solid var(--line); padding-top:10px} .uv-sec h3{margin:0 0 4px; font-size:14px}
 .rv-demo{position:fixed; left:50%; bottom:12px; transform:translateX(-50%); z-index:8000; background:rgba(10,12,28,.94); border:1px solid rgba(233,211,154,.4); border-radius:10px; padding:10px 12px; display:grid; gap:6px; font-size:12px; width:min(calc(100% - 24px),560px); box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .rv-demo .row{gap:6px; flex-wrap:wrap; align-items:center}
 .rv-demo button[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi)}
@@ -235,10 +267,9 @@ function cardListSort(rows){ const m=listSortMode(), r=rows.slice(); // 秘境�
   const v=x=>{ const a=x.st.age||0; return isFinite(a)?a:1e15; }; return r.sort((a,b)=>m==='asc'?v(a)-v(b):v(b)-v(a)); }
 function cardSorted(){ return cardListSort(CHARS.map(c=>({c,st:charStats(c)}))); }
 function cardAfterRender(){ document.querySelectorAll('[data-lsort]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lsort===listSortMode()))); const host=$('cardHost'); if(!host) return;
-  if(!CH_OPEN&&CHARS.length){ CH_OPEN=cardSorted()[0].c.id; renderChars(); return; }
   const det=$('cardBox')&&$('cardBox').closest('.chdetail');
   host.innerHTML=''; if(det) host.appendChild(det);
-  if(!CH_OPEN||!det) host.innerHTML=`<div class="empty">${CHARS.length?'キャラを選ぶと、ここにカードが出ます。':'まだキャラがいません。「動画から取り込む」で録画を読み取るか、「キャラ一覧」でスクショを取り込む・手入力で追加してください。'}</div>`;
+  if(!CH_OPEN||!det) host.innerHTML=`<div class="empty">${CHARS.length?'キャラ一覧で「カードを作成」を押すと、ここにそのキャラのカードが出ます。':'まだキャラがいません。UIDで取り込んだカードはホームに並びます。ここには、動画・スクショ・手入力で取り込んだキャラ（キャラ一覧）のカードが出ます。'}</div>`;
   const sel=$('cSel'); if(sel){ const rows=cardSorted(); sel.innerHTML=rows.map(({c})=>`<option value="${c.id}"${c.id===CH_OPEN?' selected':''}>${esc(c.name||'（名前なし）')}</option>`).join('')||'<option value="">—</option>'; }
   const z=$('cZoom'); if(z) z.value=String(CARD_ZOOM[CH_OPEN]||100);
   const has=!!(CH_OPEN&&CARD_IMG[CH_OPEN]), own=has&&!/^portraits\//.test(CARD_IMG[CH_OPEN]); if($('cZoomWrap')) $('cZoomWrap').hidden=!has; if($('cArtDel')) $('cArtDel').hidden=!own;
@@ -248,7 +279,7 @@ function cardAfterRender(){ document.querySelectorAll('[data-lsort]').forEach(b=
 /* ---- 立ち絵の保存（この端末のIndexedDB。ほかの人には見えない） ---- */
 function cardDB(){ if(CARD_DB) return CARD_DB; CARD_DB=new Promise((res)=>{ try{ const r=indexedDB.open('meinoseiza-card',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('portraits',{keyPath:'id'}); }; r.onsuccess=()=>res(r.result); r.onerror=()=>res(null); }catch(e){ res(null); } }); return CARD_DB; }
 async function portraitTx(mode,fn){ const db=await cardDB(); if(!db) return null; return new Promise(res=>{ try{ const tx=db.transaction('portraits',mode), st=tx.objectStore('portraits'); const r=fn(st); tx.oncomplete=()=>res(r&&r.result); tx.onerror=()=>res(null); }catch(e){ res(null); } }); }
-function portraitSave(id){ if(!CARD_APP||!id||!CARD_IMG[id]) return; const c=CHARS.find(x=>x.id===id);
+function portraitSave(id){ if(!CARD_APP||!id||!CARD_IMG[id]) return; const c=CHARS.find(x=>x.id===id)||uidFind(id);
   portraitTx('readwrite',st=>st.put({id,name:c?c.name:'',src:CARD_IMG[id],pos:CARD_POS[id]||null,zoom:CARD_ZOOM[id]||100,at:Date.now()})); }
 async function portraitDelete(id){ await portraitTx('readwrite',st=>st.delete(id)); delete CARD_IMG[id]; delete CARD_FIT[id]; delete CARD_POS[id]; delete CARD_ZOOM[id]; renderChars(); if(CARD_PAGE==='set') cardRenderSettings(); }
 async function portraitLoadAll(){ const all=await portraitTx('readonly',st=>st.getAll()); (all||[]).forEach(p=>{ CARD_IMG[p.id]=p.src; if(p.pos) CARD_POS[p.id]=p.pos; if(p.zoom) CARD_ZOOM[p.id]=p.zoom; });
@@ -265,7 +296,7 @@ function portraitShrink(src){ return new Promise(res=>{ const im=new Image(); im
     const out=alpha?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',.92); res(out.length<src.length?out:src); }catch(e){ res(src); } }; im.onerror=()=>res(src); im.src=src; }); }
 /* ---- 設定のページ ---- */
 async function cardRenderSettings(){ { const rc=$('cRevealOn'); if(rc) rc.checked=!store.get('revealOff',0); } const box=$('cPortraits'); if(!box) return; const all=(await portraitTx('readonly',st=>st.getAll()))||[];
-  box.innerHTML=all.length?`<div class="cthumbs">${all.map(p=>{ const c=CHARS.find(x=>x.id===p.id); return `<div class="cthumb"><img src="${p.src}" alt=""><b>${esc((c&&c.name)||p.name||'（削除したキャラ）')}</b><button class="btn" style="padding:3px 10px;font-size:12px" data-pdel="${p.id}">削除</button></div>`; }).join('')}</div>`:'<div class="empty">まだ保存した立ち絵はありません。カードのページの「立ち絵を選ぶ」で選ぶと、ここに並びます。</div>';
+  box.innerHTML=all.length?`<div class="cthumbs">${all.map(p=>{ const c=CHARS.find(x=>x.id===p.id)||uidFind(p.id); return `<div class="cthumb"><img src="${p.src}" alt=""><b>${esc((c&&c.name)||p.name||'（削除したキャラ）')}</b><button class="btn" style="padding:3px 10px;font-size:12px" data-pdel="${p.id}">削除</button></div>`; }).join('')}</div>`:'<div class="empty">まだ保存した立ち絵はありません。カードのページの「立ち絵を選ぶ」で選ぶと、ここに並びます。</div>';
   box.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>portraitDelete(b.dataset.pdel))); }
 /* ---- 組み立て ---- */
 function cardAppInit(){
@@ -289,23 +320,19 @@ function cardAppInit(){
   so.querySelectorAll('[data-lsort]').forEach(b=>b.addEventListener('click',()=>{ store.set('listSort',b.dataset.lsort); renderChars(); }));
   const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラのカードが開きます。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの秘境レベル、右の数字＝5部位の合計の秘境レベル。色はランク（<span id="tierLegend"></span>）。';
   // カード
-  pCard.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ctool"><div class="grp2"><button class="btn" id="cPrev" aria-label="前のキャラ">◀</button><select id="cSel" aria-label="キャラ"></select><button class="btn" id="cNext" aria-label="次のキャラ">▶</button><button class="btn" id="cEdit">編集</button><span id="cDelBox"><button class="btn" id="cDel">削除</button></span></div>
-    <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button><button class="btn" id="cZipAll">全員をまとめて保存</button></div></div>
+  pCard.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ctool"><div class="grp2"><button class="btn" id="cEdit">編集</button><span id="cDelBox"><button class="btn" id="cDel">削除</button></span></div>
+    <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button></div></div>
     <p class="note" id="cMsg" aria-live="polite" style="margin-top:6px"></p><div id="cardHost" style="margin-top:6px"></div>
     <p class="note" style="margin-top:8px">立ち絵はこの端末（このブラウザ）に保存され、ほかの人には見えません。絵はドラッグで位置を動かせます（ダブルクリックで元の位置）。保存した画像は2400×1350です。PNGはどこに上げても確実、WebPは軽いかわりに受け付けないサービスもあります。</p></div>`;
-  const step=d=>{ const rows=cardSorted(); if(!rows.length) return; let i=rows.findIndex(r=>r.c.id===CH_OPEN); i=(i+d+rows.length)%rows.length; CH_OPEN=rows[i].c.id; renderChars(); };
-  $('cPrev').addEventListener('click',()=>step(-1)); $('cNext').addEventListener('click',()=>step(1));
-  $('cSel').addEventListener('change',e=>{ CH_OPEN=e.target.value||null; renderChars(); });
   $('cEdit').addEventListener('click',()=>{ if(!CH_OPEN) return; cardShowPage('list'); openEditor(CH_OPEN); $('chEditor').scrollIntoView({behavior:'smooth',block:'start'}); });
   cardAppBindDel();
   $('cArt').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(!f||!CH_OPEN) return; const rd=new FileReader(); rd.onload=async()=>{ const id=CH_OPEN; CARD_IMG[id]=await portraitShrink(rd.result); delete CARD_FIT[id]; delete CARD_POS[id]; portraitSave(id); renderChars(); }; rd.readAsDataURL(f); });
   $('cZoom').addEventListener('change',e=>{ const id=CH_OPEN, src=CARD_IMG[id]; if(!src) return; CARD_ZOOM[id]=+e.target.value; portraitSave(id); fitCardArt(src,CARD_ZOOM[id]).then(u=>{ if(u&&CARD_IMG[id]===src){ CARD_FIT[id]=u; renderChars(); } }); });
   $('cArtDel').addEventListener('click',()=>{ if(CH_OPEN) portraitDelete(CH_OPEN); });
   $('cShare').addEventListener('click',cardShare); $('cPng').addEventListener('click',()=>cardExport('png',$('cMsg'))); $('cWebp').addEventListener('click',()=>cardExport('webp',$('cMsg')));
-  $('cZipAll').addEventListener('click',()=>cardExportMany(cardSorted().map(r=>r.c.id),$('cMsg'),$('cZipAll'))); // 全員のカードを画像にして、ZIPで1回で保存
-  // 取り込む：UID（Enka.Network のJSONを受け渡し）と、動画（聖遺物ビデオスキャナーを scan/ に置き、枠の中で動かす）。どちらもキャラ一覧へ直接入れる
+  // 取り込む：UID（Enka.Network のJSONを受け渡し）と、動画（聖遺物ビデオスキャナーを scan/ に置き、枠の中で動かす）。UIDはホームのショーケースへ（v2.2）、動画はキャラ一覧へ
   pScan.innerHTML=`<div class="panel" style="margin-top:14px"><h2>UIDから取り込む</h2>
-    <p class="note">ゲームのショーケースに並べたキャラの聖遺物を、Enka.Network から取り込みます（ゲームのプロフィールで、キャラの詳細を見られるようにしておいてください）。UIDを入れて「UIDで取得」を押します。</p>
+    <p class="note">ゲームのショーケースに並べたキャラの聖遺物を、Enka.Network から取り込みます（ゲームのプロフィールで、キャラの詳細を見られるようにしておいてください）。UIDを入れて「UIDで取得」を押します。取り込んだキャラは、キャラ一覧ではなくホームにカードで並びます（取り直すと入れ替わります）。</p>
     <div class="row" style="margin-top:10px"><label class="f" for="enkaUid">UID<input type="text" id="enkaUid" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="例：800123456" style="width:9em"></label><button class="btn primary" id="enkaGet">UIDで取得</button></div>
     <div class="note" id="enkaMsg" aria-live="polite" style="margin-top:8px"></div>
     <details class="more" id="enkaManual" style="margin-top:10px"><summary>「UIDで取得」がうまくいかないとき（手で受け渡す）</summary>
@@ -335,7 +362,7 @@ function cardAppInit(){
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.1。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.2。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
@@ -343,9 +370,9 @@ function cardAppInit(){
   document.addEventListener('drop',e=>{ if(e.target.closest&&e.target.closest('#cardHost')) return; const fs=e.dataTransfer?[...e.dataTransfer.files]:[]; if(fs.length){ e.preventDefault(); if(CARD_PAGE==='scan'||fs.every(f=>/^video\//.test(f.type))){ cardShowPage('scan'); scanOpen(); $('scanMsg').textContent='動画は、下の枠（録画ファイルをここにドロップ）に落としてください。'; return; } cardShowPage('list'); importShots(fs); } });
   // 取り込み・手入力を始めたら一覧のページへ
   $('chAdd').addEventListener('click',()=>cardShowPage('list'));
-  if(!CH_OPEN&&CHARS.length) CH_OPEN=cardSorted()[0].c.id;
+  { const l=store.get('cardLast',null); if(l&&CHARS.some(c=>c.id===l)) CH_OPEN=l; } // カードのページは、最後に「カードを作成」したキャラ
   portraitLoadAll().then(()=>{ renderChars(); });
-  homeInit(pHome); cardShowPage('home');
+  uidLoad(); homeInit(pHome); cardShowPage('home');
   renderChars();
   if(h0==='reveal'||window.REVEAL_DEMO) revealDemoPanel(); // showTab が先に # を書き換えるので、開いたときの値（h0）で見る
   if(location.hash) try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
@@ -411,7 +438,7 @@ function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
     if(!Object.keys(pieces).length) continue;
     const nm=ENKA.avatar[String(av.avatarId)]; if(!nm) notes.unknown++;
     const set=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>=2).map(([k,n])=>(ENKA.set[k]||'セット'+k)+(n>=4?'4':'2')).join('＋');
-    out.push({id:'enka-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()}); }
+    out.push({id:'uid-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()}); }
   return {chars:out,notes}; }
 /* UIDで取得：Enka に問い合わせる（中継の設定があれば中継、なければ直接）。
    Enka の決まり：応答の ttl（秒）が切れるまでは同じUIDを取り直さない → この端末に応答を取っておき、ttl の間はそれを使う。
@@ -440,11 +467,11 @@ function enkaImport(txt){ const box=$('enkaMsg'); let d;
   if(!d||typeof d!=='object'||(!d.playerInfo&&!d.avatarInfoList)){ box.textContent='Enka のデータではないようです。「Enkaで開く」で開いたページの文字を貼り付けてください。'; return; }
   if(!Array.isArray(d.avatarInfoList)||!d.avatarInfoList.length){ box.textContent='このUIDでは、キャラの詳細が見られませんでした。ゲームのプロフィールで、ショーケースにキャラを並べ、詳細を見られるようにしてから、もう一度「Enkaで開く」からやり直してください（反映まで少しかかることがあります）。'; return; }
   const {chars,notes}=enkaToLab(d); if(!chars.length){ box.textContent='★5の聖遺物を付けたキャラが見つかりませんでした。'; return; }
-  let r=moveImport(JSON.stringify({chars})); const ex=[];
+  const uid=d.uid&&/^\d{9,10}$/.test(String(d.uid))?String(d.uid):(store.get('enkaUid','')||''); uidSave(uid,chars); const ex=[]; let r=`${chars.length}人のカードを、ホームに並べました`;
   if(notes.partial) ex.push(`+20になっていない聖遺物 ${notes.partial}個は、いまの値で評価しています`); if(notes.low) ex.push(`★4以下の聖遺物 ${notes.low}個は外しました`);
-  if(notes.unknown) ex.push(`名前の分からないキャラが ${notes.unknown}人います（アプリの更新待ち。名前は編集で直せます）`); if(notes.odd) ex.push(`読めなかった聖遺物が ${notes.odd}個ありました`);
-  if(ex.length) r+='。'+ex.join('。')+'。'; if(d.uid&&/^\d{9,10}$/.test(String(d.uid))){ $('enkaUid').value=String(d.uid); try{ store.set('enkaUid',String(d.uid)); }catch(e){} }
-  $('enkaText').value=''; importDone(box,r,chars.map(c=>c.name)); return chars.map(c=>c.name); }
+  if(notes.unknown) ex.push(`名前の分からないキャラが ${notes.unknown}人います（アプリの更新待ち）`); if(notes.odd) ex.push(`読めなかった聖遺物が ${notes.odd}個ありました`);
+  if(ex.length) r+='。'+ex.join('。')+'。'; if(uid){ $('enkaUid').value=uid; try{ store.set('enkaUid',uid); }catch(e){} }
+  $('enkaText').value=''; box.innerHTML=`<p>${esc(r)}</p>`; HOME_NOTE=r; uidReveal(); return chars.map(c=>c.name); }
 /* ================= ホーム（v2.0）：見本のカード → UID → いちばんすごいカード ================= */
 const SITE_URL='https://wayfaringgene-code.github.io/genshin-lab/';
 const ON_SITE=/(^|\.)github\.io$/.test(location.hostname)||location.hostname==='localhost'; // GitHub Pages（と手元の確認）で開いているか
@@ -452,7 +479,7 @@ const LAB_URL=ON_SITE?'lab/':'https://claude.ai/artifact/CyumpKAACPGCbSeY8sFpFA'
 /* ---- 同梱の立ち絵：portraits/{avatarId}.webp（tools/build_portraits.py で作る）。自分で選んだ立ち絵があれば、そちらが優先 ---- */
 const PORTRAITS=__PORTRAITS__; // {avatarId:{file, name, zoom?, pos?}}
 let _N2A=null; function name2aid(n){ if(!_N2A){ _N2A={}; for(const [k,v] of Object.entries(ENKA.avatar)) if(!(v in _N2A)) _N2A[v]=k; } return _N2A[n]; }
-function bundledPortrait(c){ if(!ON_SITE||!c) return null; const a=((/^(?:enka|sample)-(\d+)$/.exec(c.id||''))||[])[1]||name2aid(c.name); const q=a&&PORTRAITS[a]; return q?{src:'portraits/'+q.file,zoom:q.zoom||0,pos:q.pos||null}:null; }
+function bundledPortrait(c){ if(!ON_SITE||!c) return null; const a=((/^(?:uid|enka|sample)-(\d+)$/.exec(c.id||''))||[])[1]||name2aid(c.name); const q=a&&PORTRAITS[a]; return q?{src:'portraits/'+q.file,zoom:q.zoom||0,pos:q.pos||null}:null; }
 function applyBundled(c){ if(!c||CARD_IMG[c.id]) return; const b=bundledPortrait(c); if(!b) return; CARD_IMG[c.id]=b.src; if(b.zoom&&!CARD_ZOOM[c.id]) CARD_ZOOM[c.id]=b.zoom; if(b.pos&&!CARD_POS[c.id]) CARD_POS[c.id]=b.pos; }
 /* ---- 見本のキャラ（実在のプレイヤーのデータではなく、伸び方を決めて作った例） ---- */
 function homeSampleChar(){
@@ -465,7 +492,7 @@ function homeSampleChar(){
     circlet:P('CR',[['CD',[3,3,2,2]],['HP%',[3]],['ER',[2]],['ATK%',[0]]])}}; }
 var HOME_SAMPLE=null;
 function homeInit(box){
-  box.innerHTML=`<section class="chero">
+  box.innerHTML=`<div id="homeShow"></div><section class="chero">
     <div class="chero-copy"><p class="ceyebrow">原神・聖遺物の「珍しさ」を測る</p>
       <h2 class="chero-q"><span class="nw">あなたの聖遺物は、</span><span class="nw">秘境を何日回った</span><span class="nw">人のレベル？</span></h2>
       <p class="chero-lead">UIDを入れるだけで、ショーケースに並べたキャラの聖遺物を「秘境レベル」で測って、カードにします。</p>
@@ -489,28 +516,113 @@ function homeRender(){
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()); applyBundled(sm);
   const draw=()=>{ const b=$('homeSample'); if(b&&CARD_PAGE==='home') b.innerHTML=cardSVG(sm,charStats(sm),'SK'); }; draw();
   if(CARD_IMG[sm.id]&&!(sm.id in CARD_FIT)&&!CARD_FITTING[sm.id]){ CARD_FITTING[sm.id]=1; fitCardArt(CARD_IMG[sm.id],CARD_ZOOM[sm.id]).then(u=>{ delete CARD_FITTING[sm.id]; CARD_FIT[sm.id]=u||''; draw(); }); }
-  // 前回の続き
-  const back=$('homeBack'); if(!CHARS.length){ back.innerHTML=''; return; }
-  const best=homeBest(CHARS);
-  back.innerHTML=`<div class="panel chome-back" style="margin-top:14px"><h2>前回の続き</h2><p class="note">この端末に ${CHARS.length}人のキャラが保存されています。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name||'（名前なし）')}</b>（${esc(fmtAge(best.a))}・${esc(tierOf(best.a)[1])}）です。${uid?'上の「最新のカードを作る」で取り直すと、前回からの変化も残ります。':''}</p>
-    <div class="btns"><button class="btn primary" data-hb="card">カードを見る</button><button class="btn" data-hb="list">キャラ一覧</button></div></div>`;
-  back.querySelector('[data-hb="card"]').addEventListener('click',()=>{ CH_OPEN=best.c.id; renderChars(); cardShowPage('card'); });
+  // UIDのショーケース（ホームのいちばん上）と、キャラ一覧への案内
+  uidRender(); const back=$('homeBack'); if(!CHARS.length){ back.innerHTML=''; return; }
+  back.innerHTML=`<div class="panel chome-back" style="margin-top:14px"><h2>キャラ一覧</h2><p class="note">動画・スクショ・手入力で取り込んだキャラが ${CHARS.length}人います。キャラ一覧の「カードを作成」から、1人ずつカードにできます。</p>
+    <div class="btns"><button class="btn" data-hb="list">キャラ一覧へ</button></div></div>`;
   back.querySelector('[data-hb="list"]').addEventListener('click',()=>cardShowPage('list')); }
-function homeBest(cs){ const v=a=>isFinite(a)?a:1e15; return cs.map(c=>({c,a:charStats(c).age||0})).sort((x,y)=>v(y.a)-v(x.a))[0]; }
 async function homeGo(e){ if(e) e.preventDefault(); const msg=$('homeMsg'), btn=$('homeGo'), uid=$('homeUid').value.replace(/\D/g,'');
   if(!/^\d{9,10}$/.test(uid)){ msg.textContent='UIDは9けたか10けたの数字です（ゲームのメニュー画面の右下などに出ています）。'; return; }
   $('enkaUid').value=uid; try{ store.set('enkaUid',uid); }catch(err){}
   btn.disabled=true; msg.textContent='Enka に問い合わせています…'; let names=null;
   try{ names=await enkaFetch(); }catch(err){} finally{ btn.disabled=false; }
-  if(names&&names.length){ msg.textContent=''; homeReveal(names); return; }
+  if(names&&names.length) return; // 取り込みが済むと、enkaImport がホームに並べて演出を流す
   const why=($('enkaMsg').querySelector('p')||$('enkaMsg')).innerText.trim();
   msg.innerHTML=`<p class="err">${esc(why||'取得できませんでした。')}</p><p style="margin-top:4px"><a href="#" id="homeAlt">ほかの方法で取り込む（動画・スクショ・手で受け渡す）</a></p>`;
   $('homeAlt').addEventListener('click',ev=>{ ev.preventDefault(); cardShowPage('scan'); }); }
-/* いちばん秘境レベルが高いキャラのカードを出す。下にカードのページを用意してから、上に演出を重ねる */
-function homeReveal(names){ const cs=[...new Set(names)].map(n=>CHARS.find(c=>c.name===n)).filter(Boolean); if(!cs.length) return;
-  const best=homeBest(cs); CH_OPEN=best.c.id; renderChars(); cardShowPage('card');
-  $('cMsg').innerHTML=`${cs.length}人を取り込みました。いちばん秘境レベルが高いのは <b class="gold">${esc(best.c.name)}</b> でした。◀ ▶ でほかのキャラも見られます。`;
-  if(!store.get('revealOff',0)) revealPlay(cs); } // 設定で演出をオフにしていれば、カードのページをそのまま見せる
+/* ---- セットを選ぶ（v2.2）：種類（なし／4セット／2セット＋2セット／2セット）→ セット名か2セット効果。選んだ結果を隠し欄に入れる ---- */
+function setPickLists(){ const names=[...new Set(Object.values(ENKA.set))].reverse(), ord=['攻撃力+18%','元素熟知+80','元素チャージ効率+20%','HP+20%','防御力+30%','会心率+12%'];
+  const labs=[...new Set(Object.values(SET_BONUS2))].sort((a,b)=>{ const i=ord.indexOf(a), j=ord.indexOf(b); return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b,'ja'); }); return {names,labs}; }
+function setPickParse(v){ const parts=String(v||'').split('＋').map(x=>x.trim()).filter(Boolean), {names,labs}=setPickLists(); if(!parts.length) return {t:'',a:'',b:''};
+  const f=parts.map(x=>/^(.+?)4$/.exec(x)).find(Boolean); if(f&&names.includes(f[1])) return {t:'4',a:f[1],b:''};
+  const L=parts.map(x=>{ const m=/^(.+?)2$/.exec(x); return m?(SET_BONUS2[m[1]]||null):(labs.includes(x)?x:null); });
+  if(L.every(Boolean)&&L.length<=2) return L.length===2?{t:'22',a:L[0],b:L[1]}:{t:'2',a:L[0],b:''};
+  if(parts.length===1&&names.includes(parts[0])) return {t:'4',a:parts[0],b:''};
+  return {t:'raw',a:String(v),b:''}; }
+function setPickHTML(v,attr){ const {names,labs}=setPickLists(), p=setPickParse(v), O=(arr,cur)=>arr.map(x=>`<option${x===cur?' selected':''}>${esc(x)}</option>`).join('');
+  return `<span class="setpick"><input type="hidden" ${attr} value="${esc(v||'')}"><select data-sp="t" aria-label="セットの種類"><option value=""${p.t===''?' selected':''}>なし（分からない）</option><option value="4"${p.t==='4'?' selected':''}>4セット</option><option value="22"${p.t==='22'?' selected':''}>2セット＋2セット</option><option value="2"${p.t==='2'?' selected':''}>2セットだけ</option>${p.t==='raw'?`<option value="raw" selected>いまの書き方のまま</option>`:''}</select>`
+    +`<select data-sp="n" aria-label="セット"${p.t==='4'?'':' hidden'}><option value="">セットを選ぶ</option>${O(names,p.t==='4'?p.a:'')}</select>`
+    +`<select data-sp="a" aria-label="2セット効果（1つ目）"${/^2/.test(p.t)?'':' hidden'}><option value="">2セット効果を選ぶ</option>${O(labs,/^2/.test(p.t)?p.a:'')}</select>`
+    +`<select data-sp="b" aria-label="2セット効果（2つ目）"${p.t==='22'?'':' hidden'}><option value="">2セット効果を選ぶ</option>${O(labs,p.t==='22'?p.b:'')}</select>${p.t==='raw'?`<span class="note">${esc(v)}</span>`:''}</span>`; }
+function setPickBind(root){ root.querySelectorAll('.setpick').forEach(sp=>{ const q=k=>sp.querySelector(`[data-sp="${k}"]`), hid=sp.querySelector('input[type=hidden]'), raw=hid.value;
+  const upd=()=>{ const t=q('t').value; q('n').hidden=t!=='4'; q('a').hidden=!/^2/.test(t); q('b').hidden=t!=='22';
+    hid.value=t==='4'?(q('n').value?q('n').value+'4':''):t==='22'?[q('a').value,q('b').value].filter(Boolean).join('＋'):t==='2'?q('a').value:t==='raw'?raw:''; };
+  sp.querySelectorAll('select').forEach(el=>el.addEventListener('input',upd)); }); }
+/* ================= UIDのショーケース（v2.2）：UIDで取り込んだキャラは、キャラ一覧とは別のラインでホームに並べる =================
+   いつも最後にUIDで取り込んだキャラだけ（取り直すと、まるごと入れ替わる）。履歴なし・引っ越しなし・ラボからは見えない（保存名 uidShow）。
+   立ち絵はUIDのカードだけのもの（id は uid-{avatarId}。キャラ一覧の立ち絵とは別に保存）。有効OPは「名前＋セット」ごとに1つ（effPut） */
+let UID_SHOW=null, UID_THUMB={}, UID_THUMB_BUSY=false, HOME_NOTE='', UV=null;
+// 1つのページにカードのSVGが2枚以上並ぶ（ホームの見本と、大きく開いたカード）ので、SVGの中のidを付け替える（同じidが並ぶと、隠れた側の模様を拾ってしまう）
+var RV_UID=0;
+function rvUniq(svg){ const k='_u'+(++RV_UID); return svg.replace(/\bid="([^"]+)"/g,`id="$1${k}"`).replace(/url\(#([^)]+)\)/g,`url(#$1${k})`).replace(/href="#([^"]+)"/g,`href="#$1${k}"`); }
+function uidEff(c){ const e=effOf(c); if(e){ c.eff=e; delete c.effGuess; } else if(!Array.isArray(c.eff)||!c.eff.length){ const g=guessEff(c.pieces); c.eff=g||S.eff.slice(); c.effGuess=true; } }
+function uidLoad(){ const v=store.get('uidShow',null); UID_SHOW=v&&Array.isArray(v.chars)&&v.chars.length?v:null; if(UID_SHOW) UID_SHOW.chars.forEach(uidEff); }
+function uidSave(uid,chars){ chars.forEach(uidEff); UID_SHOW={uid,date:today(),chars}; UID_THUMB={}; store.set('uidShow',UID_SHOW); }
+function uidFind(id){ return UID_SHOW&&UID_SHOW.chars.find(c=>c.id===id)||null; }
+function uidSorted(){ const v=c=>{ const a=charStats(c).age||0; return isFinite(a)?a:1e15; }; return (UID_SHOW?UID_SHOW.chars:[]).slice().sort((a,b)=>v(b)-v(a)); }
+// 有効OPがどこかで直されたら（effPut から呼ばれる）、同じ「名前＋セット」のUIDのカードにも効かせる
+function effPutMore(k,eff){ if(!UID_SHOW) return; let ch=false; for(const c of UID_SHOW.chars) if(effKeyOf(c)===k){ c.eff=eff.slice(); delete c.effGuess; delete UID_THUMB[c.id]; ch=true; } if(ch){ store.set('uidShow',UID_SHOW); if(CARD_PAGE==='home') uidRender(); } }
+/* ---- ホームの並び ---- */
+function uidRender(){ const box=$('homeShow'); if(!box) return; const cs=uidSorted(); if(!cs.length){ box.innerHTML=''; return; } const best=cs[0];
+  box.innerHTML=`<section class="ushow"><div class="ushow-h"><div><h2>あなたのショーケース</h2><p class="note">UID ${esc(UID_SHOW.uid||'—')}・${esc(UID_SHOW.date||'')} に取り込み・${cs.length}人。カードを押すと、保存・共有・有効OP・立ち絵の調整ができます</p></div>
+    <div class="btns"><button class="btn" type="button" data-ure>演出をもう一度</button><button class="btn" type="button" data-uzip>全員をまとめて保存</button></div></div><p class="note" data-umsg aria-live="polite"></p>
+    <div class="rv-lg">${cs.map(c=>{ const st=charStats(c), rk=rvRank(st.age||0); return `<button class="rv-lc${c===best?' best':''}" type="button" data-uid="${esc(c.id)}"><span class="th"></span><span class="m"><b>${esc(c.name||'')}</b>${c===best?'<i>いちばん</i>':''}<span class="st${rk.myth?' myth':''}" style="color:${rk.col}">${'★'.repeat(rk.stars)}${rk.plus?'+':''}</span><span class="a">${esc(fmtAge(st.age||0))}</span></span></button>`; }).join('')}</div></section>`;
+  box.querySelectorAll('[data-uid]').forEach(el=>el.addEventListener('click',()=>uidOpen(el.dataset.uid)));
+  box.querySelector('[data-ure]').addEventListener('click',()=>uidReveal(true));
+  box.querySelector('[data-uzip]').addEventListener('click',e=>uidZip(e.currentTarget,box.querySelector('[data-umsg]')));
+  uidThumbs(); }
+// 小さなカードの絵：作ったものは覚えておき、まだのものを1枚ずつ作って並びに差し込む
+function uidFill(){ const box=$('homeShow'); if(!box) return; box.querySelectorAll('[data-uid]').forEach(el=>{ const th=el.querySelector('.th'), t=UID_THUMB[el.dataset.uid]; if(th&&t&&!th.firstChild){ const c=rvCanvas(490,276); c.getContext('2d').drawImage(t,0,0,490,276); th.appendChild(c); } }); }
+async function uidThumbs(){ uidFill(); if(UID_THUMB_BUSY) return; UID_THUMB_BUSY=true;
+  try{ for(;;){ const c=uidSorted().find(x=>!UID_THUMB[x.id]); if(!c) break; UID_THUMB[c.id]=rvScaled(await rvCardImg(c),980,551); uidFill(); } } finally{ UID_THUMB_BUSY=false; } }
+// 取り込んだあと（again＝ホームの「演出をもう一度」）：ホームに並べて、演出を重ねる。演出のあと、広がったカードがホームの並びに着地する
+function uidReveal(again){ if(!UID_SHOW) return; cardShowPage('home'); const m=$('homeMsg'); if(m&&!again) m.textContent=HOME_NOTE||'';
+  if(!again&&store.get('revealOff',0)){ const s=$('homeShow'); if(s) s.scrollIntoView({block:'start'}); return; }
+  revealPlay(UID_SHOW.chars,{toHome:true}); }
+/* ---- カード1枚を大きく開く：保存・共有・有効OP・立ち絵（選ぶ・大きさ・ドラッグで位置） ---- */
+function uidOpen(id){ if(!uidFind(id)) return; uidClose(true); const ov=cardEl('div',{class:'uv-ov',role:'dialog','aria-modal':'true'});
+  document.body.appendChild(ov); UV={ov,id,ovf:document.body.style.overflow}; document.body.style.overflow='hidden';
+  UV.key=e=>{ if(e.key==='Escape') uidClose(); }; document.addEventListener('keydown',UV.key); ov.addEventListener('click',e=>{ if(e.target===ov) uidClose(); }); uidDraw(); }
+function uidClose(quiet){ if(!UV) return; UV.ov.remove(); document.body.style.overflow=UV.ovf; document.removeEventListener('keydown',UV.key); UV=null; if(!quiet) uidRender(); }
+function uidDraw(){ if(!UV) return; const c=uidFind(UV.id); if(!c) return uidClose(); const id=c.id; applyBundled(c);
+  if(CARD_IMG[id]&&!(id in CARD_FIT)){ if(!CARD_FITTING[id]){ CARD_FITTING[id]=1; fitCardArt(CARD_IMG[id],CARD_ZOOM[id]).then(u=>{ delete CARD_FITTING[id]; CARD_FIT[id]=u||''; uidDraw(); }); } }
+  const st=charStats(c), own=CARD_IMG[id]&&!/^portraits\//.test(CARD_IMG[id]), sk=setKeyOf(c.set), keep=UV.ov.querySelector('[data-umsg2]'), msgText=keep?keep.innerHTML:'';
+  UV.ov.innerHTML=`<div class="uv-box"><div class="uv-h"><div><b>${esc(c.name||'')}</b>${sk?`<span class="note">${esc(sk)}</span>`:''}</div><button class="rv-x" type="button" data-ux aria-label="閉じる">×</button></div>
+    <div class="uv-card">${rvUniq(cardSVG(c,st,'SK'))}</div>
+    <div class="btns"><button class="btn primary" type="button" data-ush>共有</button><button class="btn" type="button" data-upng>PNGで保存</button><button class="btn" type="button" data-uwebp>WebP</button></div><p class="note" data-umsg2 aria-live="polite">${msgText}</p>
+    <div class="uv-sec"><h3>有効OP</h3><p class="note">${c.effGuess?'<b class="err">推定</b>：装備から見立てたものです。':''}同じ名前・同じセットのキャラ（キャラ一覧・ラボも）に、まとめて効きます。</p>
+      <div class="checks">${effOptsFor(c).map(s2=>`<label class="chk"><input type="checkbox" data-ue="${s2}" ${c.eff.includes(s2)?'checked':''}><span>${effChip(s2)}</span></label>`).join('')}</div>${c.effGuess?'<button class="btn" type="button" data-ueok style="margin-top:6px">これでよい</button>':''}</div>
+    <div class="uv-sec"><h3>立ち絵</h3><div class="btns"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" accept="image/*" hidden data-uart></label>${CARD_IMG[id]?`<label class="row" style="gap:6px;font-size:12px;color:var(--muted)">大きさ<input type="range" min="60" max="170" step="5" value="${CARD_ZOOM[id]||100}" data-uzoom style="width:120px"></label>`:''}${own?'<button class="btn" type="button" data-uartdel>立ち絵を外す</button>':''}</div>
+      <p class="note">${CARD_IMG[id]?'絵はドラッグで動かせます（ダブルクリックで元の位置）。':''}UIDのカードの立ち絵は、キャラ一覧のカードとは別に保存されます。</p></div></div>`;
+  const q=k=>UV.ov.querySelector(k), msg=q('[data-umsg2]'), changed=()=>{ delete UID_THUMB[id]; };
+  q('[data-ux]').addEventListener('click',()=>uidClose());
+  q('[data-ush]').addEventListener('click',()=>cardShareWith(c,()=>uidBlob(c,'png'),msg));
+  q('[data-upng]').addEventListener('click',()=>uidSaveOne(c,'png',msg)); q('[data-uwebp]').addEventListener('click',()=>uidSaveOne(c,'webp',msg));
+  UV.ov.querySelectorAll('[data-ue]').forEach(el=>el.addEventListener('change',()=>{ const s2=el.dataset.ue; c.eff=el.checked?SUBS.filter(x=>x===s2||c.eff.includes(x)):c.eff.filter(x=>x!==s2); delete c.effGuess; effPut(c); saveChars(); changed(); store.set('uidShow',UID_SHOW); uidDraw(); }));
+  { const ok=q('[data-ueok]'); if(ok) ok.addEventListener('click',()=>{ delete c.effGuess; effPut(c); store.set('uidShow',UID_SHOW); uidDraw(); }); }
+  q('[data-uart]').addEventListener('change',e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; const rd=new FileReader(); rd.onload=async()=>{ const src=await portraitShrink(rd.result); CARD_IMG[id]=src; delete CARD_FIT[id]; delete CARD_POS[id]; delete CARD_ZOOM[id]; portraitSave(id); changed(); uidDraw(); }; rd.readAsDataURL(f); });
+  { const z=q('[data-uzoom]'); if(z) z.addEventListener('change',()=>{ const src=CARD_IMG[id]; if(!src) return; CARD_ZOOM[id]=+z.value; portraitSave(id); fitCardArt(src,CARD_ZOOM[id]).then(u=>{ if(CARD_IMG[id]===src){ CARD_FIT[id]=u||''; changed(); uidDraw(); } }); }); }
+  { const d=q('[data-uartdel]'); if(d) d.addEventListener('click',async()=>{ await portraitDelete(id); changed(); uidDraw(); }); }
+  // ドラッグで立ち絵の位置を動かす（カードの座標で dx・dy を覚える）
+  const svg=q('.uv-card svg'), img=svg&&svg.querySelector('image[data-bx]');
+  if(img){ const bx=+img.dataset.bx, by=+img.dataset.by; let drag=null; svg.style.cursor='grab'; svg.style.touchAction='none';
+    svg.addEventListener('pointerdown',e=>{ const p=CARD_POS[id]||{dx:0,dy:0}; drag={x:e.clientX,y:e.clientY,dx:p.dx,dy:p.dy,k:1200/svg.getBoundingClientRect().width}; svg.setPointerCapture(e.pointerId); svg.style.cursor='grabbing'; });
+    svg.addEventListener('pointermove',e=>{ if(!drag) return; const dx=drag.dx+(e.clientX-drag.x)*drag.k, dy=drag.dy+(e.clientY-drag.y)*drag.k; img.setAttribute('x',bx+dx); img.setAttribute('y',by+dy); drag.nx=dx; drag.ny=dy; });
+    const end=()=>{ if(drag&&drag.nx!=null){ CARD_POS[id]={dx:drag.nx,dy:drag.ny}; portraitSave(id); changed(); } drag=null; svg.style.cursor='grab'; };
+    svg.addEventListener('pointerup',end); svg.addEventListener('pointercancel',end);
+    svg.addEventListener('dblclick',()=>{ CARD_POS[id]={dx:0,dy:0}; portraitSave(id); changed(); uidDraw(); }); } }
+/* ---- 保存：1枚（PNG・WebP、2400×1350）と、全員をZIPで ---- */
+async function uidBlob(c,fmt){ const cv=await rvCardImg(c,2400,1350); if(!cv) return null; const type=fmt==='webp'?'image/webp':'image/png';
+  let blob=await new Promise(r=>cv.toBlob(r,type,.95)), ext=fmt; if(!blob||blob.type!==type){ blob=await new Promise(r=>cv.toBlob(r,'image/png')); ext='png'; }
+  const d=new Date(), ds=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  return {blob,ext,name:`命ノ星座_${(c.name||'card').replace(/[\\/:*?"<>|]/g,'')}_${ds}.${ext}`}; }
+async function uidSaveOne(c,fmt,msg){ msg.textContent='画像を作っています…'; const r=await uidBlob(c,fmt); if(!r){ msg.textContent='画像を作れませんでした'; return; }
+  const res=await saveBlob(r.name,r.blob); msg.textContent=res==='saved'?`${r.ext.toUpperCase()}で保存しました（2400×1350）${r.ext!==fmt?'。このブラウザはWebPを書き出せないのでPNGにしました':''}`:res==='declined'?'保存を取りやめました':'保存できませんでした'; }
+async function uidZip(btn,msg){ const cs=uidSorted(); if(!cs.length) return; const say=t=>{ if(msg) msg.textContent=t; }; btn.disabled=true; const files=[];
+  try{ for(let i=0;i<cs.length;i++){ say(`${i+1}/${cs.length}人目（${cs[i].name||''}）を描いています…`); const r=await uidBlob(cs[i],'png'); if(!r) throw new Error('image'); files.push({name:`${String(i+1).padStart(2,'0')}_${r.name}`,data:new Uint8Array(await r.blob.arrayBuffer())}); }
+    const d=new Date(), ds=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; say('ZIPにまとめています…');
+    const res=await saveBlob(`命ノ星座_UID_${cs.length}人_${ds}.zip`,zipStore(files)); say(res==='saved'?`${cs.length}人ぶんのカード（PNG・2400×1350）をZIPで保存しました`:res==='declined'?'保存を取りやめました':'この画面ではZIPを保存できません。カードを押して1枚ずつ保存してください'); }
+  catch(e){ say('画像を作れませんでした。カードを押して1枚ずつ保存してください'); } finally{ btn.disabled=false; } }
 /* ================= カードの登場の演出（v2.1）：落ちるカード =================
    思想：お気に入りのキャラのカードが、自分のものとして形になる瞬間を祝う。全員を同じ儀式で迎え、ランクの差は色と★の数で静かに見せる。
          いちばんのカードだけ、溜めを少し長く、光を少し強く。見せ場は縦動画（SNS）。アプリの中ではスキップされる前提
@@ -528,8 +640,8 @@ function rvRank(a){ const t=a>0?tierOf(a):TIERS[0], i=Math.max(0,TIERS.indexOf(t
 function rvRR(x,X,Y,w,h,r){ r=Math.min(r,w/2,h/2); x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
 function rvCanvas(w,h){ const c=document.createElement('canvas'); c.width=Math.ceil(w); c.height=Math.ceil(h); return c; }
 /* ---- カードを1枚の画像にする（保存のときと同じ作り方：書体を埋め込んだSVG → キャンバス）。毎コマSVGを描くと重いので、先に絵にしておく ---- */
-async function rvCardImg(c){ applyBundled(c); if(CARD_IMG[c.id]&&!(c.id in CARD_FIT)){ const u=await fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]); CARD_FIT[c.id]=u||''; }
-  const NS='http://www.w3.org/2000/svg', W=1960, H=1102, box=document.createElement('div'); box.innerHTML=cardSVG(c,charStats(c),'SK'); const el=box.querySelector('svg'); if(!el) return null;
+async function rvCardImg(c,W,H){ W=W||1960; H=H||1102; applyBundled(c); if(CARD_IMG[c.id]&&!(c.id in CARD_FIT)){ const u=await fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]); CARD_FIT[c.id]=u||''; }
+  const NS='http://www.w3.org/2000/svg', box=document.createElement('div'); box.innerHTML=cardSVG(c,charStats(c),'SK'); const el=box.querySelector('svg'); if(!el) return null;
   el.setAttribute('xmlns',NS); el.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink'); el.setAttribute('width',W); el.setAttribute('height',H); el.removeAttribute('style');
   try{ const css=await cardFontCSS([...new Set([...el.textContent].map(ch=>ch.codePointAt(0)))]); const st=document.createElementNS(NS,'style'); st.textContent=css; el.insertBefore(st,el.firstChild); }catch(e){}
   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(el)],{type:'image/svg+xml'}));
@@ -702,7 +814,7 @@ async function revealPlay(cs,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.
   bar.hidden=false; bar.innerHTML=`<span class="rv-hint">${items.length>1?'画面を押すと次のカードへ':'画面を押すと先へ'}</span>`;
   // 終わり：全員のときは、少し余韻をおいて一覧へ。1枚のときはボタンだけ
   const end=()=>{ if(R.ended) return; R.ended=true; skip.remove();
-    if(items.length>1){ bar.innerHTML='<span class="rv-hint">画面を押すと、カードを広げます</span>'; return; }
+    if(items.length>1||opt.toHome){ bar.innerHTML=`<span class="rv-hint">${items.length>1?'画面を押すと、カードを広げます':'画面を押すと、ホームへ'}</span>`; return; }
     bar.innerHTML=(opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':'')+`<button class="btn primary" type="button" data-rvok>${esc(opt.okLabel||'カードを見る')}</button>`;
     bar.querySelector('[data-rvok]').addEventListener('click',rvClose); const re=bar.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay); bar.querySelector('[data-rvok]').focus(); };
   if(rvStill()||R.jump){ await all; if(R.dead) return; R.t=P.total; rvDraw(x,P,P.total); return end(); }
@@ -715,7 +827,7 @@ function rvNext(R){ const P=R.P, t=R.t||0, its=P.items, b=its[its.length-1], tg=
   its.forEach(it=>{ if(!it.best) tg.push(it.t0); }); tg.push(its.length>1?b.t0-300:b.t0); tg.push(b.drop); tg.push(P.E,P.total);
   const nx=tg.filter(v=>v>t+40).sort((p,q)=>p-q)[0]; if(nx!=null) R.off+=nx-t; }
 /* 演出のあと：取り込んだ全員のカードを一覧で（秘境レベルの高い順。いちばんのカードは金の枠）。押すとそのカードのページへ */
-function rvList(R){ if(R.list||R.dead||!R.P) return; R.list=true; clearTimeout(R.lt); const ov=R.ov, opt=R.opt||{}, P=R.P, ag=it=>{ const a=it.st.age||0; return isFinite(a)?a:1e15; };
+function rvList(R){ if(R.opt&&R.opt.toHome) return rvToHome(R); if(R.list||R.dead||!R.P) return; R.list=true; clearTimeout(R.lt); const ov=R.ov, opt=R.opt||{}, P=R.P, ag=it=>{ const a=it.st.age||0; return isFinite(a)?a:1e15; };
   const its=R.items.slice().sort((p,q)=>ag(q)-ag(p)), best=its[0], still=rvStill();
   // 机（キャンバス）はいまの場所に留めて、カードだけを消す。その上に一覧を重ねる
   const r=R.cv.getBoundingClientRect(), k=r.width/RVW; Object.assign(R.cv.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0'});
@@ -739,6 +851,23 @@ function rvList(R){ if(R.list||R.dead||!R.P) return; R.list=true; clearTimeout(R
   const re=box.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay);
   const off=box.querySelector('[data-rvoff]'); if(off) off.addEventListener('click',()=>{ store.set('revealOff',1); off.textContent='次から演出を出しません（設定で戻せます）'; off.disabled=true; });
   box.querySelector('[data-rvok]').focus({preventScroll:true}); }
+// ホームへ：机のカードを、ホームの並びの自分の場所へ滑らせる。そのあいだに演出の画面（背景と机）は透けて消え、本物の並びに入れ替わる
+function rvToHome(R){ if(R.list||R.dead||!R.P) return; R.list=true; const P=R.P, ov=R.ov, n=R.items.length, still=rvStill();
+  R.items.forEach(it=>{ if(it.img1) UID_THUMB[it.c.id]=it.img1; });
+  const r=R.cv.getBoundingClientRect(), k=r.width/RVW; Object.assign(R.cv.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0'});
+  R.bar.remove(); P.noCards=true; rvDraw(R.cv.getContext('2d'),P,P.total);
+  cardShowPage('home'); const show=$('homeShow'), sec=show&&show.querySelector('.ushow'); if(!sec){ rvClose(); return; }
+  window.scrollTo(0,Math.max(0,show.getBoundingClientRect().top+window.scrollY-12)); sec.classList.add('landing');
+  const layer=cardEl('div',{class:'rv-fly'}); ov.appendChild(layer);
+  R.items.forEach((it,pi)=>{ const th=show.querySelector(`[data-uid="${CSS.escape(it.c.id)}"] .th`); if(!th) return; const tr=th.getBoundingClientRect(), ps=rvPose(P,it,P.total), c=rvCanvas(490,276);
+    if(it.img1) c.getContext('2d').drawImage(it.img1,0,0,490,276);
+    const dx=r.left+ps.x*k-(tr.left+tr.width/2), dy=r.top+ps.y*k-(tr.top+tr.height/2), sc=it.W*k*ps.s/tr.width;
+    Object.assign(c.style,{left:tr.left+'px',top:tr.top+'px',width:tr.width+'px',height:tr.height+'px',zIndex:String(pi+1),transform:`translate(${dx}px,${dy}px) rotate(${ps.rot}rad) scale(${sc})`});
+    c.dataset.d=String((n-1-pi)*55); layer.appendChild(c); });
+  void layer.offsetWidth;
+  requestAnimationFrame(()=>{ layer.querySelectorAll('canvas').forEach(c=>{ c.style.transition=still?'none':`transform .85s cubic-bezier(.22,.8,.24,1) ${c.dataset.d}ms`; c.style.transform='none'; });
+    ov.classList.add('rv-fade'); R.cv.style.transition='opacity 1s ease .1s'; R.cv.style.opacity='0';
+    R.lt=setTimeout(()=>{ uidFill(); sec.classList.remove('landing'); rvClose(); },still?60:950+(n-1)*55); }); }
 /* ---- 見本で流す：#reveal で開くと、見本のキャラで流す操作盤を出す（作り手の確認用。保存はしない） ---- */
 function rvDemoChars(n,top){ const names=['ベネット','行秋','香菱','夜蘭','ナヒーダ','鍾離','雷電将軍','フリーナ','ヌヴィレット','楓原万葉','胡桃'], BANDS=[[1,7],[7,30],[30,90],[90,365],[365,1095],[1095,36500],[36500,Infinity]];
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
@@ -762,17 +891,18 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
     box.querySelector('[data-x]').onclick=()=>box.remove(); box.querySelector('[data-go]').onclick=play; };
   draw(); document.body.appendChild(box); }
 /* ---- 共有：スマホは画像ごと共有シートへ。できなければ画像を保存して、X の投稿画面を開くボタン ---- */
-async function cardShare(){ const msg=$('cMsg'), c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const st=charStats(c), tr=tierOf(st.age||0);
+async function cardShare(){ const c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; return cardShareWith(c,()=>cardExport('png',$('cMsg'),{blobOnly:true}),$('cMsg')); }
+async function cardShareWith(c,getBlob,msg){ const st=charStats(c), tr=tierOf(st.age||0);
   const text=`${c.name}の聖遺物は「秘境レベル ${fmtAge(st.age)}（${tr[1]}）」でした #命ノ星座カード`;
   const xLink=`<a class="btn" style="padding:3px 10px;font-size:12px" target="_blank" rel="noopener" href="https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(SITE_URL)}">X に投稿する</a>`;
-  const r=await cardExport('png',msg,{blobOnly:true}); if(!r||!r.blob){ msg.textContent='画像を作れませんでした'; return; }
+  msg.textContent='画像を作っています…'; const r=await getBlob(); if(!r||!r.blob){ msg.textContent='画像を作れませんでした'; return; }
   const file=new File([r.blob],r.name,{type:'image/png'}), data={files:[file],text:text+' '+SITE_URL};
   const tryShare=async()=>{ try{ await navigator.share(data); msg.textContent='共有しました'; return true; }catch(e){ if(e&&e.name==='AbortError'){ msg.textContent=''; return true; } return e&&e.name==='NotAllowedError'?'again':false; } };
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     const t=await tryShare(); if(t===true) return;
-    if(t==='again'){ msg.innerHTML='画像の準備ができました。<button class="btn primary" style="padding:3px 10px;font-size:12px" id="cShare2">画像を共有する</button>'; $('cShare2').addEventListener('click',async()=>{ const t2=await tryShare(); if(t2!==true) cardShareFallback(r,xLink); }); return; } }
-  cardShareFallback(r,xLink); }
-async function cardShareFallback(r,xLink){ const msg=$('cMsg'); const res=await saveBlob(r.name,r.blob);
+    if(t==='again'){ msg.innerHTML='画像の準備ができました。<button class="btn primary" style="padding:3px 10px;font-size:12px" id="cShare2">画像を共有する</button>'; msg.querySelector('#cShare2').addEventListener('click',async()=>{ const t2=await tryShare(); if(t2!==true) cardShareFallback(r,xLink,msg); }); return; } }
+  cardShareFallback(r,xLink,msg); }
+async function cardShareFallback(r,xLink,msg){ const res=await saveBlob(r.name,r.blob);
   msg.innerHTML=(res==='saved'?'画像を保存しました。':res==='declined'?'画像の保存をやめました。':'画像を保存できませんでした。')+` ${xLink}（保存した画像を添付してください）`; }
 function cardAppBindDel(){ const b=$('cDel'); if(b) b.addEventListener('click',()=>{ const c=CHARS.find(x=>x.id===CH_OPEN); if(!c) return; const box=$('cDelBox'); box.innerHTML=`<span class="note">「${esc(c.name||'（名前なし）')}」を削除しますか？</span> <button class="btn" id="cDelYes">削除する</button> <button class="btn" id="cDelNo">やめる</button>`;
   $('cDelYes').addEventListener('click',()=>{ CHARS=CHARS.filter(x=>x!==c); CH_OPEN=(cardSorted()[0]||{c:{}}).c.id||null; saveChars(); portraitTx('readwrite',st=>st.delete(c.id)); box.innerHTML='<button class="btn" id="cDel">削除</button>'; cardAppBindDel(); renderChars(); });
@@ -788,5 +918,8 @@ _pj = open(_pp, encoding='utf-8').read() if os.path.exists(_pp) else '{}'
 _json.loads(_pj)
 assert s.count('__PORTRAITS__') == 1
 s = s.replace('__PORTRAITS__', _pj)
+_sb = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'set_bonus.json'), encoding='utf-8').read(); _json.loads(_sb)
+assert s.count('/*__SET_BONUS__*/{}') == 1
+s = s.replace('/*__SET_BONUS__*/{}', _sb.strip())  # 2セット効果の表（v2.2）
 open(dst, 'w', encoding='utf-8').write(s)
 print('wrote', dst, len(s))
