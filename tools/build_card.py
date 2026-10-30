@@ -290,7 +290,7 @@ function cardAppInit(){
   const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラのカードが開きます。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの秘境レベル、右の数字＝5部位の合計の秘境レベル。色はランク（<span id="tierLegend"></span>）。';
   // カード
   pCard.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ctool"><div class="grp2"><button class="btn" id="cPrev" aria-label="前のキャラ">◀</button><select id="cSel" aria-label="キャラ"></select><button class="btn" id="cNext" aria-label="次のキャラ">▶</button><button class="btn" id="cEdit">編集</button><span id="cDelBox"><button class="btn" id="cDel">削除</button></span></div>
-    <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button></div></div>
+    <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button><button class="btn" id="cZipAll">全員をまとめて保存</button></div></div>
     <p class="note" id="cMsg" aria-live="polite" style="margin-top:6px"></p><div id="cardHost" style="margin-top:6px"></div>
     <p class="note" style="margin-top:8px">立ち絵はこの端末（このブラウザ）に保存され、ほかの人には見えません。絵はドラッグで位置を動かせます（ダブルクリックで元の位置）。保存した画像は2400×1350です。PNGはどこに上げても確実、WebPは軽いかわりに受け付けないサービスもあります。</p></div>`;
   const step=d=>{ const rows=cardSorted(); if(!rows.length) return; let i=rows.findIndex(r=>r.c.id===CH_OPEN); i=(i+d+rows.length)%rows.length; CH_OPEN=rows[i].c.id; renderChars(); };
@@ -302,6 +302,7 @@ function cardAppInit(){
   $('cZoom').addEventListener('change',e=>{ const id=CH_OPEN, src=CARD_IMG[id]; if(!src) return; CARD_ZOOM[id]=+e.target.value; portraitSave(id); fitCardArt(src,CARD_ZOOM[id]).then(u=>{ if(u&&CARD_IMG[id]===src){ CARD_FIT[id]=u; renderChars(); } }); });
   $('cArtDel').addEventListener('click',()=>{ if(CH_OPEN) portraitDelete(CH_OPEN); });
   $('cShare').addEventListener('click',cardShare); $('cPng').addEventListener('click',()=>cardExport('png',$('cMsg'))); $('cWebp').addEventListener('click',()=>cardExport('webp',$('cMsg')));
+  $('cZipAll').addEventListener('click',()=>cardExportMany(cardSorted().map(r=>r.c.id),$('cMsg'),$('cZipAll'))); // 全員のカードを画像にして、ZIPで1回で保存
   // 取り込む：UID（Enka.Network のJSONを受け渡し）と、動画（聖遺物ビデオスキャナーを scan/ に置き、枠の中で動かす）。どちらもキャラ一覧へ直接入れる
   pScan.innerHTML=`<div class="panel" style="margin-top:14px"><h2>UIDから取り込む</h2>
     <p class="note">ゲームのショーケースに並べたキャラの聖遺物を、Enka.Network から取り込みます（ゲームのプロフィールで、キャラの詳細を見られるようにしておいてください）。UIDを入れて「UIDで取得」を押します。</p>
@@ -581,10 +582,11 @@ function rvSprite(x,sp,w,h,alpha,op){ if(alpha<=0) return; x.save(); if(op) x.gl
 const RV_T={drop:{lead:250,pre:430,preBest:2000,fall:230,read:1050,after:1900},photo:{lead:250,fall:1050,read:780,charge:750,after:1900},foil:{lead:150,read:2150,charge:750,after:2100}};
 // テンポ：いちばんのカードの直前の1枚までは、同じ駆け足で → 直前の1枚だけ少し落とす（溜めにつなぐ）。sp＝時間の倍率
 function rvTempo(k,m){ if(m<=1) return 1; return k===m-1?.7:.34; }
+// カードの絵から、描くのに使う絵（縮小・映り込み・型押しの版）を作る。絵ができたカードから順に ready になる
+function rvPrep(it,v){ it.img1=rvScaled(it.img,it.W,it.H); if(v!=='foil') it.refl=rvReflection(it.img1,it.W,it.H); else it.emb=rvEmboss(it.img,it.W,it.H); it.ready=true; }
 function rvPlan(items,v,mode){ const T=RV_T[v], n=items.length, A=rvAssets(), ev=[]; let t=T.lead;
   items.forEach((it,k)=>{ const best=k===n-1; it.best=best; it.t0=t; it.dir=rvRnd(k,7)<.5?-1:1;
     if(v==='photo'){ it.W=900; it.H=506; } else { it.W=980; it.H=551; }
-    it.img1=rvScaled(it.img,it.W,it.H); if(v!=='foil') it.refl=rvReflection(it.img1,it.W,it.H); if(v==='foil') it.emb=rvEmboss(it.img,it.W,it.H);
     it.rest=best?{x:RV_CX,y:RV_CY,rot:0}:{x:RV_CX+(rvRnd(k,8)-.5)*90,y:RV_CY+(rvRnd(k,9)-.5)*70,rot:(rvRnd(k,10)-.5)*.24};
     if(v==='foil'){ it.off=best?T.charge:0; it.press=t+380+it.off; it.infoIn=it.press+770; it.starAt=it.infoIn+430; it.press2=best?it.infoIn+900:0; it.land=it.press; t+=T.read+it.off; }
     else{ const sp=it.sp=best?1:rvTempo(k,n-1); it.drop=t+(v==='drop'?(best?T.preBest:T.pre*sp):(best?T.charge:0)); it.fall=v==='drop'?(best?T.fall:Math.max(140,T.fall*Math.sqrt(sp))):T.fall*(best?1:Math.max(.6,sp)); it.land=it.drop+it.fall; it.infoIn=it.land+(v==='drop'?220:100)*sp; it.starAt=it.infoIn+260*sp; t=it.land+T.read*sp;
@@ -645,7 +647,8 @@ function rvCardDraw(x,it,ps,kind,dim,L,lit){ const W=it.W, H=it.H; x.save(); x.g
   else{ x.fillStyle='#f3efe6'; rvRR(x,-W/2-16,-H/2-16,W+32,H+32,3); x.fill(); x.fillStyle='rgba(0,0,0,.06)'; x.fillRect(-W/2-16,H/2+10,W+32,6); } // 写真の白い縁
   x.save(); rvRR(x,-W/2,-H/2,W,H,kind==='photo'?2:12); x.clip();
   const im=ps.s*ps.sy<=1.05?it.img1:(it.img||it.img1);
-  if(L){ x.drawImage(L.blank,-W/2,-H/2,W,H); if(L.emb>0){ x.globalAlpha=ps.a*L.emb; x.drawImage(it.emb,-W/2,-H/2,W,H); } if(L.col>0){ x.globalAlpha=ps.a*L.col; x.drawImage(im,-W/2,-H/2,W,H); } x.globalAlpha=ps.a;
+  if(!im&&!L){ x.fillStyle='#0b0e22'; x.fillRect(-W/2,-H/2,W,H); } // 絵がまだできていないカード（確認用に先の時刻を描いたときだけ）
+  else if(L){ x.drawImage(L.blank,-W/2,-H/2,W,H); if(L.emb>0&&it.emb){ x.globalAlpha=ps.a*L.emb; x.drawImage(it.emb,-W/2,-H/2,W,H); } if(L.col>0&&im){ x.globalAlpha=ps.a*L.col; x.drawImage(im,-W/2,-H/2,W,H); } x.globalAlpha=ps.a;
     if(L.plate>0){ const g=x.createLinearGradient(0,-H/2,0,H/2); g.addColorStop(0,`rgba(255,236,190,${.1*L.plate})`); g.addColorStop(1,`rgba(255,236,190,${.02*L.plate})`); x.fillStyle=g; x.fillRect(-W/2,-H/2,W,H); }
     if(L.flash>0){ x.fillStyle=`rgba(255,246,220,${L.flash})`; x.fillRect(-W/2,-H/2,W,H); } }
   else x.drawImage(im,-W/2,-H/2,W,H);
@@ -730,9 +733,11 @@ async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!c
   // 準備：机を出して、カードの絵と書体を用意する
   const A=rvAssets(); x.drawImage(A.desk,0,0); x.textAlign='center'; x.font=`400 24px ${RV_SANS}`; x.fillStyle='rgba(185,178,163,.6)'; x.fillText('カードを用意しています…',RV_CX,RV_CY);
   const fonts=Promise.all([document.fonts.load(`700 68px ${RV_MINCHO}`,list.map(c=>c.name||'').join('')+'命ノ星座カード（名前なし）'),document.fonts.load(`400 70px ${RV_SANS}`,'0123456789.,秘境レベルDAYSWEKMONTHYRAX'),document.fonts.load(`700 30px ${RV_SANS}`,'#命ノ星座カード')]).catch(()=>{});
-  const items=await Promise.all(list.map(async c=>{ const st=charStats(c); return {c,st,rk:rvRank(st.age||0),img:await rvCardImg(c)}; }));
-  await Promise.race([fonts,new Promise(r=>setTimeout(r,2500))]); if(R.dead) return;
-  const P=rvPlan(items,v,mode); P.pre=opt.pre||'both'; R.P=P; R.drawAt=t=>{ R.hold=true; rvDraw(x,P,t); }; // drawAt：好きな時刻の1コマを描いて止める（確認・動画の書き出し用）
+  // カードの絵は、出てくる順に用意する（2枚ずつ並行）。最初の1枚ができたら流し始め、残りは流しながら用意する（間に合わないカードがあれば、そのカードの手前で時計を止めて待つ）
+  const items=list.map(c=>{ const st=charStats(c); return {c,st,rk:rvRank(st.age||0),img:null,ready:false}; });
+  const P=rvPlan(items,v,mode); P.pre=opt.pre||'both'; R.P=P;
+  let qi=0; const work=async()=>{ while(qi<items.length&&!R.dead){ const it=items[qi++]; it.img=await rvCardImg(it.c); rvPrep(it,v); } }, all=Promise.all([work(),work()]); R.ready=all; // 全員の絵ができたら解決（動画の書き出しは、これを待ってから）
+  await Promise.race([Promise.all([fonts,new Promise(r=>{ const w=()=>items[0].ready||R.dead?r():setTimeout(w,30); w(); })]),new Promise(r=>setTimeout(r,4000))]); if(R.dead) return; R.drawAt=t=>{ R.hold=true; rvDraw(x,P,t); }; R.ready=null; // drawAt：好きな時刻の1コマを描いて止める（確認・動画の書き出し用）
   R.items=items; R.opt=opt; R.cv=cv; R.bar=bar;
   bar.hidden=false; bar.innerHTML=`<span class="rv-hint">${items.length>1?'画面を押すと次のカードへ':'画面を押すと先へ'}</span>`;
   // 終わり：全員のときは、少し余韻をおいて一覧へ。1枚のときはボタンだけ
@@ -740,8 +745,11 @@ async function revealPlay(cs,v,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!c
     if(items.length>1){ bar.innerHTML='<span class="rv-hint">画面を押すと、カードを広げます</span>'; return; }
     bar.innerHTML=(opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':'')+`<button class="btn primary" type="button" data-rvok>${esc(opt.okLabel||'カードを見る')}</button>`;
     bar.querySelector('[data-rvok]').addEventListener('click',rvClose); const re=bar.querySelector('[data-rvre]'); if(re) re.addEventListener('click',opt.replay); bar.querySelector('[data-rvok]').focus(); };
-  if(rvStill()||R.jump){ R.t=P.total; rvDraw(x,P,P.total); return end(); }
-  R.off=0; const t0=performance.now(); const step=now=>{ if(R.dead||R.hold) return; const t=R.jump?P.total:Math.min(P.total,now-t0+R.off); R.t=t; rvDraw(x,P,t); if(t>=P.total) return end(); requestAnimationFrame(step); }; requestAnimationFrame(step); }
+  if(rvStill()||R.jump){ await all; if(R.dead) return; R.t=P.total; rvDraw(x,P,P.total); return end(); }
+  const due=it=>(it.drop!=null?it.drop:it.press!=null?it.press:it.t0)-60; // そのカードの絵が要る時刻（表が見える少し前）
+  R.off=0; R.paused=0; const t0=performance.now(); const step=now=>{ if(R.dead||R.hold) return; let t=Math.min(P.total,now-t0+R.off-R.paused);
+    const need=P.items.find(it=>!it.ready&&t>=due(it)); if(need){ R.paused+=t-due(need); t=due(need); } // 絵が間に合っていなければ、ここで待つ
+    if(R.jump&&P.items.every(it=>it.ready)) t=P.total; R.t=t; rvDraw(x,P,t); if(t>=P.total) return end(); requestAnimationFrame(step); }; requestAnimationFrame(step); }
 // 次へ：いまのカードの続きを飛ばして、次のカードの始まりへ。いちばんのカードの溜め中なら落ちる瞬間へ、着地のあとなら締めへ
 function rvNext(R){ const P=R.P, t=R.t||0, its=P.items, b=its[its.length-1], tg=[];
   its.forEach(it=>{ if(!it.best) tg.push(it.t0); }); tg.push(P.v==='drop'&&its.length>1?b.t0-300:b.t0); tg.push(P.v==='foil'?b.press:b.drop); tg.push(P.E,P.total);
@@ -754,7 +762,7 @@ function rvList(R){ if(R.list||R.dead||!R.P) return; R.list=true; clearTimeout(R
   R.bar.remove(); P.noCards=true; rvDraw(R.cv.getContext('2d'),P,P.total); ov.classList.add('rv-ovl'); ov.scrollTop=0;
   const box=cardEl('div',{class:'rv-list'+(still?'':' spread')}); box.innerHTML=`<div class="rv-lh"><h2>取り込んだカード<small>${its.length}人</small></h2><button class="rv-x" type="button" aria-label="閉じる">×</button></div>
     <div class="rv-lg">${its.map((it,i)=>`<button class="rv-lc${it===best?' best':''}" type="button" data-i="${i}"><span class="th"></span><span class="m"><b>${esc(it.c.name||'（名前なし）')}</b>${it===best?'<i>いちばん</i>':''}<span class="st${it.rk.myth?' myth':''}" style="color:${it.rk.col}">${'★'.repeat(it.rk.stars)}${it.rk.plus?'+':''}</span><span class="a">${esc(fmtAge(it.st.age||0))}</span></span></button>`).join('')}</div>
-    <div class="rv-lf">${opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':''}<button class="btn primary" type="button" data-rvok>${opt.replay?'閉じる':'いちばんのカードを見る'}</button>${opt.replay?'':'<button class="rv-off" type="button" data-rvoff>次から演出を出さない</button>'}</div>`;
+    <div class="rv-lf">${opt.replay?'<button class="btn" type="button" data-rvre>もう一度</button>':''}<button class="btn primary" type="button" data-rvok>${opt.replay?'閉じる':'カードのページへ'}</button>${opt.replay?'':'<button class="rv-off" type="button" data-rvoff>次から演出を出さない</button>'}</div>`;
   ov.appendChild(box);
   its.forEach((it,i)=>{ const th=box.querySelector(`[data-i="${i}"] .th`), c=rvCanvas(490,276); if(it.img1) c.getContext('2d').drawImage(it.img1,0,0,490,276); th.appendChild(c); });
   // 広げる：一覧のカードを、机の上で重なっていた位置・角度・大きさに置いてから、自分の場所へ滑らせる（上に重なっていたカードから順に）
