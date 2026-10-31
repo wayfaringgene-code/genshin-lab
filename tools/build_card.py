@@ -894,8 +894,9 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
 /* ---- 2種類目のカード（試作・ROADMAP 2.6）：#card2 で開くと、スマホの幅で案を見比べる（作り手の確認用。保存はしない）
    思想：主役は★（全体の★と5部位の★）、数字は裏付け。合格ラインは作らない。SNS で流れてきた人に向けて、縦長（4:5）。
    星座カードの夜空・星・金を引き継ぐ。5つの角がある形はランクの★だけに使い、背景の星は角のない点にする
-   A 一列に灯る星／B 段の横棒／C 五角形（目盛りを★の段にした改良版。比べるための案） ---- */
-const C2={v:'A',ci:0,unit:'mo',line:1,list:[]}; let C2_N=0;
+   A 一列に灯る星／B 段の横棒／C 五角形（目盛りを★の段にした改良版。比べるための案）／D 今のカードの右側（サブOPつきの行）を主役に ---- */
+const C2={v:'D',ci:0,unit:'mo',line:1,list:[]}; let C2_N=0;
+const C2_SUB={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}; // サブOPの短い名前（星座カードと同じ）
 function c2Num(d){ // 数字と単位（mo：か月にそろえる／cur：今の表記）
   if(!(d>0)) return ['—','']; if(!isFinite(d)) return ['MAX',''];
   if(C2.unit==='cur'){ const t=fmtWait(d,'en3c'), m=t.match(/^(.*?) ?([A-Z]+)$/); return m?[m[1],m[2]]:[t,'']; }
@@ -931,17 +932,21 @@ function card2SVG(c,st,v){ const P='c2'+(++C2_N)+'-', W=1080, H=1350, nm=c.name|
   for(let i=0;i<6;i++){ const x=(RN()*W).toFixed(0), y=(RN()*H).toFixed(0); g+=`<circle cx="${x}" cy="${y}" r="7" fill="#cfe0ff" opacity=".16" filter="url(#${P}soft)"/><circle cx="${x}" cy="${y}" r="1.8" fill="#fff" opacity=".75"/>`; }
   g+=`<rect x="20" y="20" width="${W-40}" height="${H-40}" rx="24" fill="none" stroke="#e9d39a" stroke-opacity=".5" stroke-width="2"/><rect x="32" y="32" width="${W-64}" height="${H-64}" rx="16" fill="none" stroke="#e9d39a" stroke-opacity=".14" stroke-width="1.5"/>`;
   [[20,20],[W-20,20],[20,H-20],[W-20,H-20]].forEach(([x,y])=>g+=`<path d="M${x} ${y-9}L${x+9} ${y}L${x} ${y+9}L${x-9} ${y}Z" fill="#e9d39a" opacity=".8"/>`);
+  // 立ち絵（右上。上半身を切り出したもので、下と四方はぼかしてある）
+  const fit=CARD_FIT[c.id]; if(fit) g+=`<image href="${fit}" x="${W-640}" y="14" width="640" height="597" preserveAspectRatio="xMidYMid meet" opacity=".95"/>`;
+  const HALO=`stroke="#070914" stroke-opacity=".75" stroke-width="7" paint-order="stroke" stroke-linejoin="round"`;
   // 名前・元素・セット
-  g+=`<text x="72" y="138" font-family='${sans}' font-size="76" font-weight="700" fill="#f3ead6">${esc(nm)}</text>
-    <text x="75" y="190" font-family='${sans}' font-size="27" fill="#9aa6bb">${el==='?'?'':`<tspan fill="${ec}">●</tspan> ${el}元素`}${c.set?`　${esc(setKeyOf(c.set))}`:''}</text>`;
-  // 全体：大きな★の列と数字（どのカードでも同じ場所）
+  g+=`<text x="72" y="128" font-family='${sans}' font-size="72" font-weight="700" fill="#f3ead6" ${HALO}>${esc(nm)}</text>
+    <text x="75" y="176" font-family='${sans}' font-size="25" fill="#9aa6bb" ${HALO}>${el==='?'?'':`<tspan fill="${ec}">●</tspan> ${el}元素`}${c.set?`　${esc(setKeyOf(c.set))}`:''}</text>`;
+  // 全体：★の列と数字（どのカードでも同じ場所）。有効RVとスコアは小さく
   const [n0,u0]=c2Num(a), myth=rk.myth?(rk.dawn?'SINCE THE DAWN OF TIME':'ONCE IN A CENTURY'):'', tc=rk.myth?`url(#${P}rb)`:rk.col;
-  g+=`<text x="540" y="290" text-anchor="middle" font-family='${sans}' font-size="26" letter-spacing="8" fill="${myth?'#f3e3b4':'#8f8a7c'}">${myth||'秘境レベル'}</text>`;
-  g+=c2Stars(P,540,378,50,116,a,{center:true});
-  g+=`<text x="540" y="508" text-anchor="middle" font-family='${sans}' font-weight="700" fill="${a>0?tc:'#5a6478'}"><tspan font-size="104">${n0}</tspan><tspan font-size="36" dx="14" letter-spacing="3">${u0}</tspan></text>`;
-  g+=`<rect x="140" y="562" width="800" height="2" fill="url(#${P}hr)"/>`;
+  g+=`<text x="75" y="250" font-family='${sans}' font-size="24" letter-spacing="6" fill="${myth?'#f3e3b4':'#8f8a7c'}" ${HALO}>${myth||'秘境レベル'}</text>`;
+  g+=c2Stars(P,114,318,40,92,a);
+  g+=`<text x="68" y="428" font-family='${sans}' font-weight="700" fill="${a>0?tc:'#5a6478'}" ${HALO}><tspan font-size="${n0.length<=5?96:n0.length<=7?80:64}">${n0}</tspan><tspan font-size="32" dx="12" letter-spacing="3">${u0}</tspan></text>`;
+  g+=`<text x="75" y="472" font-family='${sans}' font-size="23" fill="#8b95a8" ${HALO}>有効RV <tspan fill="#f3ead6" font-weight="700">${Math.round(st.tot)}%</tspan>　スコア <tspan fill="#f3ead6" font-weight="700">${(st.score||0).toFixed(1)}</tspan></text>`;
+  g+=`<rect x="72" y="498" width="936" height="2" fill="url(#${P}hr)"/>`;
   // 5部位
-  const ROW0=596, RH=124;
+  const ROW0=520, RH=136;
   if(v==='A'||v==='B'){
     if(v==='A'&&C2.unit==='mo') g+=`<text x="1008" y="${ROW0+4}" text-anchor="end" font-family='${sans}' font-size="18" letter-spacing="3" fill="#6f7a8e">MONTHS</text>`;
     const L=330, RR=850, nT=TIERS.length, gp=6, sw=(RR-L-gp*(nT-1))/nT;
@@ -957,7 +962,7 @@ function card2SVG(c,st,v){ const P='c2'+(++C2_N)+'-', W=1080, H=1350, nm=c.name|
           if(has&&i<=b.k){ const w=i<b.k?sw:Math.max(8,sw*b.f); g+=`<rect x="${sx.toFixed(1)}" y="${cy-10}" width="${w.toFixed(1)}" height="20" rx="5" fill="${col}" opacity="${i<b.k?.85:1}"/>`; tip=sx+w; } }
         if(has) g+=`<circle cx="${tip.toFixed(1)}" cy="${cy}" r="14" fill="${rr.col}" opacity=".55" filter="url(#${P}soft)"/><circle cx="${tip.toFixed(1)}" cy="${cy}" r="5" fill="#fff"/>`;
         g+=`<text x="1008" y="${cy-2}" text-anchor="end" font-family='${sans}' font-size="36" font-weight="700" fill="${col}">${has?'★'+rr.stars+(rr.plus?'+':''):'—'}</text><text x="1008" y="${cy+34}" text-anchor="end" font-family='${sans}' font-size="26" fill="#aab3c4">${nn}${unit}</text>`; } }); }
-  else if(v==='C'){ const cx=540, cy=912, R0=34, R=236, CAP=10950, ANG={flower:-90,plume:-18,sands:54,goblet:126,circlet:198};
+  else if(v==='C'){ const cx=540, cy=872, R0=34, R=236, CAP=10950, ANG={flower:-90,plume:-18,sands:54,goblet:126,circlet:198};
     const rad=d=>{ if(!(d>1)) return R0; if(!isFinite(d)||d>=CAP) return R; const b=c2Band(d); return R0+(b.k+b.f)/6*(R-R0); };
     const pt=(s,r)=>{ const t=ANG[s]*Math.PI/180; return [cx+r*Math.cos(t),cy+r*Math.sin(t)]; }, pent=r=>SLOTS.map(s=>pt(s,r).map(q=>q.toFixed(1)).join(',')).join(' ');
     // 段の輪：★の区切りごとに五角形の輪。帯の名前（★1〜★5+）を、花と羽のあいだに
@@ -970,8 +975,24 @@ function card2SVG(c,st,v){ const P='c2'+(++C2_N)+'-', W=1080, H=1350, nm=c.name|
     V.forEach(o=>{ const rr=rvRank(o.a), col=o.has?rr.col:'#4a5470', [x,y]=o.xy, t=ANG[o.s]*Math.PI/180, lx=cx+(R+52)*Math.cos(t), ly=cy+(R+52)*Math.sin(t), an=Math.cos(t)>.3?'start':Math.cos(t)<-.3?'end':'middle';
       g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16" fill="${col}" opacity=".6" filter="url(#${P}soft)"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="#fff"/>`;
       g+=`<text x="${lx.toFixed(1)}" y="${(ly-6).toFixed(1)}" text-anchor="${an}" font-family='${sans}' font-size="24" fill="#8b95a8">${SLOT_JP[o.s]}</text><text x="${lx.toFixed(1)}" y="${(ly+30).toFixed(1)}" text-anchor="${an}" font-family='${sans}' font-size="34" font-weight="700" fill="${o.has&&rr.myth?`url(#${P}rb)`:col}">${o.has?'★'+rr.stars+(rr.plus?'+':''):'—'}<tspan font-size="22" font-weight="400" fill="#aab3c4" dx="10">${o.has?c2Num(o.a)[0]:''}</tspan></text>`; }); }
+  else if(v==='D'){ const L=330, RR=1008, nT=TIERS.length, gp=5, sw=(RR-L-gp*(nT-1))/nT, effS=new Set(c.eff||[]), CW=(RR-L-12)/2;
+    SLOTS.forEach((s,k)=>{ const y0=514+k*140, x=st.slots[s], p=c.pieces[s], has=x.rv!=null&&x.age>0, ar=has?x.age:0, rr=rvRank(ar), col=has?(rr.myth?`url(#${P}rb)`:rr.col):'#4a5470', [nn,uu]=c2Num(ar), eq=p&&p.main&&(p.subs||[]).some(q=>q.v!=='');
+      g+=`<rect x="72" y="${y0+6}" width="40" height="40" fill="${has?rr.col:'#4a5470'}" mask="url(#${P}mk-${s})"/><text x="122" y="${y0+34}" font-family='${sans}' font-size="23" fill="#8b95a8">${SLOT_JP[s]}</text>
+        <text x="74" y="${y0+80}" font-family='${sans}' font-size="31" font-weight="700" fill="${eq?'#e6dfcf':'#ff9b8a'}">${eq?esc(MAIN_SHORT(p.main)):'未装備'}</text>
+        <text x="74" y="${y0+128}" font-family='${sans}' font-weight="700" fill="${col}"><tspan font-size="36">${has?'★'+rr.stars+(rr.plus?'+':''):'—'}</tspan><tspan font-size="${nn.length<=5?28:nn.length<=7?23:19}" dx="12">${has?nn:''}</tspan><tspan font-size="14" dx="5" letter-spacing="1">${has?uu:''}</tspan></text>`;
+      // ★の段で区切った棒。先は角のない光
+      const b=c2Band(ar); let tip=L;
+      for(let i=0;i<nT;i++){ const sx=L+i*(sw+gp); g+=`<rect x="${sx.toFixed(1)}" y="${y0+12}" width="${sw.toFixed(1)}" height="14" rx="4" fill="#141a38" stroke="#283055" stroke-width="1.2"/>`;
+        if(has&&i<=b.k){ const w=i<b.k?sw:Math.max(6,sw*b.f); g+=`<rect x="${sx.toFixed(1)}" y="${y0+12}" width="${w.toFixed(1)}" height="14" rx="4" fill="${col}" opacity="${i<b.k?.85:1}"/>`; tip=sx+w; } }
+      if(has) g+=`<circle cx="${tip.toFixed(1)}" cy="${y0+19}" r="12" fill="${rr.col}" opacity=".55" filter="url(#${P}soft)"/><circle cx="${tip.toFixed(1)}" cy="${y0+19}" r="4" fill="#fff"/>`;
+      // サブOP 4つ（2×2）。有効OPを先に、明るく。丸の数字は強化で伸びた回数
+      if(eq){ const subs=p.subs.filter(q=>q.s).map((q,i)=>[q,i]).sort((a2,b2)=>(effS.has(b2[0].s)-effS.has(a2[0].s))||(a2[1]-b2[1])).map(z=>z[0]), det=x.est&&x.est.ok?x.est.det:null;
+        subs.slice(0,4).forEach((q,i)=>{ const on=effS.has(q.s), cx=L+(i%2)*(CW+12), cy=y0+38+Math.floor(i/2)*50, d=det&&det.find(z=>z.s===q.s), up=d?d.n-1:null, lab=C2_SUB[q.s]||q.s, val=q.v+(FLAT.has(q.s)?'':'%');
+          g+=`<rect x="${cx.toFixed(1)}" y="${cy}" width="${CW.toFixed(1)}" height="44" rx="8" fill="${on?'#e9d39a':'#fff'}" fill-opacity="${on?.08:.025}" stroke="${on?'#e9d39a':'#fff'}" stroke-opacity="${on?.45:.1}" stroke-width="1.2"/>`;
+          if(up!=null) g+=`<circle cx="${(cx+24).toFixed(1)}" cy="${cy+22}" r="13" fill="${on&&up>0?'#e9d39a':'none'}" stroke="${on?'#e9d39a':'#6f7a8e'}" stroke-width="1.5"/><text x="${(cx+24).toFixed(1)}" y="${cy+29}" text-anchor="middle" font-family='${sans}' font-size="19" font-weight="700" fill="${on&&up>0?'#1a1408':on?'#e9d39a':'#8a93a6'}">${up}</text>`;
+          g+=`<text x="${(cx+48).toFixed(1)}" y="${cy+30}" font-family='${sans}' font-size="22" font-weight="${on?700:400}" fill="${on?'#d9c48e':'#7d869a'}">${lab}</text><text x="${(cx+CW-14).toFixed(1)}" y="${cy+32}" text-anchor="end" font-family='${sans}' font-size="29" font-weight="${on?700:400}" fill="${on?'#f3e3b4':'#8a93a6'}">${val}</text>`; }); } }); }
   // 一言（秘境レベルを知らない人向け）と、下の帯
-  if(C2.line&&a>0) g+=`<text x="540" y="1250" text-anchor="middle" font-family='${sans}' font-size="29" fill="#c9c2b0">この聖遺物を秘境だけで揃えるのに、平均 <tspan fill="${rk.col}" font-weight="700">${c2Jp(a)}</tspan></text>`;
+  if(C2.line&&a>0) g+=`<text x="540" y="1262" text-anchor="middle" font-family='${sans}' font-size="29" fill="#c9c2b0">この聖遺物を秘境だけで揃えるのに、平均 <tspan fill="${rk.col}" font-weight="700">${c2Jp(a)}</tspan></text>`;
   g+=`<text x="72" y="1302" font-family='${sans}' font-size="20" fill="#7d8698">${esc(c.date||'')}</text><text x="${W-72}" y="1302" text-anchor="end" font-family='${sans}' font-size="20" fill="#8a93a6"><tspan fill="#e9d39a" font-weight="700">命ノ星座カード</tspan><tspan dx="12">wayfaringgene-code.github.io/genshin-lab</tspan></text>`;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="命ノ星座カード（2種類目・試作${v}）：${esc(nm)}" style="display:block;width:100%;height:auto;border-radius:14px">${g}</svg>`; }
 function card2Proto(){ if($('c2Proto')) return;
@@ -984,9 +1005,10 @@ function card2Proto(){ if($('c2Proto')) return;
   const demo=[[2,'★3'],[3,'★4'],[4,'★5'],[5,'★5+'],[6,'百年級']].map(([t,l])=>{ const c=rvDemoChars(1,t)[0]; return {c,l:`見本：${l}（${c.name}）`}; });
   C2.list=[{c:sm,l:`見本：${sm.name}`},...demo,...((UID_SHOW&&UID_SHOW.chars)||[]).map(c=>({c,l:`UID：${c.name||'（名前なし）'}`})),...CHARS.map(c=>({c,l:`一覧：${c.name||'（名前なし）'}`}))];
   const box=cardEl('div',{class:'c2-proto',id:'c2Proto'}), B=(k,v,t,on)=>`<button class="btn" type="button" data-${k}="${v}" aria-pressed="${on}">${t}</button>`;
-  const draw=()=>{ const it=C2.list[C2.ci]||C2.list[0], st=charStats(it.c), vs=C2.v==='all'?['A','B','C']:[C2.v];
+  const draw=()=>{ const it=C2.list[C2.ci]||C2.list[0], st=charStats(it.c), vs=C2.v==='all'?['A','B','C','D']:[C2.v], cc=it.c;
+    applyBundled(cc); if(CARD_IMG[cc.id]&&!(cc.id in CARD_FIT)&&!CARD_FITTING[cc.id]){ CARD_FITTING[cc.id]=1; fitCardArt(CARD_IMG[cc.id],CARD_ZOOM[cc.id]).then(u=>{ delete CARD_FITTING[cc.id]; CARD_FIT[cc.id]=u||''; if($('c2Proto')) draw(); }); }
     box.innerHTML=`<div class="c2-bar"><div class="row"><b>2種類目のカード（試作）</b><span class="note">保存はしません</span><button class="btn" type="button" data-x style="margin-left:auto">閉じる</button></div>
-      <div class="row">${[['A','A 一列に灯る星'],['B','B 段の横棒'],['C','C 五角形（改良）'],['NOW','今のカード'],['all','A・B・C を並べる']].map(([k,t])=>B('v',k,t,C2.v===k)).join('')}</div>
+      <div class="row">${[['A','A 一列に灯る星'],['B','B 段の横棒'],['C','C 五角形（改良）'],['D','D 右側を主役に'],['NOW','今のカード'],['all','A〜D を並べる']].map(([k,t])=>B('v',k,t,C2.v===k)).join('')}</div>
       <div class="row"><select data-ci aria-label="キャラ">${C2.list.map((x,i)=>`<option value="${i}"${i===C2.ci?' selected':''}>${esc(x.l)}</option>`).join('')}</select>
         単位 ${B('u','mo','か月',C2.unit==='mo')}${B('u','cur','今の表記',C2.unit==='cur')}　一言 ${B('l','1','あり',!!C2.line)}${B('l','0','なし',!C2.line)}</div></div>
       <div class="c2-cards">${vs.map(v=>`<figure>${C2.v==='all'?`<figcaption>${v}</figcaption>`:''}${v==='NOW'?cardSVG(it.c,st,'SK'):card2SVG(it.c,st,v)}</figure>`).join('')}</div>`;
