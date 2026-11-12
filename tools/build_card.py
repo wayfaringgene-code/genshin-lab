@@ -1025,11 +1025,21 @@ function candFor(c,slot,opt,st){ const inv=invLoad(); if(!inv) return null; opt=
     const f=pieceFinal(a.p,eff); if(!f) continue; let pb=0,gain=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU){ pb+=q; gain+=(v-nowU)*q; } }
     if(pb<0.01) continue; out.push({a,f,pb,gain:gain*10,exp:ex*10,off:!inSet}); }
   return out.sort((x,y)=>y.gain-x.gain||y.pb-x.pb); }
-// すべてのキャラ・部位の候補を、1個ごとにまとめる（聖遺物のページ用）
-function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at+'|'+inv.arts.length+'|'+CHARS.map(c=>c.id+':'+(c.eff||[]).join('')+':'+(c.date||'')+':'+pieceSig(c.pieces&&c.pieces.flower)).join(',');
-  if(INV_IDX&&INV_IDX.sig===sig) return INV_IDX; const by=new Map();
-  for(const c of CHARS){ const st=charStats(c); for(const s of SLOTS){ const L=candFor(c,s,{},st)||[]; for(const x of L){ if(!by.has(x.a)) by.set(x.a,[]); by.get(x.a).push({c,slot:s,pb:x.pb,gain:x.gain,off:x.off}); } } }
-  for(const v of by.values()) v.sort((x,y)=>y.gain-x.gain); INV_IDX={sig,by}; return INV_IDX; }
+// 聖遺物のページ用：1個ごとに「そのセットを4セットで使うキャラ」（表の使えるセット。メインOPも合うもの）を並べ、+20での素質（秘境何日分か）を出す
+//   2＋2・「どれでも」・使えるセットが空欄のキャラは並べない（表に4セットで書いたキャラだけ）。4+1 は出さない（キャラ一覧の育成候補では出せる）
+function invUsers(c){ const b=BUILDS[c.name]; return b&&b.sets?b.sets.filter(o=>o.length===1).map(o=>o[0]):[]; }
+function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at+'|'+inv.arts.length+'|'+CHARS.map(c=>c.id+':'+(c.eff||[]).join('')+':'+(c.date||'')+':'+SLOTS.map(s=>pieceSig(c.pieces&&c.pieces[s])).join('/')).join(',');
+  if(INV_IDX&&INV_IDX.sig===sig) return INV_IDX;
+  const bySet=new Map(); for(const c of CHARS){ const pl=planOf(c), st=charStats(c); for(const set of invUsers(c)){ if(!bySet.has(set)) bySet.set(set,[]); bySet.get(set).push({c,pl,st}); } }
+  const info=new Map();
+  for(const a of inv.arts){ const us=[], lv=a.p.lv==null?20:a.p.lv; let pot=null;
+    for(const {c,pl,st} of bySet.get(a.set)||[]){ if(!(pl.main[a.slot]||[]).includes(a.p.main)) continue;
+      const f=pieceFinal(a.p,c.eff||[]); if(!f) continue; const own=a.loc===c.name, now=st.slots[a.slot].rv, nowU=now==null?-1:Math.round(now/10);
+      let pb=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU) pb+=q; }
+      const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
+      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c}; }
+    us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
+  INV_IDX={sig,info}; return INV_IDX; }
 /* ---- 1個の表示 ---- */
 function invArtHTML(a,eff,right,who,cls){ const E=new Set(eff||[]), p=a.p;
   const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}">${INV_SUB[x.s]||x.s} ${esc(x.v)}${invPct(x.s)?'%':''}${x.off?'（+4で付く）':''}</span>`).join('');
@@ -1072,34 +1082,36 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
   on('cdP41','change',e=>{ CAND.p41=e.target.checked; candRender(); }); on('cdEq','change',e=>{ CAND.eq=e.target.checked; candRender(); });
   on('cdCard','click',()=>{ candClose(); CH_OPEN=c.id; store.set('cardLast',c.id); renderChars(); cardShowPage('card'); }); }
 /* ---- 聖遺物のページ ---- */
-const INV_SORTS={gain:'育てがいの大きい順',lv:'レベルの高い順',set:'セット順'};
-function invInit(page){ INV_VIEW=Object.assign({set:'',slot:'',main:'',lv:'',eq:'free',cand:'',sort:'gain',n:50},store.get('invView',{})||{}); INV_VIEW.n=50; page.innerHTML=`<div class="panel" style="margin-top:14px" id="invBox"></div>`; }
+const INV_SORTS={pot:'素質の高い順',lv:'レベルの高い順',set:'セット順'};
+function invInit(page){ INV_VIEW=Object.assign({set:'',slot:'',main:'',lv:'',eq:'free',cand:'',sort:'pot',n:50},store.get('invView',{})||{}); if(!INV_SORTS[INV_VIEW.sort]) INV_VIEW.sort='pot'; if(!['','yes','no'].includes(INV_VIEW.cand)) INV_VIEW.cand=''; INV_VIEW.n=50; page.innerHTML=`<div class="panel" style="margin-top:14px" id="invBox"></div>`; }
 function invRender(){ const box=$('invBox'); if(!box) return; const inv=invLoad();
   if(!inv){ box.innerHTML=`<h2>手持ちの聖遺物</h2><div class="empty">まだありません。「取り込む」のページで、動画を読むか、GOOD形式のファイルを読み込むと、ここに★5の聖遺物が並びます（UIDやスクショからは手持ちは作れません）。</div><div class="btns"><button class="btn primary" id="invGo">取り込むのページへ</button></div>`; $('invGo').addEventListener('click',()=>cardShowPage('scan')); return; }
   box.innerHTML=`<h2>手持ちの聖遺物</h2><p class="note">計算しています…</p>`;
   setTimeout(()=>{ const t0=performance.now(); const idx=invIndex(); invRenderList(box,inv,idx,performance.now()-t0); },30); }
-function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, by=idx.by;
-  const nFree=arts.filter(a=>!a.loc).length, nNo=arts.filter(a=>!a.loc&&!by.has(a)).length, nNo0=arts.filter(a=>!a.loc&&!by.has(a)&&(a.p.lv==null?20:a.p.lv)===0).length;
+function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.info, used=a=>I.get(a).us.length>0, lvOf=a=>I.get(a).lv;
+  const free=arts.filter(a=>!a.loc), nNo=free.filter(a=>!used(a)).length, nNo0=free.filter(a=>!used(a)&&lvOf(a)===0).length;
   const sets=[...new Set(arts.map(a=>a.set))].sort((a,b)=>a.localeCompare(b,'ja')), mains=[...new Set(arts.filter(a=>!V.slot||a.slot===V.slot).map(a=>a.p.main))];
   const opt=(v,list)=>list.map(([k,l])=>`<option value="${esc(k)}"${k===v?' selected':''}>${esc(l)}</option>`).join('');
   let L=arts.filter(a=>(!V.set||a.set===V.set)&&(!V.slot||a.slot===V.slot)&&(!V.main||a.p.main===V.main)&&(V.eq==='all'||(V.eq==='free'?!a.loc:!!a.loc)));
-  const lvOf=a=>a.p.lv==null?20:a.p.lv; if(V.lv==='0') L=L.filter(a=>lvOf(a)===0); else if(V.lv==='mid') L=L.filter(a=>lvOf(a)>0&&lvOf(a)<20); else if(V.lv==='20') L=L.filter(a=>lvOf(a)===20);
-  if(V.cand==='yes') L=L.filter(a=>by.has(a)); else if(V.cand==='no') L=L.filter(a=>!by.has(a));
-  const top=a=>{ const v=by.get(a); return v?v[0].gain:-1; };
-  if(V.sort==='gain') L.sort((a,b)=>top(b)-top(a)); else if(V.sort==='lv') L.sort((a,b)=>lvOf(b)-lvOf(a)); else L.sort((a,b)=>a.set.localeCompare(b.set,'ja')||SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot));
+  if(V.lv==='0') L=L.filter(a=>lvOf(a)===0); else if(V.lv==='mid') L=L.filter(a=>lvOf(a)>0&&lvOf(a)<20); else if(V.lv==='20') L=L.filter(a=>lvOf(a)===20);
+  if(V.cand==='yes') L=L.filter(used); else if(V.cand==='no') L=L.filter(a=>!used(a));
+  const pot=a=>{ const p=I.get(a).pot; return p?(isFinite(p.days)?p.days:1e15):-1; };
+  if(V.sort==='pot') L.sort((a,b)=>pot(b)-pot(a)); else if(V.sort==='lv') L.sort((a,b)=>lvOf(b)-lvOf(a)||pot(b)-pot(a)); else L.sort((a,b)=>a.set.localeCompare(b.set,'ja')||SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||pot(b)-pot(a));
   const stale=CHARS.filter(c=>(c.date||'')>inv.at).length;
-  let h=`<h2>手持ちの聖遺物</h2><div class="inv-sum"><span>★5 <b>${arts.length.toLocaleString()}</b>個</span><span>装備なし <b>${nFree.toLocaleString()}</b></span><span>誰の候補にもならない（装備なし） <b>${nNo.toLocaleString()}</b>（うち+0 ${nNo0.toLocaleString()}）</span></div>
+  let h=`<h2>手持ちの聖遺物</h2><div class="inv-sum"><span>★5 <b>${arts.length.toLocaleString()}</b>個</span><span>装備なし <b>${free.length.toLocaleString()}</b></span><span>使うキャラがいない（装備なし） <b>${nNo.toLocaleString()}</b>（うち+0 ${nNo0.toLocaleString()}）</span></div>
     <p class="note" style="margin-top:6px">${esc(inv.at)} の取り込みの時点${inv.src?`（${esc(inv.src)}）`:''}。読み込み直すと、まるごと入れ替わります。${stale?`<b class="err">そのあとで更新したキャラが ${stale}人います。付け替え・強化した分は、ここには入っていません。</b>`:''}</p>
     <div class="inv-f"><label>セット<select data-iv="set"><option value="">すべて</option>${opt(V.set,sets.map(x=>[x,x]))}</select></label>
       <label>部位<select data-iv="slot"><option value="">すべて</option>${opt(V.slot,SLOTS.map(s=>[s,SLOT_JP[s]]))}</select></label>
       <label>メインOP<select data-iv="main"><option value="">すべて</option>${opt(V.main,mains.map(m=>[m,MAIN_SHORT(m)]))}</select></label>
       <label>レベル<select data-iv="lv">${opt(V.lv,[['','すべて'],['0','+0'],['mid','途中'],['20','+20']])}</select></label>
       <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
-      <label>候補<select data-iv="cand">${opt(V.cand,[['','すべて'],['yes','誰かの候補'],['no','誰の候補にもならない']])}</select></label>
+      <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['yes','いる'],['no','いない']])}</select></label>
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
-    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。「候補」＝キャラ一覧のキャラの方針（有効OP・使えるセット・メインOP）に合い、+20まで上げたときにいまの部位を1%以上の確率で超える1個。名前を押すと、そのキャラの候補が開きます。</p><div class="ia-list">`;
-  h+=L.slice(0,V.n).map(a=>{ const v=by.get(a)||[]; const who=(a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(v.length?v.slice(0,4).map(x=>`<button class="tag2" data-cand="${x.c.id}" data-cslot="${x.slot}">${esc(x.c.name)}：${pctTxt(x.pb)}・+${Math.round(x.gain)}%${x.off?'（4+1）':''}</button>`).join('')+(v.length>4?`<span class="tag2">ほか${v.length-4}人</span>`:''):`<span class="tag2 ex">誰の候補にもならない</span>`);
-    const best=v[0]; const right=best?`<b>+${Math.round(best.gain)}%</b>${esc(best.c.name)}の平均の伸び`:''; return invArtHTML(a,best?best.c.eff:null,right,who); }).join('')+`</div>`;
+    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。「使うキャラ」＝初期値の表で、このセットを4セットで使うことになっていて、メインOPも合うキャラ（キャラ一覧にいるキャラだけ）。素質＝+20まで上げたときの平均の有効RVが、秘境で何日分か（使うキャラの有効OPで測り、いちばん高く出る分）。キャラの名前を押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
+  h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
+    const right=p?`<b>${fmtAge(p.days)}</b>${t?esc(t[1])+'・':''}${x.lv<20?'+20で平均':'いま'} ${Math.round(p.ex)}%`:'<span>使うキャラなし</span>';
+    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>`<button class="tag2${u.own||u.pb>=0.01?'':' ex'}" data-cand="${u.c.id}" data-cslot="${a.slot}">${esc(u.c.name)}：${u.own?'いま付けている':u.now==null?'部位が空き':(u.pb<0.01?`いま${Math.round(u.now)}%・いまのほうが上`:`いま${Math.round(u.now)}% → 超える${pctTxt(u.pb)}`)}</button>`).join(''):`<span class="tag2 ex">このセット・メインOPを使うキャラがいない</span>`);
+    return invArtHTML(a,p?p.c.eff:null,right,who); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
