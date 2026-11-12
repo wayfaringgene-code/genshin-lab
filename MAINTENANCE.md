@@ -62,6 +62,9 @@ flowchart LR
 
 > 以前はラボを artifact で直していたが、**今は `src/lab.html` が正**。artifact だけを直すと GitHub と食い違う。
 
+### 育成の方針の初期値を直す
+キャラごとの有効OP・使えるセット・メインOPの初期値は `src/builds.csv`（GitHub で表の形で見られ、そのまま編集できる）。書き方は **[docs/BUILDS.md](docs/BUILDS.md)**。直したら `python3 tools/check_builds.py` で書き間違いを確かめる。まだアプリには組み込んでいない（聖遺物一覧・育成候補で使う予定）。
+
 ### 立ち絵を足す・差し替える
 手順は **[docs/PORTRAITS.md](docs/PORTRAITS.md)**。画像（ファイル名はキャラ名）を ZIP にして Claude に「立ち絵を登録して」と頼めば、`tools/build_portraits.py` で `src/portraits/` に登録して公開まで進める。
 
