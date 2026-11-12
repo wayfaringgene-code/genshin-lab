@@ -259,7 +259,7 @@ function cardShowPage(p){ CARD_PAGE=p; document.querySelectorAll('.cpage').forEa
   document.querySelectorAll('.cnav [data-page]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.page===p)));
   try{ store.set('cardPage',p); }catch(e){}
   if(p==='home') homeRender(); else if($('homeSample')) $('homeSample').innerHTML='';
-  if(p==='set') cardRenderSettings(); if(p==='card') cardAfterRender(); window.scrollTo({top:0}); }
+  if(p==='set') cardRenderSettings(); if(p==='card') cardAfterRender(); if(p==='inv') invRender(); window.scrollTo({top:0}); }
 const LIST_SORTS={desc:'高い順',asc:'低い順',added:'追加した順'};
 function listSortMode(){ const m=store.get('listSort','desc'); return LIST_SORTS[m]?m:'desc'; }
 function cardListSort(rows){ const m=listSortMode(), r=rows.slice(); // 秘境レベルの高い順・低い順（「上限」は最後尾の扱い）、追加した順（新しく入ったキャラが上）
@@ -300,17 +300,17 @@ async function cardRenderSettings(){ { const rc=$('cRevealOn'); if(rc) rc.checke
   box.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>portraitDelete(b.dataset.pdel))); }
 /* ---- 組み立て ---- */
 function cardAppInit(){
-  document.body.classList.add('mode-card');
+  document.body.classList.add('mode-card'); buildsApply(); // 有効OPが推定のキャラに、初期値の表（src/builds.csv）を当てる
   // 見た目は決定済みの値に固定（試作用の切り替えは出さない）
   CC_LABEL='glass'; CC_FONT='murecho'; CC_FRAME='gold'; CC_LINE='star'; CC_MYTH='m1'; CC_MYTHLANG='en'; CC_UNITS='en3c'; CC_SLOTID='badge';
   const head=document.querySelector('header.top'); head.querySelector('h1').innerHTML='<small>秘境で何日回ると、どこまで行く？</small>命ノ星座カード';
   const nav=cardEl('div',{class:'tabs cnav',role:'tablist','aria-label':'ページ'},
-    '<button role="tab" data-page="home">ホーム</button><button role="tab" data-page="list">キャラ一覧</button><button role="tab" data-page="card">カード</button><button role="tab" data-page="scan">取り込む</button><button role="tab" data-page="set">設定</button>');
+    '<button role="tab" data-page="home">ホーム</button><button role="tab" data-page="list">キャラ一覧</button><button role="tab" data-page="card">カード</button><button role="tab" data-page="inv">聖遺物</button><button role="tab" data-page="scan">取り込む</button><button role="tab" data-page="set">設定</button>');
   head.appendChild(nav); nav.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>cardShowPage(b.dataset.page)));
   { const h1=head.querySelector('h1'); h1.style.cursor='pointer'; h1.addEventListener('click',()=>cardShowPage('home')); }
   const wrap=document.querySelector('.wrap'), view=$('view-chars');
-  const pHome=cardEl('section',{id:'pg-home',class:'cpage'}), pList=cardEl('section',{id:'pg-list',class:'cpage',hidden:''}), pCard=cardEl('section',{id:'pg-card',class:'cpage',hidden:''}), pSet=cardEl('section',{id:'pg-set',class:'cpage',hidden:''}), pScan=cardEl('section',{id:'pg-scan',class:'cpage',hidden:''});
-  view.parentNode.insertBefore(pHome,view); view.parentNode.insertBefore(pList,view); view.parentNode.insertBefore(pCard,view); view.parentNode.insertBefore(pScan,view); view.parentNode.insertBefore(pSet,view);
+  const pHome=cardEl('section',{id:'pg-home',class:'cpage'}), pList=cardEl('section',{id:'pg-list',class:'cpage',hidden:''}), pCard=cardEl('section',{id:'pg-card',class:'cpage',hidden:''}), pSet=cardEl('section',{id:'pg-set',class:'cpage',hidden:''}), pScan=cardEl('section',{id:'pg-scan',class:'cpage',hidden:''}), pInv=cardEl('section',{id:'pg-inv',class:'cpage',hidden:''});
+  view.parentNode.insertBefore(pHome,view); view.parentNode.insertBefore(pList,view); view.parentNode.insertBefore(pCard,view); view.parentNode.insertBefore(pInv,view); view.parentNode.insertBefore(pScan,view); view.parentNode.insertBefore(pSet,view);
   // キャラ一覧：横棒の一覧＋取り込みの入口（取り込みの確認と手入力は、この上に出る）
   const tl=$('chTimeline').closest('.panel');
   pList.appendChild($('chEditor')); pList.appendChild($('chImport')); pList.appendChild(tl);
@@ -318,7 +318,7 @@ function cardAppInit(){
   const h=tl.querySelector('.row'); h.querySelector('h2').textContent='手持ちのキャラ';
   const ctrl=h.querySelector('.row'); ctrl.innerHTML=''; const shots=$('chShots').closest('label'); const so=cardEl('div',{class:'seg',role:'group','aria-label':'並び順'},Object.entries(LIST_SORTS).map(([k,v])=>`<button data-lsort="${k}">${v}</button>`).join('')); ctrl.appendChild(so); ctrl.appendChild(shots); ctrl.appendChild($('chAdd'));
   so.querySelectorAll('[data-lsort]').forEach(b=>b.addEventListener('click',()=>{ store.set('listSort',b.dataset.lsort); renderChars(); }));
-  const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラのカードが開きます。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの秘境レベル、右の数字＝5部位の合計の秘境レベル。色はランク（<span id="tierLegend"></span>）。';
+  const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラの<b>育成候補</b>（手持ちの聖遺物のうち、いまの部位を超えうるもの）が開きます。押した棒の部位が先に出ます。カードは行の右上の「カードを作成 ›」から。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの秘境レベル、右の数字＝5部位の合計の秘境レベル。色はランク（<span id="tierLegend"></span>）。';
   // カード
   pCard.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ctool"><div class="grp2"><button class="btn" id="cEdit">編集</button><span id="cDelBox"><button class="btn" id="cDel">削除</button></span></div>
     <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button></div></div>
@@ -341,11 +341,16 @@ function cardAppInit(){
     <textarea id="enkaText" rows="3" aria-label="Enka のページの文字" placeholder="Enka のページの文字を、ここに貼り付けます" style="width:100%;margin-top:10px;font:12px/1.4 ui-monospace,monospace;color:var(--ink);background:var(--inset);border:1px solid var(--line);border-radius:8px;padding:8px"></textarea>
     <div class="btns"><button class="btn primary" id="enkaIn">読み込む</button><label class="btn" style="cursor:pointer">ファイルから読み込む<input type="file" id="enkaFile" accept=".json,.txt,application/json,text/plain" hidden></label></div></details>
     <p class="note" style="margin-top:8px">★5の聖遺物だけを取り込みます。Enka のデータにはサブOPが伸びた1回ごとの幅が入っているので、有効RVは推定ではなく実際の値で計算します。同じUIDをすぐ開き直しても、しばらくは同じ内容が返ります。データ：Enka.Network</p></div>
-    <div class="panel" style="margin-top:14px"><h2>動画から取り込む</h2><p class="note">ゲームの所持品画面（聖遺物）を録画した動画から、聖遺物を読み取ります。読み終わったら「キャラ一覧に入れる」で、装備中のキャラがキャラ一覧に入ります。+20になっていない聖遺物はいまの値で評価し、カードに「+8」などの印が付きます。★4の聖遺物は外します。動画はこの端末の中だけで処理し、どこにも送りません。</p>
+    <div class="panel" style="margin-top:14px"><h2>動画から取り込む</h2><p class="note">ゲームの所持品画面（聖遺物）を録画した動画から、聖遺物を読み取ります。読み終わったら「キャラ一覧に入れる」で、装備中のキャラがキャラ一覧に、すべての★5の聖遺物が「手持ち」（聖遺物のページと育成候補）に入ります。+20になっていない聖遺物はいまの値で評価し、カードに「+8」などの印が付きます。★4の聖遺物は外します。動画はこの端末の中だけで処理し、どこにも送りません。</p>
     <div class="btns" id="scanStartBox"><button class="btn primary" id="scanStart">動画の読み取りを始める</button><span class="note" style="align-self:center">読み取りの道具（約15MB）を読み込みます</span></div>
     <div class="note" id="scanMsg" aria-live="polite" style="margin-top:6px"></div></div>
+    <div class="panel" style="margin-top:14px"><h2>GOOD形式のファイルから取り込む</h2><p class="note">聖遺物ビデオスキャナーなどが書き出す「GOOD形式」のファイル（artifacts_GOOD.json など）を読み込みます。装備中のキャラはキャラ一覧へ、すべての★5の聖遺物は「手持ち」として保存し、聖遺物のページと育成候補に使います（読み込むたびに、手持ちはまるごと入れ替わります）。ファイルはこの端末の中だけで読み、どこにも送りません。</p>
+    <div class="btns"><label class="btn primary" style="cursor:pointer">ファイルを選ぶ<input type="file" id="goodFile" accept=".json,application/json" hidden></label></div>
+    <div class="note" id="goodMsg" aria-live="polite" style="margin-top:6px"></div></div>
     <iframe id="scanFrame" title="聖遺物ビデオスキャナー" hidden style="display:block;width:100%;height:900px;border:0;margin-top:14px;background:transparent;color-scheme:dark"></iframe>`;
   $('scanStart').addEventListener('click',scanOpen);
+  $('goodFile').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; if(f) goodImportFile(await f.text(),$('goodMsg')); });
+  invInit(pInv);
   { const u=$('enkaUid'), a=$('enkaOpen'), sync=()=>{ const v=u.value.replace(/\D/g,''); if(v!==u.value) u.value=v; const ok=/^\d{9,10}$/.test(v); a.setAttribute('aria-disabled',String(!ok)); if(ok) a.href=`https://enka.network/api/uid/${v}/`; else a.removeAttribute('href'); try{ if(ok) store.set('enkaUid',v); }catch(e){} };
     u.value=store.get('enkaUid','')||''; u.addEventListener('input',sync); sync();
     a.addEventListener('click',e=>{ if(a.getAttribute('aria-disabled')==='true'){ e.preventDefault(); $('enkaMsg').textContent='UIDは9けたか10けたの数字です。'; } }); }
@@ -362,7 +367,7 @@ function cardAppInit(){
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.2。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.3（試作）。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
@@ -385,6 +390,7 @@ function scanOnMessage(e){ const fr=$('scanFrame'); if(!fr||e.source!==fr.conten
   if(d.type==='gscan:h'){ SCAN_HELLO=true; fr.style.height=Math.max(480,Math.ceil(+d.h||0)+4)+'px'; return; }
   if(d.type==='gscan:lab'){ let r, n=0; try{ const j=JSON.parse(d.json); n=(j.chars||[]).length; const nt=j.notes||{};
       r=n?moveImport(d.json):'装備中のキャラが見つかりませんでした（キャラが装備している聖遺物だけを取り込みます）。';
+      if(d.good){ const iv=invFromGood(d.good); if(iv) r+=iv; }
       const ex=[]; if(nt.partial) ex.push(`+20になっていない聖遺物 ${nt.partial}個は、いまの値で評価しています`); if(nt.low) ex.push(`★4の聖遺物 ${nt.low}個は外しました`); if(ex.length) r+='。'+ex.join('。')+'。'; }
     catch(err){ r='読み取り結果を受け取れませんでした（'+(err&&err.message||err)+'）'; }
     let names=[]; try{ names=(JSON.parse(d.json).chars||[]).map(c=>c.name); }catch(err){} importDone($('scanMsg'),r,names);
@@ -555,7 +561,7 @@ let UID_SHOW=null, UID_THUMB={}, UID_THUMB_BUSY=false, HOME_NOTE='', UV=null;
 // 1つのページにカードのSVGが2枚以上並ぶ（ホームの見本と、大きく開いたカード）ので、SVGの中のidを付け替える（同じidが並ぶと、隠れた側の模様を拾ってしまう）
 var RV_UID=0;
 function rvUniq(svg){ const k='_u'+(++RV_UID); return svg.replace(/\bid="([^"]+)"/g,`id="$1${k}"`).replace(/url\(#([^)]+)\)/g,`url(#$1${k})`).replace(/href="#([^"]+)"/g,`href="#$1${k}"`); }
-function uidEff(c){ const e=effOf(c); if(e){ c.eff=e; delete c.effGuess; } else if(!Array.isArray(c.eff)||!c.eff.length){ const g=guessEff(c.pieces); c.eff=g||S.eff.slice(); c.effGuess=true; } }
+function uidEff(c){ const e=effOf(c); if(e){ c.eff=e; delete c.effGuess; } else if(!Array.isArray(c.eff)||!c.eff.length||(c.effGuess&&buildEff(c))){ const g=guessEffFor(c); c.eff=g||S.eff.slice(); c.effGuess=true; } }
 function uidLoad(){ const v=store.get('uidShow',null); UID_SHOW=v&&Array.isArray(v.chars)&&v.chars.length?v:null; if(UID_SHOW) UID_SHOW.chars.forEach(uidEff); }
 function uidSave(uid,chars){ chars.forEach(uidEff); UID_SHOW={uid,date:today(),chars}; UID_THUMB={}; store.set('uidShow',UID_SHOW); }
 function uidFind(id){ return UID_SHOW&&UID_SHOW.chars.find(c=>c.id===id)||null; }
@@ -908,6 +914,200 @@ function cardAppBindDel(){ const b=$('cDel'); if(b) b.addEventListener('click',(
   $('cDelYes').addEventListener('click',()=>{ CHARS=CHARS.filter(x=>x!==c); CH_OPEN=(cardSorted()[0]||{c:{}}).c.id||null; saveChars(); portraitTx('readwrite',st=>st.delete(c.id)); box.innerHTML='<button class="btn" id="cDel">削除</button>'; cardAppBindDel(); renderChars(); });
   $('cDelNo').addEventListener('click',()=>{ box.innerHTML='<button class="btn" id="cDel">削除</button>'; cardAppBindDel(); }); }); }
 """
+# --- 手持ちの聖遺物・聖遺物のページ・育成候補（v2.3 試作。docs/ROADMAP.md の 2.7） ---
+#     手持ち：GOOD 形式（動画の読み取り結果・GOODファイル）の★5を、そのまま「lab:inv」にまるごと保存（1個ごとのIDがないので、読み込むたびに入れ替え）
+#     育成候補：キャラの部位ごとに、手持ちの1個を+20まで上げたときの見込み（「1個を評価」と同じ数え方）と、いまの部位を超える確率・平均の伸び
+#     キャラの方針：有効OPは「遊ぶ人が決めたもの（effMap）→ 初期値の表（src/builds.csv）→ 装備からの推測」。使えるセット・メインOPは「表 → いまの装備」
+rep("if(c.effGuess) labs.unshift({t:'推定',guess:true});", "if(c.effGuess) labs.unshift({t:c.effDef?'初期値':'推定',guess:true});")
+rep("const hadEff=Array.isArray(c.eff); if(!hadEff){ const g=guessEff(c.pieces);", "const hadEff=Array.isArray(c.eff); if(!hadEff){ const g=CARD_APP?guessEffFor(c):guessEff(c.pieces);")
+rep("if(m.effGuess){ const g=guessEff(m.pieces); if(g) m.eff=g; }", "if(m.effGuess){ const g=CARD_APP?guessEffFor(m):guessEff(m.pieces); if(g) m.eff=g; }")
+# キャラ一覧の行：棒（と名札）を押すと育成候補、右上の札を押すとカード
+rep("const go=()=>{ CH_OPEN=(CH_OPEN===b.dataset.open&&!CARD_APP)?null:b.dataset.open;",
+    "const go=(ev)=>{ if(CARD_APP&&b.closest('#chTimeline')&&!(ev&&ev.target&&ev.target.closest&&ev.target.closest('.tl-mk'))){ candOpen(b.dataset.open,candSlotAt(b,ev)); return; } CH_OPEN=(CH_OPEN===b.dataset.open&&!CARD_APP)?null:b.dataset.open;")
+rep("b.addEventListener('click',go); b.addEventListener('keydown',e=>{ if(b.tagName!=='BUTTON'&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); go(); } }); });",
+    "b.addEventListener('click',go); b.addEventListener('keydown',e=>{ if(b.tagName!=='BUTTON'&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); go(); } }); });\n  if(CARD_APP) document.querySelectorAll('#chTimeline .tl-mk').forEach(m=>{ m.style.cursor='pointer'; const t=document.createElementNS('http://www.w3.org/2000/svg','title'); t.textContent='このキャラのカードを作成'; m.prepend(t); });")
+
+CSS_INV = r"""
+<style>
+/* ===== 手持ちの聖遺物・育成候補（v2.3 試作） ===== */
+.ia-list{display:grid; gap:8px; margin-top:10px}
+.ia{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--inset)}
+.ia.cur{border-color:rgba(233,211,154,.45)}
+.ia-h{font-size:13px; color:var(--ink2); display:flex; flex-wrap:wrap; gap:2px 10px; align-items:baseline}
+.ia-h b{color:var(--ink); font-size:14px} .ia-h .lv{font-variant-numeric:tabular-nums; color:var(--gold-hi)}
+.ia-subs{display:flex; flex-wrap:wrap; gap:4px 6px}
+.ia-sub{font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-variant-numeric:tabular-nums}
+.ia-sub.on{color:#f3e3b4; border-color:rgba(233,211,154,.7); background:rgba(233,211,154,.12)}
+.ia-sub.off{border-style:dashed}
+.ia-r{grid-column:2; grid-row:1 / span 2; text-align:right; font-size:12px; color:var(--muted); align-self:center; font-variant-numeric:tabular-nums}
+.ia-r b{display:block; font-size:20px; color:var(--gold-hi); line-height:1.2}
+.ia-who{grid-column:1 / -1; font-size:12px; color:var(--muted)}
+.ia-who .tag2{display:inline-block; border:1px solid var(--line); border-radius:999px; padding:0 8px; margin:2px 4px 0 0; color:var(--ink2)}
+.ia-who .tag2.ex{color:#ffb4a6; border-color:rgba(255,155,138,.5)}
+.ia-who button.tag2{background:none; font:inherit; font-size:12px; cursor:pointer}
+.ia-more{margin-top:10px}
+.inv-f{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-top:10px}
+.inv-f label{display:flex; gap:6px; align-items:center; font-size:12.5px; color:var(--muted)}
+.inv-f select{max-width:16em}
+.cd-tabs{display:flex; flex-wrap:wrap; gap:6px}
+.cd-tabs button{display:inline-flex; align-items:baseline; gap:5px; padding:5px 12px; font-size:13px}
+.cd-tabs button small{color:var(--muted); font-size:11px}
+.cd-tabs button[aria-pressed="true"]{border-color:var(--gold); color:var(--gold-hi); background:rgba(233,211,154,.12)}
+/* ページの切り替えが6つになったので、狭い画面では1行のまま横にずらせるように */
+@media (max-width:560px){ .cnav{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%} .cnav::-webkit-scrollbar{display:none} .cnav button{white-space:nowrap; flex:none; padding:6px 9px; font-size:12.5px} }
+.inv-sum{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink2)}
+.inv-sum b{color:var(--ink); font-size:16px; font-variant-numeric:tabular-nums}
+@media (max-width:560px){ .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} }
+</style>
+"""
+
+JS += r"""
+/* ================= 手持ちの聖遺物・育成候補（v2.3 試作） ================= */
+var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{};
+var INV=null, INV_IDX=null, INV_VIEW=null; const PF_MEMO=new Map();
+const GOOD_STAT={hp:'HP',atk:'ATK',def:'DEF',hp_:'HP%',atk_:'ATK%',def_:'DEF%',enerRech_:'ER',eleMas:'EM',critRate_:'CR',critDMG_:'CD',heal_:'HEAL',physical_dmg_:'PHYS',pyro_dmg_:'DMG_炎',hydro_dmg_:'DMG_水',cryo_dmg_:'DMG_氷',electro_dmg_:'DMG_雷',anemo_dmg_:'DMG_風',geo_dmg_:'DMG_岩',dendro_dmg_:'DMG_草'};
+const INV_SUB={'HP':'HP','ATK':'攻撃力','DEF':'防御力','HP%':'HP%','ATK%':'攻撃力%','DEF%':'防御力%','ER':'元素チャージ','EM':'元素熟知','CR':'会心率','CD':'会心ダメ'};
+const invPct=s=>/%$/.test(s)||s==='ER'||s==='CR'||s==='CD';
+const goodChar=k=>!k?'':k.startsWith('Traveler')?'旅人':((GOOD_NAMES.chars||{})[k]||k);
+const goodSet=k=>(GOOD_NAMES.sets||{})[k]||k;
+const pctTxt=p=>p>=0.995?'ほぼ100%':p<0.01?'1%未満':Math.round(p*100)+'%';
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+/* ---- 有効OPの初期値（src/builds.csv） ---- */
+function buildEff(c){ const b=c&&BUILDS[c.name]; return b&&b.eff&&b.eff.length?b.eff.slice():null; }
+function guessEffFor(c){ const d=buildEff(c); if(d){ c.effDef=true; return d; } delete c.effDef; return guessEff(c.pieces); }
+function buildsApply(){ let ch=false; for(const c of CHARS){ if(!c.effGuess||effOf(c)) continue; const d=buildEff(c); if(d&&(!c.effDef||d.join()!==(c.eff||[]).join())){ c.eff=d; c.effDef=true; ch=true; } } if(ch) saveChars(); }
+/* ---- キャラの方針：使えるセット・メインOP・4+1（表 → いまの装備） ---- */
+function planOf(c){ const b=BUILDS[c.name]||null; let sets=b&&b.sets&&b.sets.length?b.sets:null;
+  if(!sets){ const ps=String(c.set||'').split('＋').map(x=>x.trim()).filter(Boolean);
+    sets=ps.length===1&&/4$/.test(ps[0])?[[ps[0].slice(0,-1)]]:ps.length===1?[[ps[0].replace(/2$/,''),'どれでも']]:ps.length===2?[ps.map(x=>x.replace(/2$/,''))]:[]; }
+  const okSet=new Set(sets.flat()), any=!sets.length||okSet.has('どれでも'), main={};
+  for(const s of SLOTS) main[s]=(b&&b.main&&b.main[s]&&b.main[s].length)?b.main[s]:charMainKeys(c,s);
+  return {sets,okSet,any,main,p41:!!(b&&b.p41),table:!!b,ok:!!(b&&b.ok)}; }
+const planSetTxt=pl=>pl.any&&!pl.sets.length?'どれでも':pl.sets.map(o=>o.join('＋')).join('／');
+/* ---- 手持ちの保存（lab:inv。GitHub Pages ではラボと同じ場所） ---- */
+function invLoad(){ if(INV===null){ const v=store.get('inv',null); INV=v&&Array.isArray(v.arts)&&v.arts.length?v:false; } return INV||null; }
+function invSave(v){ INV=v; INV_IDX=null; PF_MEMO.clear(); try{ localStorage.setItem('lab:inv',JSON.stringify(v)); return true; }catch(e){ return false; } }
+function goodPiece(a){ const subs=(a.substats||[]).map(x=>({s:GOOD_STAT[x.key],v:String(x.value)})).concat((a.unactivatedSubstats||[]).map(x=>({s:GOOD_STAT[x.key],v:String(x.value),off:true})));
+  while(subs.length<4) subs.push({s:'',v:''}); const p={main:GOOD_STAT[a.mainStatKey],subs:subs.slice(0,4)}; if(a.level<20) p.lv=a.level; return p; }
+function goodParse(txt){ let d; try{ d=JSON.parse(String(txt)); }catch(e){ return null; } return d&&d.format==='GOOD'&&Array.isArray(d.artifacts)?d:null; }
+// 手持ちを入れ替える。戻り値は知らせる文（失敗は null）
+function invFromGood(txt){ const d=typeof txt==='string'?goodParse(txt):txt; if(!d) return null;
+  const arts=d.artifacts.filter(a=>a&&a.rarity===5&&GOOD_STAT[a.mainStatKey]&&a.slotKey).map(a=>({set:goodSet(a.setKey),slot:a.slotKey,lk:!!a.lock,loc:goodChar(a.location),p:goodPiece(a)}));
+  if(!arts.length) return '。★5の聖遺物がなかったので、手持ちは前のままです';
+  const ok=invSave({at:todayStr(),src:d.source||'',arts}); const eq=arts.filter(a=>a.loc).length;
+  return ok?`。手持ちとして★5の聖遺物 ${arts.length.toLocaleString()}個（装備中 ${eq}・装備なし ${(arts.length-eq).toLocaleString()}）を保存しました`:'。手持ちが大きすぎて、この端末に保存できませんでした（このページを開いている間だけ使えます）'; }
+// GOODファイルから：装備中のキャラをキャラ一覧へ（動画の取り込みと同じ形）、★5すべてを手持ちへ
+function goodImportFile(txt,box){ const d=goodParse(txt); if(!d){ box.textContent='GOOD形式のファイルではないようです（"format":"GOOD" が見つかりません）'; return; }
+  const by=new Map(), notes={low:0,partial:0}, date=todayStr();
+  for(const a of d.artifacts){ if(!a||!a.location) continue; if(a.rarity!==5){ notes.low++; continue; } if(!GOOD_STAT[a.mainStatKey]) continue; if(!by.has(a.location)) by.set(a.location,[]); by.get(a.location).push(a); }
+  const chars=[]; for(const [key,list] of by){ const pieces={}, cnt={}; for(const a of list){ const p=goodPiece(a); if(p.lv!=null) notes.partial++; pieces[a.slotKey]=p; cnt[a.setKey]=(cnt[a.setKey]||0)+1; }
+    const set=Object.entries(cnt).sort((x,y)=>y[1]-x[1]).filter(e=>e[1]>=2).map(e=>goodSet(e[0])+(e[1]>=4?'4':'2')).join('＋');
+    chars.push({id:'scan-'+key,name:goodChar(key),set,pieces,date}); }
+  let r=chars.length?moveImport(JSON.stringify({app:'genshin-lab-chars',v:1,chars})):'装備中のキャラは見つかりませんでした';
+  const ex=[]; if(notes.partial) ex.push(`+20になっていない装備中の聖遺物 ${notes.partial}個は、いまの値で評価しています`); if(notes.low) ex.push(`装備中の★4以下 ${notes.low}個は外しました`);
+  r+=(invFromGood(d)||'')+(ex.length?'。'+ex.join('。'):'')+'。';
+  buildsApply(); importDone(box,r,chars.map(c=>c.name)); renderChars(); }
+/* ---- 1個を+20まで上げたときの見込み（「1個を評価」と同じ数え方）：{cur（いまの有効RV%）, dist:[[10%単位, 確率]], rem} ---- */
+function pieceFinal(p,eff){ const key=JSON.stringify([p.main,p.subs,p.lv,eff]); if(PF_MEMO.has(key)) return PF_MEMO.get(key); let r=null;
+  const est=estPiece(p.main,p.subs,p.lv);
+  if(est.ok){ const E=new Set(eff); let cur=0; for(const d of est.det) if(E.has(d.s)) cur+=d.u; const k=p.subs.filter(x=>x.s&&E.has(x.s)).length; let rem=Math.max(0,5-est.lv/4);
+    if(est.pend){ rem=4; const o=p.subs.find(x=>x.off); if(o&&E.has(o.s)){ const m=matches(o.s,o.v), q=m&&m[1]; if(q&&q.cnt){ let eu=0,c=0; for(const [uu,cc] of q.rv){ eu+=uu*cc; c+=cc; } cur+=eu/c; } else cur+=8.5; } }
+    let dist=new Map([[Math.round(cur),1]]); const add=(dm,q)=>{ const nd=new Map(); for(const [v,w] of dm){ if(q<1) nd.set(v,(nd.get(v)||0)+w*(1-q)); if(q>0) for(let t=0;t<4;t++) nd.set(v+7+t,(nd.get(v+7+t)||0)+w*q/4); } return nd; };
+    for(let i=0;i<rem;i++) dist=add(dist,k/4);
+    r={cur:Math.round(cur)*10,dist:[...dist.entries()],rem,lv:est.lv}; }
+  PF_MEMO.set(key,r); return r; }
+const pieceSig=p=>p?JSON.stringify([p.main,(p.subs||[]).filter(x=>x.s).map(x=>x.s+'='+x.v+(x.off?'*':''))]):'';
+/* ---- キャラの1部位の候補 ---- */
+function candFor(c,slot,opt,st){ const inv=invLoad(); if(!inv) return null; opt=opt||{}; st=st||charStats(c); const pl=planOf(c), mains=pl.main[slot]||[], eff=c.eff||[];
+  const now=st.slots[slot].rv||0, nowU=Math.round(now/10), mine=pieceSig(c.pieces[slot]); const out=[];
+  for(const a of inv.arts){ if(a.slot!==slot||!mains.includes(a.p.main)) continue; if(a.loc&&a.loc===c.name) continue; if(!a.loc&&mine&&pieceSig(a.p)===mine) continue;
+    const inSet=pl.any||pl.okSet.has(a.set); if(!inSet&&!(opt.p41!=null?opt.p41:pl.p41)) continue; if(a.loc&&opt.noEquipped) continue;
+    const f=pieceFinal(a.p,eff); if(!f) continue; let pb=0,gain=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU){ pb+=q; gain+=(v-nowU)*q; } }
+    if(pb<0.01) continue; out.push({a,f,pb,gain:gain*10,exp:ex*10,off:!inSet}); }
+  return out.sort((x,y)=>y.gain-x.gain||y.pb-x.pb); }
+// すべてのキャラ・部位の候補を、1個ごとにまとめる（聖遺物のページ用）
+function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at+'|'+inv.arts.length+'|'+CHARS.map(c=>c.id+':'+(c.eff||[]).join('')+':'+(c.date||'')+':'+pieceSig(c.pieces&&c.pieces.flower)).join(',');
+  if(INV_IDX&&INV_IDX.sig===sig) return INV_IDX; const by=new Map();
+  for(const c of CHARS){ const st=charStats(c); for(const s of SLOTS){ const L=candFor(c,s,{},st)||[]; for(const x of L){ if(!by.has(x.a)) by.set(x.a,[]); by.get(x.a).push({c,slot:s,pb:x.pb,gain:x.gain,off:x.off}); } } }
+  for(const v of by.values()) v.sort((x,y)=>y.gain-x.gain); INV_IDX={sig,by}; return INV_IDX; }
+/* ---- 1個の表示 ---- */
+function invArtHTML(a,eff,right,who,cls){ const E=new Set(eff||[]), p=a.p;
+  const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}">${INV_SUB[x.s]||x.s} ${esc(x.v)}${invPct(x.s)?'%':''}${x.off?'（+4で付く）':''}</span>`).join('');
+  return `<div class="ia${cls?' '+cls:''}"><div class="ia-h"><b>${esc(a.set||'セット不明')}</b><span>${SLOT_JP[a.slot]||a.slot}・${esc(MAIN_SHORT(p.main))}</span><span class="lv">+${p.lv==null?20:p.lv}</span>${a.lk?'<span title="ロック中">🔒</span>':''}</div>
+    <div class="ia-subs">${subs}</div>${right?`<div class="ia-r">${right}</div>`:''}${who?`<div class="ia-who">${who}</div>`:''}</div>`; }
+/* ---- 育成候補（キャラ一覧の行を押したとき） ---- */
+var CAND={id:null,slot:'flower',p41:null,eq:true,n:20};
+function candSlotAt(row,ev){ try{ const svg=row.ownerSVGElement, r=row.querySelector('rect'); if(!svg||!r||!ev||ev.clientY==null||!ev.clientX) return null;
+    const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; const q=pt.matrixTransform(svg.getScreenCTM().inverse()); if(q.x<236) return null;
+    const cy=+r.getAttribute('y')+(+r.getAttribute('height'))/2, k=Math.round((q.y-cy)/11)+2; return SLOTS[Math.max(0,Math.min(4,k))]; }catch(e){ return null; } }
+function candOpen(id,slot){ const c=CHARS.find(x=>x.id===id); if(!c) return; CAND={id,slot:null,p41:null,eq:true,n:20};
+  if(!slot&&invLoad()){ const st=charStats(c); let best=null; for(const s of SLOTS){ const L=candFor(c,s,{},st)||[]; if(L.length&&(!best||L[0].gain>best.g)) best={s,g:L[0].gain}; } slot=best?best.s:null; }
+  CAND.slot=slot||'flower'; let ov=$('cdOv'); if(!ov){ ov=cardEl('div',{class:'uv-ov',id:'cdOv',role:'dialog','aria-modal':'true','aria-label':'育成候補'}); document.body.appendChild(ov);
+    ov.addEventListener('click',e=>{ if(e.target===ov) candClose(); }); document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('cdOv')) candClose(); }); }
+  document.body.style.overflow='hidden'; candRender(); }
+function candClose(){ const ov=$('cdOv'); if(ov) ov.remove(); document.body.style.overflow=''; }
+function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!ov||!c) return candClose(); const inv=invLoad(), st=charStats(c), pl=planOf(c), slot=CAND.slot, p41=CAND.p41==null?pl.p41:CAND.p41;
+  const L=inv?(candFor(c,slot,{p41,noEquipped:!CAND.eq},st)||[]):[];
+  const tabs=SLOTS.map(s=>{ const n=inv?(candFor(c,s,{p41,noEquipped:!CAND.eq},st)||[]).length:0; return `<button class="btn" data-cs="${s}" aria-pressed="${s===slot}">${SLOT_JP[s]}<small>${n}</small></button>`; }).join('');
+  const x=st.slots[slot], mine=c.pieces[slot], effTxt=(c.eff||[]).map(q=>INV_SUB[q]||q).join('・')||'なし';
+  let h=`<div class="uv-box"><div class="uv-h"><div><b>${esc(c.name||'（名前なし）')}</b><span class="note">育成候補</span></div><button class="rv-x" id="cdX" aria-label="閉じる">×</button></div>
+    <p class="note" style="margin:0">有効OP：${effTxt}${c.effGuess?(c.effDef?'（初期値）':'（装備からの推定）'):''}／使えるセット：${esc(planSetTxt(pl))}／${SLOT_JP[slot]}のメインOP：${(pl.main[slot]||[]).map(m=>esc(MAIN_SHORT(m))).join('・')||'—'}${pl.table?'':'（初期値の表にないキャラなので、いまの装備から）'}</p>
+    <div class="cd-tabs" role="group" aria-label="部位">${tabs}</div>`;
+  if(!inv) h+=`<div class="empty">手持ちの聖遺物がまだありません。「取り込む」のページで、動画を読むか、GOOD形式のファイルを読み込むと、ここに候補が出ます。</div>`;
+  else{ const stale=(c.date||'')>inv.at;
+    h+=mine&&x.rv!=null?invArtHTML({set:'いま付けている1個',slot,lk:false,p:mine},c.eff,`<b>${Math.round(x.rv)}%</b>いまの有効RV`,'','cur'):`<p class="note">いまこの部位は空です。どの1個でも上回ります。</p>`;
+    h+=`<div class="inv-f"><label><input type="checkbox" id="cdP41" ${p41?'checked':''}>ほかのセットも出す（4+1）</label><label><input type="checkbox" id="cdEq" ${CAND.eq?'checked':''}>ほかのキャラが装備中の1個も出す</label></div>
+      <p class="note" style="margin:0">手持ちは ${esc(inv.at)} の取り込みの時点です${stale?`。<b class="err">このキャラのデータ（${esc(c.date)}）のほうが新しいので、もう付け替えた1個や、強化した1個が古いまま出ているかもしれません</b>`:''}。</p>`;
+    if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
+    else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
+        const right=`<b>${pctTxt(r.pb)}</b>いまを超える確率<br>平均の伸び +${Math.round(r.gain)}%${(a.p.lv==null?20:a.p.lv)<20?`<br>いま${r.f.cur}% → +20で平均${Math.round(r.exp)}%`:''}`;
+        return invArtHTML(a,c.eff,right,who); }).join('')+`</div>`;
+      if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
+  h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
+    <div class="btns"><button class="btn primary" id="cdCard">このキャラのカードを作成 ›</button><button class="btn" id="cdClose">閉じる</button></div></div>`;
+  ov.innerHTML=h; ov.scrollTop=0;
+  ov.querySelectorAll('[data-cs]').forEach(b=>b.addEventListener('click',()=>{ CAND.slot=b.dataset.cs; CAND.n=20; candRender(); }));
+  const on=(id,ev,fn)=>{ const e=$(id); if(e) e.addEventListener(ev,fn); };
+  on('cdX','click',candClose); on('cdClose','click',candClose); on('cdMore','click',()=>{ CAND.n+=30; const y=ov.scrollTop; candRender(); ov.scrollTop=y; });
+  on('cdP41','change',e=>{ CAND.p41=e.target.checked; candRender(); }); on('cdEq','change',e=>{ CAND.eq=e.target.checked; candRender(); });
+  on('cdCard','click',()=>{ candClose(); CH_OPEN=c.id; store.set('cardLast',c.id); renderChars(); cardShowPage('card'); }); }
+/* ---- 聖遺物のページ ---- */
+const INV_SORTS={gain:'育てがいの大きい順',lv:'レベルの高い順',set:'セット順'};
+function invInit(page){ INV_VIEW=Object.assign({set:'',slot:'',main:'',lv:'',eq:'free',cand:'',sort:'gain',n:50},store.get('invView',{})||{}); INV_VIEW.n=50; page.innerHTML=`<div class="panel" style="margin-top:14px" id="invBox"></div>`; }
+function invRender(){ const box=$('invBox'); if(!box) return; const inv=invLoad();
+  if(!inv){ box.innerHTML=`<h2>手持ちの聖遺物</h2><div class="empty">まだありません。「取り込む」のページで、動画を読むか、GOOD形式のファイルを読み込むと、ここに★5の聖遺物が並びます（UIDやスクショからは手持ちは作れません）。</div><div class="btns"><button class="btn primary" id="invGo">取り込むのページへ</button></div>`; $('invGo').addEventListener('click',()=>cardShowPage('scan')); return; }
+  box.innerHTML=`<h2>手持ちの聖遺物</h2><p class="note">計算しています…</p>`;
+  setTimeout(()=>{ const t0=performance.now(); const idx=invIndex(); invRenderList(box,inv,idx,performance.now()-t0); },30); }
+function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, by=idx.by;
+  const nFree=arts.filter(a=>!a.loc).length, nNo=arts.filter(a=>!a.loc&&!by.has(a)).length, nNo0=arts.filter(a=>!a.loc&&!by.has(a)&&(a.p.lv==null?20:a.p.lv)===0).length;
+  const sets=[...new Set(arts.map(a=>a.set))].sort((a,b)=>a.localeCompare(b,'ja')), mains=[...new Set(arts.filter(a=>!V.slot||a.slot===V.slot).map(a=>a.p.main))];
+  const opt=(v,list)=>list.map(([k,l])=>`<option value="${esc(k)}"${k===v?' selected':''}>${esc(l)}</option>`).join('');
+  let L=arts.filter(a=>(!V.set||a.set===V.set)&&(!V.slot||a.slot===V.slot)&&(!V.main||a.p.main===V.main)&&(V.eq==='all'||(V.eq==='free'?!a.loc:!!a.loc)));
+  const lvOf=a=>a.p.lv==null?20:a.p.lv; if(V.lv==='0') L=L.filter(a=>lvOf(a)===0); else if(V.lv==='mid') L=L.filter(a=>lvOf(a)>0&&lvOf(a)<20); else if(V.lv==='20') L=L.filter(a=>lvOf(a)===20);
+  if(V.cand==='yes') L=L.filter(a=>by.has(a)); else if(V.cand==='no') L=L.filter(a=>!by.has(a));
+  const top=a=>{ const v=by.get(a); return v?v[0].gain:-1; };
+  if(V.sort==='gain') L.sort((a,b)=>top(b)-top(a)); else if(V.sort==='lv') L.sort((a,b)=>lvOf(b)-lvOf(a)); else L.sort((a,b)=>a.set.localeCompare(b.set,'ja')||SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot));
+  const stale=CHARS.filter(c=>(c.date||'')>inv.at).length;
+  let h=`<h2>手持ちの聖遺物</h2><div class="inv-sum"><span>★5 <b>${arts.length.toLocaleString()}</b>個</span><span>装備なし <b>${nFree.toLocaleString()}</b></span><span>誰の候補にもならない（装備なし） <b>${nNo.toLocaleString()}</b>（うち+0 ${nNo0.toLocaleString()}）</span></div>
+    <p class="note" style="margin-top:6px">${esc(inv.at)} の取り込みの時点${inv.src?`（${esc(inv.src)}）`:''}。読み込み直すと、まるごと入れ替わります。${stale?`<b class="err">そのあとで更新したキャラが ${stale}人います。付け替え・強化した分は、ここには入っていません。</b>`:''}</p>
+    <div class="inv-f"><label>セット<select data-iv="set"><option value="">すべて</option>${opt(V.set,sets.map(x=>[x,x]))}</select></label>
+      <label>部位<select data-iv="slot"><option value="">すべて</option>${opt(V.slot,SLOTS.map(s=>[s,SLOT_JP[s]]))}</select></label>
+      <label>メインOP<select data-iv="main"><option value="">すべて</option>${opt(V.main,mains.map(m=>[m,MAIN_SHORT(m)]))}</select></label>
+      <label>レベル<select data-iv="lv">${opt(V.lv,[['','すべて'],['0','+0'],['mid','途中'],['20','+20']])}</select></label>
+      <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
+      <label>候補<select data-iv="cand">${opt(V.cand,[['','すべて'],['yes','誰かの候補'],['no','誰の候補にもならない']])}</select></label>
+      <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
+    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。「候補」＝キャラ一覧のキャラの方針（有効OP・使えるセット・メインOP）に合い、+20まで上げたときにいまの部位を1%以上の確率で超える1個。名前を押すと、そのキャラの候補が開きます。</p><div class="ia-list">`;
+  h+=L.slice(0,V.n).map(a=>{ const v=by.get(a)||[]; const who=(a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(v.length?v.slice(0,4).map(x=>`<button class="tag2" data-cand="${x.c.id}" data-cslot="${x.slot}">${esc(x.c.name)}：${pctTxt(x.pb)}・+${Math.round(x.gain)}%${x.off?'（4+1）':''}</button>`).join('')+(v.length>4?`<span class="tag2">ほか${v.length-4}人</span>`:''):`<span class="tag2 ex">誰の候補にもならない</span>`);
+    const best=v[0]; const right=best?`<b>+${Math.round(best.gain)}%</b>${esc(best.c.name)}の平均の伸び`:''; return invArtHTML(a,best?best.c.eff:null,right,who); }).join('')+`</div>`;
+  if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
+  box.innerHTML=h;
+  box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
+  box.querySelectorAll('[data-cand]').forEach(el=>el.addEventListener('click',()=>candOpen(el.dataset.cand,el.dataset.cslot)));
+  const m=$('invMore'); if(m) m.addEventListener('click',()=>{ V.n+=100; invRenderList(box,inv,idx,0); }); }
+"""
+
+s = s.replace("<div class=\"wrap\">", CSS_INV + "<div class=\"wrap\">", 1)
 rep("showTab((CHARS_ONLY||CARD_APP)?'chars'", JS + "\nshowTab((CHARS_ONLY||CARD_APP)?'chars'")
 import os, json as _json
 _t = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enka_tables.json'), encoding='utf-8').read(); _json.loads(_t)
@@ -921,5 +1121,25 @@ s = s.replace('__PORTRAITS__', _pj)
 _sb = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'set_bonus.json'), encoding='utf-8').read(); _json.loads(_sb)
 assert s.count('/*__SET_BONUS__*/{}') == 1
 s = s.replace('/*__SET_BONUS__*/{}', _sb.strip())  # 2セット効果の表（v2.2）
+# 手持ち・育成候補（v2.3）：GOOD 形式のキャラ名・セット名（src/scanner/data.js）と、育成の方針の初期値（src/builds.csv）を埋め込む
+_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_dj = open(os.path.join(_root, 'src', 'scanner', 'data.js'), encoding='utf-8').read()
+_gd, _ = _json.JSONDecoder().raw_decode(_dj, _dj.index('{', _dj.index('GSCAN_DATA')))
+_gn = {'chars': {k: v for k, v in _gd['chars'].items()}, 'sets': {k: v['n'] for k, v in _gd['sets'].items()}}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import csv as _csv, io as _io, check_builds as _cb
+_rows = [(i + 2, r) for i, r in enumerate(_csv.DictReader(_io.StringIO(open(_cb.CSV, encoding='utf-8-sig').read())))]
+_ch, _st = _cb.load_data(); _errs = _cb.check(_rows, _ch, _st, False)
+assert not _errs, 'src/builds.csv に書き間違いがあります（python3 tools/check_builds.py）：\n' + '\n'.join(_errs)
+_CODE = {'会心率': 'CR', '会心ダメージ': 'CD', '攻撃力%': 'ATK%', 'HP%': 'HP%', '防御力%': 'DEF%', '元素熟知': 'EM', '元素チャージ効率': 'ER',
+         '攻撃力': 'ATK', 'HP': 'HP', '防御力': 'DEF', '治癒効果': 'HEAL', '物理ダメージ': 'PHYS'}
+for _e in _cb.ELEMS: _CODE[_e + '元素ダメージ'] = 'DMG_' + _e
+_lst = lambda v: [_CODE[x] for x in v.split('・') if x]
+_builds = {}
+for _, _r in _rows:
+    _builds[_r['キャラ'].strip()] = {'eff': _lst(_r['有効OP']), 'sets': [o.split('＋') for o in _r['使えるセット'].split('／') if o],
+        'main': {k: _lst(_r[j]) for k, j in (('sands', '砂'), ('goblet', '杯'), ('circlet', '冠'))}, 'p41': _r['4+1'].strip() == '○', 'ok': _r['確認済み'].strip() == '○'}
+assert s.count('/*__GOOD_NAMES__*/{}') == 1 and s.count('/*__BUILDS__*/{}') == 1
+s = s.replace('/*__GOOD_NAMES__*/{}', _json.dumps(_gn, ensure_ascii=False)).replace('/*__BUILDS__*/{}', _json.dumps(_builds, ensure_ascii=False))
 open(dst, 'w', encoding='utf-8').write(s)
 print('wrote', dst, len(s))

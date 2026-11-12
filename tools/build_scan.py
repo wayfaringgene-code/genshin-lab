@@ -3,7 +3,7 @@
 # 変更点：
 #   - core.js の toLab：レベル（+20未満なら lv）、未発動のサブOP（off:true で4つ目に置く）を残す。★4は外して数える（notes）
 #   - index.html：?embed=1 で枠の中に置かれたときだけ、カードアプリの見た目に合わせ、
-#     「キャラ一覧に入れる」ボタン（親のページへ postMessage）と、高さの通知を足す。単体で開いたときは今までどおり
+#     「キャラ一覧に入れる」ボタン（親のページへ postMessage。装備中のキャラと、手持ちの GOOD 形式を一緒に送る）と、高さの通知を足す。単体で開いたときは今までどおり
 import os, shutil, sys
 
 src, dst = sys.argv[1], sys.argv[2]
@@ -88,8 +88,8 @@ patch('index.html', [
 # 親のページとのやりとり
 ("  window.__gscan = { S, exportJSON, load };",
  """  if (EMBED) {
-    $('exmsg').textContent = '読み終わったら「キャラ一覧に入れる」で、装備中のキャラ（★5の聖遺物）をカードアプリに入れます。';
-    $('toCards').addEventListener('click', () => { parent.postMessage({ type: 'gscan:lab', json: exportJSON('lab') }, '*'); $('exmsg').textContent = '送りました…'; });
+    $('exmsg').textContent = '読み終わったら「キャラ一覧に入れる」で、装備中のキャラ（★5の聖遺物）をキャラ一覧に、すべての★5の聖遺物を「手持ち」に入れます。';
+    $('toCards').addEventListener('click', () => { parent.postMessage({ type: 'gscan:lab', json: exportJSON('lab'), good: exportJSON('good') }, '*'); $('exmsg').textContent = '送りました…'; });
     window.addEventListener('message', e => { if (e.source !== parent) return; const d = e.data || {}; if (d.type === 'gscan:done') $('exmsg').textContent = d.msg || '入れました。'; });
     const wrap = document.querySelector('.wrap');
     let lastH = 0; const post = () => { const h = Math.ceil(wrap.getBoundingClientRect().height); if (h !== lastH) { lastH = h; parent.postMessage({ type: 'gscan:h', h }, '*'); } };
