@@ -1093,7 +1093,7 @@ function candFor(c,slot,opt,st){ const inv=invLoad(); if(!inv) return null; opt=
 // 聖遺物のページ用：1個ごとに「そのセットを4セットで使うキャラ」（表の使えるセット。メインOPも合うもの）を並べ、+20での素質（秘境何日分か）を出す
 //   2＋2・「どれでも」・使えるセットが空欄のキャラは並べない（表に4セットで書いたキャラだけ）。4+1 は出さない（キャラ一覧の育成候補では出せる）
 function invUsers(c){ const b=BUILDS[c.name]; return b&&b.sets?b.sets.filter(o=>o.length===1).map(o=>o[0]):[]; }
-function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at+'|'+inv.arts.length+'|'+CHARS.map(c=>c.id+':'+(c.eff||[]).join('')+':'+(c.date||'')+':'+SLOTS.map(s=>pieceSig(c.pieces&&c.pieces[s])).join('/')).join(',');
+function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBennett()?'B':'-')+inv.at+'|'+inv.arts.length+'|'+CHARS.map(c=>c.id+':'+(c.eff||[]).join('')+':'+(c.date||'')+':'+SLOTS.map(s=>pieceSig(c.pieces&&c.pieces[s])).join('/')).join(',');
   if(INV_IDX&&INV_IDX.sig===sig) return INV_IDX;
   const bySet=new Map(); for(const c of CHARS){ const pl=planOf(c), st=charStats(c); for(const set of invUsers(c)){ if(!bySet.has(set)) bySet.set(set,[]); bySet.get(set).push({c,pl,st}); } }
   const info=new Map();
@@ -1103,9 +1103,46 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at
       let pb=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU) pb+=q; }
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
-      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
+      const dm=own?null:dmgCompare(c,a,f);
+      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
     us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
+/* ---- ダメージの見積もり（v2.3 試作）：「この1個に替えたら、基準の技のダメージが何%変わるか」 ----
+   ダメージそのものは求めない（天賦倍率・敵の耐性・防御は、どのサブOPでも同じだけ掛かるので、比べると消える）。
+   キャラごとに、ステータスの効き方だけを式にする。数字は genshin-db 5.2.15、式は gcsim（b107b5d）の実装で照らし合わせた（docs/ROADMAP.md 2.7） */
+const DMG_MODELS={
+  'フリンズ':{skill:'雷霆のシンフォニー',            // 元素爆発（特殊）。月感電の直接ダメージ（攻撃力×倍率×3×(1+基礎ボーナス)×(1+熟知ボーナス+反応ボーナス)×会心）
+    baseAtk:351.59+674.33,                          // Lv90 フリンズ＋Bloodsoaked Ruins
+    cr:5+22.05, cd:50+38.4+28,                       // 基礎＋武器の会心率／基礎＋突破＋武器（月感電の後 +28%）
+    react:0.36+0.20,                                 // 武器（元爆の後の月感電 +36%）＋固有天賦（昇輝の月感電 +20%）
+    set:'天穹の顕現せし夜', set2:{EM:80}, set4:{CR:30,react:0.10}, // 2セット：熟知+80／4セット（昇輝）：会心率+30%・月反応+10%
+    dmg(t){ const atk=t.atk, em=t.EM+Math.min(0.08*atk,160), base=Math.min(atk/100*0.007,0.14);
+      return atk*(1+base)*(1+6*em/(em+2000)+t.react)*(1+Math.min(1,t.CR/100)*t.CD/100); } }
+};
+const BENNETT_ATK=1.19*(191.16+674.33); // ベネットの元素爆発（天賦13）：ベネットの基礎攻撃力（キャラ＋基礎攻撃力674の武器）の119%
+const MAIN_NUM={HP:4780,ATK:311,'ATK%':46.6,'HP%':46.6,'DEF%':58.3,EM:186.5,ER:51.8,CR:31.1,CD:62.2,HEAL:35.9,PHYS:58.3};
+const rollAvg=s=>ROLL[s]?ROLL[s].reduce((a,b)=>a+b,0)/4:0;
+function dmgBennett(){ return !!store.get('dmgBennett',0); }
+// いま付けている5部位（とセット）。部位のセットは手持ちの「装備中」から、分からなければキャラのセットのものとみなす
+function dmgSetOf(c,slot){ const inv=invLoad(); const a=inv&&inv.arts.find(x=>x.loc===c.name&&x.slot===slot); return a?a.set:((DMG_MODELS[c.name]||{}).set||''); }
+function dmgTotal(M,pieces,sets,bennett){ const t={atkP:0,atk:0,CR:M.cr,CD:M.cd,EM:0,react:M.react};
+  for(const s of SLOTS){ const p=pieces[s]; if(!p||!p.main) continue; const mv=MAIN_NUM[p.main]!=null?MAIN_NUM[p.main]:(String(p.main).startsWith('DMG_')?46.6:0);
+    const add=(k,v)=>{ if(k==='ATK%') t.atkP+=v; else if(k==='ATK') t.atk+=v; else if(k==='CR'||k==='CD'||k==='EM') t[k]+=v; };
+    add(p.main,mv); for(const q of p.subs||[]){ if(!q.s||q.off) continue; add(q.s,parseFloat(q.v)||0); } }
+  const n=SLOTS.filter(s=>sets[s]===M.set).length; if(n>=2) t.EM+=M.set2.EM; if(n>=4){ t.CR+=M.set4.CR; t.react+=M.set4.react; }
+  t.atk=M.baseAtk*(1+t.atkP/100)+t.atk+(bennett?BENNETT_ATK:0); return t; }
+// この1個（+20まで上げたときの伸び方を、強化が4行に入る回数の組み合わせごとに数える。伸び幅は平均）
+function dmgCompare(c,a,f){ const M=DMG_MODELS[c.name]; if(!M||!f) return null; const ben=dmgBennett(), slot=a.slot;
+  const sets={}; for(const s of SLOTS) sets[s]=dmgSetOf(c,s); const D0=M.dmg(dmgTotal(M,c.pieces,sets,ben)); if(!(D0>0)) return null;
+  const sets2=Object.assign({},sets,{[slot]:a.set}), L=a.p.subs.filter(x=>x.s), rem=f.rem||0;
+  const evalWith=adds=>{ const subs=L.map((x,i)=>({s:x.s,v:String((parseFloat(x.v)||0)+adds[i])})); /* off も付いた値として数える */ return M.dmg(dmgTotal(M,Object.assign({},c.pieces,{[slot]:{main:a.p.main,subs}}),sets2,ben))/D0-1; };
+  const base=L.map(()=>0); // 4行目が+4で付くなら、付いた値はそのまま（subs の off を外して数える）
+  let mean=0,pUp=0,best=-Infinity,pBest=0; const fact=n=>{ let r=1; for(let i=2;i<=n;i++) r*=i; return r; };
+  (function rec(i,left,ns){ if(i===L.length-1){ ns.push(left); const pr=fact(rem)/ns.reduce((a,n)=>a*fact(n),1)/Math.pow(L.length,rem); const r=evalWith(ns.map((n,j)=>n*rollAvg(L[j].s)));
+      mean+=pr*r; if(r>1e-9) pUp+=pr; ns.pop(); return; } for(let n=0;n<=left;n++){ ns.push(n); rec(i+1,left-n,ns); ns.pop(); } })(0,rem,[]);
+  for(let j=0;j<L.length;j++){ const r=evalWith(L.map((x,k)=>k===j?rem*(ROLL[x.s]?ROLL[x.s][3]:0):0)); if(r>best+1e-12){ best=r; pBest=Math.pow(1/16,rem); } else if(Math.abs(r-best)<=1e-12) pBest+=Math.pow(1/16,rem); }
+  if(!rem){ best=mean; pBest=1; }
+  return {skill:M.skill,mean,pUp,max:best,pMax:pBest,ben}; }
 /* ---- 1個のスコア（会心率×2＋会心ダメージ＋型の1項目。カードと同じ）：いま・+20で平均・+20で最大 ----
    平均＝残りの強化が4行に等しく入り、伸び幅も平均。最大＝残りの強化がすべて、スコアにいちばん効く行に最大の伸びで入ったとき */
 function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!=='CRIT'&&s===t?STYPES[t][2]:0), L=p.subs.filter(x=>x.s);
@@ -1119,6 +1156,8 @@ function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!
 function rankBadge(t){ const i=TIERS.indexOf(t); return `<span class="rkw${i>=4?' glow':''}" style="--rc:${t[2]}"><span class="rk">${esc(t[1])}</span></span>`; }
 function invQm(x,p){ const nm=esc(p.c.name), all=x.us.map(u=>esc(u.c.name)).join('・'), lv=x.lv;
   return `<span class="qwrap"><button class="qm" type="button" aria-label="この数字の説明">?</button><span class="itip" role="tooltip"><b>素質</b>：${lv<20?'この1個を+20まで上げたら、平均で':'この1個（+20）は、いま'}秘境何か月分の1個になるか。秘境だけで同じ有効RVの1個をそろえるのに、平均的な人がかかる期間です。<br>${x.us.length>1?`このセットを使うキャラ（${all}）の有効OPでそれぞれ測り、いちばん高く出た<b>${nm}</b>の値です。`:`<b>${nm}</b>の有効OPで測った値です。`}★はカードと同じランクです。<br><b>スコア</b>：会心率×2＋会心ダメージ＋型の1項目（${nm}の型）。${lv<20?'+20まで上げたときの平均です。':'いまの値です。'}</span></span>`; }
+const dmgPct=x=>(x>=0?'+':'')+(x*100).toFixed(1)+'%';
+const dmgNote=d=>`<span class="pb">ダメージ＝${esc(d.skill)}（${d.ben?'ベネットのバフあり':'バフなし'}・試作）が何%変わるか。上がる確率 ${pctTxt(d.pUp)}</span>`;
 const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*100).toFixed(1)+'%':'約1/'+Math.round(1/p).toLocaleString();
 function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y,k)=>{ const r=v=>Math.round((v||0)/(k||1)); return r(y)>r(x)?'up':r(y)<r(x)?'dn':''; }; // 見えている桁（MONTHS・スコアとも小数第1位）で比べる
   if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
@@ -1126,8 +1165,8 @@ function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=
   const ks=[...new Set([...A.map(q=>q.s),...B.map(q=>q.s)])].sort((x,y)=>(E.has(y)?1:0)-(E.has(x)?1:0)), val=(L,k)=>{ const q=L.find(z=>z.s===k); return q?`+${esc(q.v)}${invPct(k)?'%':''}${q.off?'<small>+4</small>':''}`:'—'; };
   const cmp=`<span class="cmp"><i></i><i class="h">この1個（+${lv}）</i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i>${ks.map(k=>`<i class="k${E.has(k)?' on':''}">${INV_SUB[k]||k}</i><i class="${E.has(k)?'on':''}">${val(A,k)}</i><i class="${E.has(k)?'on':''}">${val(B,k)}</i>`).join('')}</span>`;
   const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>${cmp}`, now=u.slotAge||0, sn=u.scNow;
-  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i></span></span>`;
-  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i></span><span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
+  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
+  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
 /* ---- 1個の表示 ---- */
 // ロールの棒：伸びた回数だけ「箱4つの組」を並べ、伸び幅の合計（70%＝箱1つ … 100%＝箱4つ）だけ塗る。合計は見積もり（RV÷10−6×回数）
 function rollBar(n,u){ if(!n) return ''; const fill=Math.max(n,Math.min(4*n,Math.round(u-6*n))); let k=fill, g='';
@@ -1177,7 +1216,7 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
     if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
     else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
         const M=model(slot,[a.p.main],c.eff), dNew=ageOf(d=>M.mean(d),r.exp), sr=scoreRange(c,a.p,r.f), lvA=a.p.lv==null?20:a.p.lv; let mxU=0, pMx=0; for(const [v,q] of r.f.dist) if(v>mxU){ mxU=v; pMx=q; }
-        const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>${lvA<20?`平均 ${fmtAge(dNew)}・スコア ${sr.mean.toFixed(1)}<br>最大 ${fmtAge(ageOf(d=>M.mean(d),mxU*10))}（${pRare(pMx)}）・スコア ${sr.max.toFixed(1)}（${pRare(sr.pMax)}）`:`${fmtAge(dNew)}・スコア ${sr.now.toFixed(1)}`}`;
+        const dm=dmgCompare(c,a,r.f), right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>${dm?`ダメージ 平均 ${dmgPct(dm.mean)}（上がる確率 ${pctTxt(dm.pUp)}）<br>`:''}${lvA<20?`平均 ${fmtAge(dNew)}・スコア ${sr.mean.toFixed(1)}<br>最大 ${fmtAge(ageOf(d=>M.mean(d),mxU*10))}（${pRare(pMx)}）・スコア ${sr.max.toFixed(1)}（${pRare(sr.pMax)}）`:`${fmtAge(dNew)}・スコア ${sr.now.toFixed(1)}`}`;
         return invArtHTML(a,c.eff,right,who,r.pb>=0.5?'go':''); }).join('')+`</div>`;
       if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
   h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
@@ -1213,7 +1252,8 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>レベル<select data-iv="lv">${opt(V.lv,[['','すべて'],['0','+0'],['mid','途中'],['20','+20']])}</select></label>
       <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
       <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['go','更新できる見込みが高い（緑の枠）'],['yes','いる'],['no','いない（餌の候補）']])}</select></label>
-      <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
+      <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label>
+      <label title="ダメージの見積もりは、いまはフリンズ（雷霆のシンフォニー）だけの試作です"><input type="checkbox" id="invBen" ${dmgBennett()?'checked':''}>ダメージの見積もりにベネットのバフを入れる（試作・フリンズのみ）</label></div>
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
@@ -1224,6 +1264,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
   box.innerHTML=h;
   box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
   box.querySelectorAll('[data-cand]').forEach(el=>el.addEventListener('click',()=>candOpen(el.dataset.cand,el.dataset.cslot)));
+  { const bn=$('invBen'); if(bn) bn.addEventListener('change',()=>{ store.set('dmgBennett',bn.checked?1:0); INV_IDX=null; invRender(); }); }
   box.querySelectorAll('.qm').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const w=b.parentElement, on=!w.classList.contains('open'); box.querySelectorAll('.qwrap.open').forEach(q=>q.classList.remove('open')); w.classList.toggle('open',on); }));
   const m=$('invMore'); if(m) m.addEventListener('click',()=>{ V.n+=100; invRenderList(box,inv,idx,0); }); }
 """
