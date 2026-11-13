@@ -22,7 +22,15 @@ rep("const $=id=>document.getElementById(id);",
 
 # --- 単位：カードアプリでは英語（DAYS／MONTHS／YEARS）だけ ---
 rep("function fmtWait(d,L){ L=WAIT_UNITS[L]?L:'jp';",
-    "function fmtWait(d,L){ L=WAIT_UNITS[L]?L:(CARD_APP?'en3c':'jp');")
+    "function fmtWait(d,L){ if(CARD_APP) return fmtMonths(d); L=WAIT_UNITS[L]?L:(CARD_APP?'en3c':'jp');")
+# --- 単位：カードアプリでは、日数はすべて MONTHS（小数第1位）で出す（v2.3）。目盛り・ランクの境目の表記も同じ ---
+rep("en3c:{7:'1 WEEK',30:'1 MONTH',90:'3 MONTHS',365:'1 YEAR',1095:'3 YEARS',3650:'10 YEARS'}})[UL]||TIER_DAY_JP_G,",
+    "en3c:{7:'1 WEEK',30:'1 MONTH',90:'3 MONTHS',365:'1 YEAR',1095:'3 YEARS',3650:'10 YEARS'}})[CARD_APP?'mo':UL]||(CARD_APP?moLabels():TIER_DAY_JP_G),")
+rep("const TIER_DAY_JP_G={7:'1週',30:'1か月',90:'3か月',365:'1年',1095:'3年',3650:'10年'};",
+    "const TIER_DAY_JP_G=CARD_APP?moLabels():{7:'1週',30:'1か月',90:'3か月',365:'1年',1095:'3年',3650:'10年'};")
+_tk = "[[1,'1日'],[7,'1週'],[30,'1か月'],[90,'3か月'],[365,'1年'],[1095,'3年'],[3650,'10年'],[36500,'100年'],[365000,'1000年'],[3650000,'1万年']]"
+assert s.count(_tk) == 3
+s = s.replace(_tk, "(CARD_APP?moTicks(" + _tk + "):" + _tk + ")")
 
 # --- 一覧の行を押したら、カードのページへ ---
 rep("if(CH_OPEN) $('chList').scrollIntoView({behavior:'smooth',block:'nearest'}); };",
@@ -362,7 +370,7 @@ function cardAppInit(){
   const mv=$('mvOut').closest('.panel'); const det=mv.querySelector('details'); if(det){ det.open=true; const sm=det.querySelector('summary'); if(sm) sm.remove(); }
   pSet.innerHTML=`<div class="panel" style="margin-top:14px"><h2>計算の前提 <span class="clock">固定</span></h2><dl class="ckv">
     <dt>1日の周回数</dt><dd>${S.runsPerDay}周（樹脂${S.runsPerDay*20}）</dd><dt>初期4OPの確率</dt><dd>${Math.round(S.p4*100)}%（秘境）</dd><dt>1周の★5ドロップ</dt><dd>平均${DROP5}個</dd><dt>狙いのセット</dt><dd>2択の片方（${Math.round(SET_SHARE*100)}%）</dd>
-    <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの有効RVを秘境だけで揃えるのにかかる、平均的な人の日数</dd><dt>ランクの境目</dt><dd>★1 〜1週／★2 〜1か月／★3 〜3か月／★4 〜1年／★5 〜3年／★5+ 3年〜（100年以上は ONCE IN A CENTURY、5000年以上は SINCE THE DAWN OF TIME）</dd>
+    <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの有効RVを秘境だけで揃えるのにかかる、平均的な人の日数</dd><dt>ランクの境目</dt><dd>★1 〜0.2 MONTHS／★2 〜1.0 MONTHS／★3 〜3.0 MONTHS／★4 〜12.0 MONTHS／★5 〜36.0 MONTHS／★5+ 36.0 MONTHS〜（1,200 MONTHS 以上は ONCE IN A CENTURY、60,000 MONTHS 以上は SINCE THE DAWN OF TIME）。期間はすべて MONTHS（30.4日＝1か月）で表します</dd>
     <dt>確率の出典</dt><dd>KQM「Genshin Impact Artifacts Guide」、Genshin Impact Wiki（Fandom）「Artifact/Distribution」（草元素追加後の値）</dd></dl></div>
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
@@ -509,7 +517,7 @@ function homeInit(box){
     <div id="homeBack"></div>
     <div class="panel" style="margin-top:14px"><details class="more"><summary>「秘境レベル」って？</summary><dl class="ckv" style="margin-top:6px">
       <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの聖遺物と同じだけの有効RVを、秘境だけで揃えるのにかかる平均の日数です（1日9周＝樹脂180）。強さではなく「どれだけ珍しいか」の物差しです。</dd>
-      <dt>ランク</dt><dd>★1 〜1週／★2 〜1か月／★3 〜3か月／★4 〜1年／★5 〜3年／★5+ 3年〜。100年以上は ONCE IN A CENTURY、5000年以上は SINCE THE DAWN OF TIME。</dd>
+      <dt>ランク</dt><dd>★1 〜0.2 MONTHS／★2 〜1.0 MONTHS／★3 〜3.0 MONTHS／★4 〜12.0 MONTHS／★5 〜36.0 MONTHS／★5+ 36.0 MONTHS〜。1,200 MONTHS 以上は ONCE IN A CENTURY、60,000 MONTHS 以上は SINCE THE DAWN OF TIME。</dd>
       <dt>有効RV</dt><dd>有効なサブOP（そのキャラに役立つもの）が伸びた量の合計です。1回でいちばん大きく伸びたときを100%として数えます。</dd>
       <dt>使い方のヒント</dt><dd>部位ごとの秘境レベルが、これから秘境を回るつもりの日数より長ければ、その期間にその部位を更新できる見込みは五分以下です。</dd></dl></details></div>
     <p class="note chome-links">ほかの取り込み方：<a href="#" data-hgo="scan">動画・スクショから取り込む</a>　／　くわしく分析：<a href="${LAB_URL}"${ON_SITE?'':' target="_blank" rel="noopener"'}>聖遺物ラボ</a>　／　非公式のファンツールです（HoYoverse とは関係ありません）</p>`;
@@ -964,6 +972,7 @@ CSS_INV = r"""
 .ia-who .tag2 .tip .tt{display:grid; grid-template-columns:auto repeat(3,auto); gap:2px 14px; margin:4px 0 2px; font-style:normal; font-variant-numeric:tabular-nums}
 .ia-who .tag2 .tip .tt.t3{grid-template-columns:auto repeat(2,auto)} .ia-who .tag2 .tip .tt.t2{grid-template-columns:auto auto}
 .ia-who .tag2 .tip .tt i{font-style:normal; text-align:right; color:var(--ink)} .ia-who .tag2 .tip .tt i.k{text-align:left; color:var(--muted)} .ia-who .tag2 .tip .tt i.h{color:var(--muted); font-size:11px}
+.ia-who .tag2 .tip .tt i small{display:block; font-size:10.5px; font-weight:400; color:var(--muted)}
 .ia-who .tag2 .tip .tt i.up{color:var(--ok); font-weight:700} .ia-who .tag2 .tip .tt i.dn{color:var(--ng)} .ia-who .tag2 .tip .up{color:var(--ok)} .ia-who .tag2 .tip .dn{color:var(--ng)} .ia-who .tag2 .tip .pb{color:var(--muted)}
 @media (hover:none){ .ia-who .tag2 .tip{display:none!important} }
 .ia-who .tag2.cc.hi{border-color:var(--okb)} .ia-who .tag2.cc.hi .st, .ia-who .tag2.cc.hi .st b{color:var(--ok)}
@@ -988,6 +997,10 @@ CSS_INV = r"""
 """
 
 JS += r"""
+/* ================= 単位（v2.3）：カードアプリでは日数をすべて MONTHS（30.4日＝1か月）・小数第1位で出す ================= */
+function fmtMonths(d){ if(!isFinite(d)) return 'never'; const m=Math.max(0,d)/30.4; return m.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+'\u2009MONTHS'; }
+function moLabels(){ const o={}; for(const d of [7,30,90,365,1095,3650]) o[d]=fmtMonths(d).replace('\u2009',' '); return o; }
+function moTicks(T){ return T.filter(t=>t[0]>=7).map(([d])=>[d,fmtMonths(d).replace('\u2009MONTHS',' MO')]); }
 /* ================= 手持ちの聖遺物・育成候補（v2.3 試作） ================= */
 var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{}, ICONS=/*__ICONS__*/{};
 function charIcon(name,sz){ const f=ICONS[name]; return f?`<i class="cico${sz?' '+sz:''}" style="background-image:url(icons/${f})" aria-hidden="true"></i>`:`<i class="cico ini${sz?' '+sz:''}" aria-hidden="true">${esc(String(name||'？').slice(0,1))}</i>`; }
@@ -1065,8 +1078,8 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at
       const f=pieceFinal(a.p,c.eff||[]); if(!f) continue; const own=a.loc===c.name, now=st.slots[a.slot].rv, nowU=now==null?-1:Math.round(now/10);
       let pb=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU) pb+=q; }
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
-      let mxU=0; for(const [v] of f.dist) if(v>mxU) mxU=v; const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
-      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,daysMax,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c}; }
+      let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
+      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c}; }
     us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 /* ---- 1個のスコア（会心率×2＋会心ダメージ＋型の1項目。カードと同じ）：いま・+20で平均・+20で最大 ----
@@ -1074,13 +1087,15 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at
 function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!=='CRIT'&&s===t?STYPES[t][2]:0), L=p.subs.filter(x=>x.s);
   const avg=s=>ROLL[s]?ROLL[s].reduce((a,b)=>a+b,0)/4:0, top=s=>ROLL[s]?ROLL[s][3]:0, now=pieceScore(p,t);
   const o=f.pend?p.subs.find(x=>x.off):null, add0=o?W(o.s)*(parseFloat(o.v)||0):0;
-  return {now, mean:now+add0+f.rem*L.reduce((a,x)=>a+W(x.s)*avg(x.s),0)/4, max:now+add0+f.rem*Math.max(0,...L.map(x=>W(x.s)*top(x.s)))}; }
+  const best=Math.max(0,...L.map(x=>W(x.s)*top(x.s))), nTop=L.filter(x=>best>0&&W(x.s)*top(x.s)===best).length; // 最大になる確率：残りの強化が毎回その行（同じ値の行が複数なら、どれか）に入り、伸び幅も最大（1/4）
+  return {now, mean:now+add0+f.rem*L.reduce((a,x)=>a+W(x.s)*avg(x.s),0)/4, max:now+add0+f.rem*best, pMax:best>0?Math.pow(nTop/16,f.rem):1}; }
 /* ---- キャラの札の吹き出し：この1個を+20まで上げて付けたら、部位とカード全体の秘境レベルが平均でどうなるか ---- */
-function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y)=>y>x+1e-9?'up':y<x-1e-9?'dn':'';
+const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*100).toFixed(1)+'%':'約1/'+Math.round(1/p).toLocaleString();
+function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y,k)=>{ const r=v=>Math.round((v||0)/(k||1)); return r(y)>r(x)?'up':r(y)<r(x)?'dn':''; }; // 見えている桁（MONTHS・スコアとも小数第1位）で比べる
   if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
   const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`, now=u.slotAge||0, sn=u.scNow;
-  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now)}">${sc(u.sr.now)}</i></span></span>`;
-  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax)}">${ag(u.daysMax)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max)}">${sc(u.sr.max)}</i></span><span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）</span></span>`; }
+  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i></span></span>`;
+  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i></span><span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
 /* ---- 1個の表示 ---- */
 function invArtHTML(a,eff,right,who,cls){ const E=new Set(eff||[]), p=a.p;
   const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}"${E.has(x.s)?' title="有効OP"':''}><i></i>${INV_GAME[x.s]||x.s}<span class="v">+${esc(x.v)}${invPct(x.s)?'%':''}</span>${x.off?'<small>+4で付く</small>':''}</span>`).join('');
@@ -1111,8 +1126,8 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
       <p class="note" style="margin:0">手持ちは ${esc(inv.at)} の取り込みの時点です${stale?`。<b class="err">このキャラのデータ（${esc(c.date)}）のほうが新しいので、もう付け替えた1個や、強化した1個が古いまま出ているかもしれません</b>`:''}。</p>`;
     if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
     else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
-        const M=model(slot,[a.p.main],c.eff), dNew=ageOf(d=>M.mean(d),r.exp), sr=scoreRange(c,a.p,r.f), lvA=a.p.lv==null?20:a.p.lv; let mxU=0; for(const [v] of r.f.dist) if(v>mxU) mxU=v;
-        const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>${lvA<20?`平均 ${fmtAge(dNew)}・スコア ${sr.mean.toFixed(1)}<br>最大 ${fmtAge(ageOf(d=>M.mean(d),mxU*10))}・スコア ${sr.max.toFixed(1)}`:`${fmtAge(dNew)}・スコア ${sr.now.toFixed(1)}`}`;
+        const M=model(slot,[a.p.main],c.eff), dNew=ageOf(d=>M.mean(d),r.exp), sr=scoreRange(c,a.p,r.f), lvA=a.p.lv==null?20:a.p.lv; let mxU=0, pMx=0; for(const [v,q] of r.f.dist) if(v>mxU){ mxU=v; pMx=q; }
+        const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>${lvA<20?`平均 ${fmtAge(dNew)}・スコア ${sr.mean.toFixed(1)}<br>最大 ${fmtAge(ageOf(d=>M.mean(d),mxU*10))}（${pRare(pMx)}）・スコア ${sr.max.toFixed(1)}（${pRare(sr.pMax)}）`:`${fmtAge(dNew)}・スコア ${sr.now.toFixed(1)}`}`;
         return invArtHTML(a,c.eff,right,who,r.pb>=0.5?'go':''); }).join('')+`</div>`;
       if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
   h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
