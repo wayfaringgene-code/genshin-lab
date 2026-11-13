@@ -938,10 +938,13 @@ CSS_INV = r"""
 .ia{--ok:#7fd6a4; --okb:rgba(127,214,164,.55); --ng:#ff9b8a}
 .ia-h{font-size:13px; color:var(--ink2); display:flex; flex-wrap:wrap; gap:2px 10px; align-items:baseline}
 .ia-h b{color:var(--ink); font-size:14px} .ia-h .lv{font-variant-numeric:tabular-nums; color:var(--ink2)}
-.ia-subs{display:flex; flex-wrap:wrap; gap:4px 6px}
-.ia-sub{font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid transparent; color:var(--muted); opacity:.75; font-variant-numeric:tabular-nums}
-.ia-sub.on{color:var(--ink); border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.06); opacity:1}
-.ia-sub.off{border-style:dashed; border-color:rgba(255,255,255,.22)}
+.ia-subs{display:grid; grid-template-columns:repeat(4,max-content); gap:3px 22px; font-size:12.5px}
+.ia-sub{display:inline-flex; align-items:center; gap:6px; color:var(--muted); white-space:nowrap}
+.ia-sub i{width:5px; height:5px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px currentColor; opacity:.6}
+.ia-sub .v{font-variant-numeric:tabular-nums}
+.ia-sub.on{color:var(--ink)} .ia-sub.on i{background:var(--ink); box-shadow:none; opacity:1}
+.ia-sub.off{opacity:.8} .ia-sub small{font-size:10.5px; color:var(--muted); border:1px dashed rgba(255,255,255,.25); border-radius:4px; padding:0 4px}
+.ia.go{border-color:var(--okb)}
 .ia-r{grid-column:2; grid-row:1 / span 2; text-align:right; font-size:12px; color:var(--muted); align-self:center; font-variant-numeric:tabular-nums}
 .ia-r b{display:block; font-size:20px; color:var(--ink); line-height:1.2}
 .ia-r .tier{font-weight:700}
@@ -972,7 +975,7 @@ CSS_INV = r"""
 @media (max-width:560px){ .cnav{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%} .cnav::-webkit-scrollbar{display:none} .cnav button{white-space:nowrap; flex:none; padding:6px 9px; font-size:12.5px} }
 .inv-sum{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink2)}
 .inv-sum b{color:var(--ink); font-size:16px; font-variant-numeric:tabular-nums}
-@media (max-width:560px){ .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
+@media (max-width:560px){ .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
 </style>
 """
 
@@ -982,6 +985,7 @@ var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{}, ICONS=/*__ICONS__*
 function charIcon(name,sz){ const f=ICONS[name]; return f?`<i class="cico${sz?' '+sz:''}" style="background-image:url(icons/${f})" aria-hidden="true"></i>`:`<i class="cico ini${sz?' '+sz:''}" aria-hidden="true">${esc(String(name||'？').slice(0,1))}</i>`; }
 var INV=null, INV_IDX=null, INV_VIEW=null; const PF_MEMO=new Map();
 const GOOD_STAT={hp:'HP',atk:'ATK',def:'DEF',hp_:'HP%',atk_:'ATK%',def_:'DEF%',enerRech_:'ER',eleMas:'EM',critRate_:'CR',critDMG_:'CD',heal_:'HEAL',physical_dmg_:'PHYS',pyro_dmg_:'DMG_炎',hydro_dmg_:'DMG_水',cryo_dmg_:'DMG_氷',electro_dmg_:'DMG_雷',anemo_dmg_:'DMG_風',geo_dmg_:'DMG_岩',dendro_dmg_:'DMG_草'};
+const INV_GAME={'HP':'HP','ATK':'攻撃力','DEF':'防御力','HP%':'HP','ATK%':'攻撃力','DEF%':'防御力','ER':'元素チャージ効率','EM':'元素熟知','CR':'会心率','CD':'会心ダメージ'};
 const INV_SUB={'HP':'HP','ATK':'攻撃力','DEF':'防御力','HP%':'HP%','ATK%':'攻撃力%','DEF%':'防御力%','ER':'元素チャージ','EM':'元素熟知','CR':'会心率','CD':'会心ダメ'};
 const invPct=s=>/%$/.test(s)||s==='ER'||s==='CR'||s==='CD';
 const goodChar=k=>!k?'':k.startsWith('Traveler')?'旅人':((GOOD_NAMES.chars||{})[k]||k);
@@ -1058,7 +1062,7 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at
   INV_IDX={sig,info}; return INV_IDX; }
 /* ---- 1個の表示 ---- */
 function invArtHTML(a,eff,right,who,cls){ const E=new Set(eff||[]), p=a.p;
-  const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}">${INV_SUB[x.s]||x.s} ${esc(x.v)}${invPct(x.s)?'%':''}${x.off?'（+4で付く）':''}</span>`).join('');
+  const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}"${E.has(x.s)?' title="有効OP"':''}><i></i>${INV_GAME[x.s]||x.s}<span class="v">+${esc(x.v)}${invPct(x.s)?'%':''}</span>${x.off?'<small>+4で付く</small>':''}</span>`).join('');
   return `<div class="ia${cls?' '+cls:''}"><div class="ia-h"><b>${esc(a.set||'セット不明')}</b><span>${SLOT_JP[a.slot]||a.slot}・${esc(MAIN_SHORT(p.main))}</span><span class="lv">+${p.lv==null?20:p.lv}</span>${a.lk?'<span title="ロック中">🔒</span>':''}</div>
     <div class="ia-subs">${subs}</div>${right?`<div class="ia-r">${right}</div>`:''}${who?`<div class="ia-who">${who}</div>`:''}</div>`; }
 /* ---- 育成候補（キャラ一覧の行を押したとき） ---- */
@@ -1087,7 +1091,7 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
     if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
     else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
         const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>平均の伸び +${Math.round(r.gain)}%${(a.p.lv==null?20:a.p.lv)<20?`<br>いま${r.f.cur}% → +20で平均${Math.round(r.exp)}%`:''}`;
-        return invArtHTML(a,c.eff,right,who); }).join('')+`</div>`;
+        return invArtHTML(a,c.eff,right,who,r.pb>=0.5?'go':''); }).join('')+`</div>`;
       if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
   h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
     <div class="btns"><button class="btn primary" id="cdCard">このキャラのカードを作成 ›</button><button class="btn" id="cdClose">閉じる</button></div></div>`;
@@ -1128,7 +1132,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
     const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b>${t?`<span class="tier" style="color:${t[2]}">${esc(t[1])}</span>・`:''}${x.lv<20?'+20の見込み':'いまの実力'}${x.us.length>1?`<span class="by" title="${esc(p.c.name)}の有効OPで測った値">${charIcon(p.c.name,'s')}${esc(p.c.name)}基準</span>`:''}`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
       return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" title="${esc(u.c.name)}：いまの${SLOT_JP[a.slot]} ${u.now==null?'なし':Math.round(u.now)+'%'}・この1個の素質 ${fmtAge(u.days)}（${esc(u.c.name)}の有効OPで）">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${x.us.length>1?`<span class="sub">${fmtAge(u.days)}</span>`:''}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
-    return invArtHTML(a,p?p.c.eff:null,right,who); }).join('')+`</div>`;
+    return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&(u.now==null||u.pb>=0.5))?'go':''); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
