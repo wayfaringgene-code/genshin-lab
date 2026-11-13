@@ -958,9 +958,13 @@ CSS_INV = r"""
 .ia-who .tag2.cc{display:inline-flex; align-items:center; gap:6px; padding:2px 10px 2px 2px; font-size:12px}
 .ia-who .tag2.cc .nm{color:var(--ink)} .ia-who .tag2.cc .st{color:var(--ink2)} .ia-who .tag2.cc .st b{color:var(--ink); font-variant-numeric:tabular-nums}
 .ia-who .tag2.cc{position:relative}
-.ia-who .tag2 .tip{display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; width:max-content; max-width:min(320px,80vw); flex-direction:column; gap:3px; background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--ink2); text-align:left; white-space:normal; box-shadow:0 10px 28px rgba(0,0,0,.55); pointer-events:none}
+.ia-who .tag2 .tip{display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; width:max-content; max-width:min(420px,86vw); flex-direction:column; gap:3px; background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--ink2); text-align:left; white-space:normal; box-shadow:0 10px 28px rgba(0,0,0,.55); pointer-events:none}
 .ia-who .tag2.cc:hover .tip, .ia-who .tag2.cc:focus-visible .tip{display:flex}
-.ia-who .tag2 .tip > b{color:var(--ink); font-weight:700} .ia-who .tag2 .tip .up{color:var(--ok)} .ia-who .tag2 .tip .dn{color:var(--ng)} .ia-who .tag2 .tip .pb{color:var(--muted)}
+.ia-who .tag2 .tip > b{color:var(--ink); font-weight:700}
+.ia-who .tag2 .tip .tt{display:grid; grid-template-columns:auto repeat(3,auto); gap:2px 14px; margin:4px 0 2px; font-style:normal; font-variant-numeric:tabular-nums}
+.ia-who .tag2 .tip .tt.t3{grid-template-columns:auto repeat(2,auto)} .ia-who .tag2 .tip .tt.t2{grid-template-columns:auto auto}
+.ia-who .tag2 .tip .tt i{font-style:normal; text-align:right; color:var(--ink)} .ia-who .tag2 .tip .tt i.k{text-align:left; color:var(--muted)} .ia-who .tag2 .tip .tt i.h{color:var(--muted); font-size:11px}
+.ia-who .tag2 .tip .tt i.up{color:var(--ok); font-weight:700} .ia-who .tag2 .tip .tt i.dn{color:var(--ng)} .ia-who .tag2 .tip .up{color:var(--ok)} .ia-who .tag2 .tip .dn{color:var(--ng)} .ia-who .tag2 .tip .pb{color:var(--muted)}
 @media (hover:none){ .ia-who .tag2 .tip{display:none!important} }
 .ia-who .tag2.cc.hi{border-color:var(--okb)} .ia-who .tag2.cc.hi .st, .ia-who .tag2.cc.hi .st b{color:var(--ok)}
 .ia-who .tag2.cc.ex{border-color:var(--line)} .ia-who .tag2.cc.ex .st{color:var(--ng)} .ia-who .tag2.cc.ex .nm{color:var(--ink2)} .ia-who .tag2.cc.ex .cico{opacity:.6} .ia-who .tag2.cc.own .st{color:var(--muted)}
@@ -1038,7 +1042,7 @@ function pieceFinal(p,eff){ const key=JSON.stringify([p.main,p.subs,p.lv,eff]); 
     if(est.pend){ rem=4; const o=p.subs.find(x=>x.off); if(o&&E.has(o.s)){ const m=matches(o.s,o.v), q=m&&m[1]; if(q&&q.cnt){ let eu=0,c=0; for(const [uu,cc] of q.rv){ eu+=uu*cc; c+=cc; } cur+=eu/c; } else cur+=8.5; } }
     let dist=new Map([[Math.round(cur),1]]); const add=(dm,q)=>{ const nd=new Map(); for(const [v,w] of dm){ if(q<1) nd.set(v,(nd.get(v)||0)+w*(1-q)); if(q>0) for(let t=0;t<4;t++) nd.set(v+7+t,(nd.get(v+7+t)||0)+w*q/4); } return nd; };
     for(let i=0;i<rem;i++) dist=add(dist,k/4);
-    r={cur:Math.round(cur)*10,dist:[...dist.entries()],rem,lv:est.lv}; }
+    r={cur:Math.round(cur)*10,dist:[...dist.entries()],rem,lv:est.lv,pend:!!est.pend}; }
   PF_MEMO.set(key,r); return r; }
 const pieceSig=p=>p?JSON.stringify([p.main,(p.subs||[]).filter(x=>x.s).map(x=>x.s+'='+x.v+(x.off?'*':''))]):'';
 /* ---- キャラの1部位の候補 ---- */
@@ -1061,13 +1065,22 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at
       const f=pieceFinal(a.p,c.eff||[]); if(!f) continue; const own=a.loc===c.name, now=st.slots[a.slot].rv, nowU=now==null?-1:Math.round(now/10);
       let pb=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU) pb+=q; }
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
-      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c}; }
+      let mxU=0; for(const [v] of f.dist) if(v>mxU) mxU=v; const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
+      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,daysMax,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c}; }
     us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
+/* ---- 1個のスコア（会心率×2＋会心ダメージ＋型の1項目。カードと同じ）：いま・+20で平均・+20で最大 ----
+   平均＝残りの強化が4行に等しく入り、伸び幅も平均。最大＝残りの強化がすべて、スコアにいちばん効く行に最大の伸びで入ったとき */
+function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!=='CRIT'&&s===t?STYPES[t][2]:0), L=p.subs.filter(x=>x.s);
+  const avg=s=>ROLL[s]?ROLL[s].reduce((a,b)=>a+b,0)/4:0, top=s=>ROLL[s]?ROLL[s][3]:0, now=pieceScore(p,t);
+  const o=f.pend?p.subs.find(x=>x.off):null, add0=o?W(o.s)*(parseFloat(o.v)||0):0;
+  return {now, mean:now+add0+f.rem*L.reduce((a,x)=>a+W(x.s)*avg(x.s),0)/4, max:now+add0+f.rem*Math.max(0,...L.map(x=>W(x.s)*top(x.s)))}; }
 /* ---- キャラの札の吹き出し：この1個を+20まで上げて付けたら、部位とカード全体の秘境レベルが平均でどうなるか ---- */
-function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, ar=(x,y)=>`${x>0?fmtAge(x):'なし'} → <b class="${y>x?'up':'dn'}">${fmtAge(y)}</b>`;
-  if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span>${SLOT_JP[a.slot]}：${fmtAge(u.slotAge)}</span><span>カード：${fmtAge(u.cardAge)}</span></span>`;
-  return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}の${SLOT_JP[a.slot]}を、この1個${lv<20?'（+20まで上げて平均）':''}に替えると</b><span>${SLOT_JP[a.slot]}：${ar(u.slotAge||0,u.days)}</span><span>カード：${ar(u.cardAge,u.cardNew)}</span><span class="pb">更新できる確率 ${pctTxt(u.pb)}</span></span>`; }
+function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y)=>y>x+1e-9?'up':y<x-1e-9?'dn':'';
+  if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
+  const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`, now=u.slotAge||0, sn=u.scNow;
+  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now)}">${sc(u.sr.now)}</i></span></span>`;
+  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax)}">${ag(u.daysMax)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max)}">${sc(u.sr.max)}</i></span><span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）</span></span>`; }
 /* ---- 1個の表示 ---- */
 function invArtHTML(a,eff,right,who,cls){ const E=new Set(eff||[]), p=a.p;
   const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}"${E.has(x.s)?' title="有効OP"':''}><i></i>${INV_GAME[x.s]||x.s}<span class="v">+${esc(x.v)}${invPct(x.s)?'%':''}</span>${x.off?'<small>+4で付く</small>':''}</span>`).join('');
@@ -1093,13 +1106,13 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
     <div class="cd-tabs" role="group" aria-label="部位">${tabs}</div>`;
   if(!inv) h+=`<div class="empty">手持ちの聖遺物がまだありません。「取り込む」のページで、動画を読むか、GOOD形式のファイルを読み込むと、ここに候補が出ます。</div>`;
   else{ const stale=(c.date||'')>inv.at;
-    h+=mine&&x.rv!=null?invArtHTML({set:'いま付けている1個',slot,lk:false,p:mine},c.eff,`<b style="color:${tierOf(x.age)[2]}">${fmtAge(x.age)}</b>いまの${SLOT_JP[slot]}<br>カード ${fmtAge(st.age)}`,'','cur'):`<p class="note">いまこの部位は空です。どの1個でも上回ります。</p>`;
+    h+=mine&&x.rv!=null?invArtHTML({set:'いま付けている1個',slot,lk:false,p:mine},c.eff,`<b style="color:${tierOf(x.age)[2]}">${fmtAge(x.age)}</b>いまの${SLOT_JP[slot]}<br>スコア ${x.sc==null?'—':x.sc.toFixed(1)}`,'','cur'):`<p class="note">いまこの部位は空です。どの1個でも上回ります。</p>`;
     h+=`<div class="inv-f"><label><input type="checkbox" id="cdP41" ${p41?'checked':''}>ほかのセットも出す（4+1）</label><label><input type="checkbox" id="cdEq" ${CAND.eq?'checked':''}>ほかのキャラが装備中の1個も出す</label></div>
       <p class="note" style="margin:0">手持ちは ${esc(inv.at)} の取り込みの時点です${stale?`。<b class="err">このキャラのデータ（${esc(c.date)}）のほうが新しいので、もう付け替えた1個や、強化した1個が古いまま出ているかもしれません</b>`:''}。</p>`;
     if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
     else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
-        const M=model(slot,[a.p.main],c.eff), dNew=ageOf(d=>M.mean(d),r.exp), cNew=ageOf(st.meanTot,Math.max(0,st.tot-(x.rv||0)+r.exp));
-        const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>${(a.p.lv==null?20:a.p.lv)<20?'+20で平均：':''}${SLOT_JP[slot]} ${fmtAge(dNew)}<br>カード ${fmtAge(st.age)} → ${fmtAge(cNew)}`;
+        const M=model(slot,[a.p.main],c.eff), dNew=ageOf(d=>M.mean(d),r.exp), sr=scoreRange(c,a.p,r.f), lvA=a.p.lv==null?20:a.p.lv; let mxU=0; for(const [v] of r.f.dist) if(v>mxU) mxU=v;
+        const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>${lvA<20?`平均 ${fmtAge(dNew)}・スコア ${sr.mean.toFixed(1)}<br>最大 ${fmtAge(ageOf(d=>M.mean(d),mxU*10))}・スコア ${sr.max.toFixed(1)}`:`${fmtAge(dNew)}・スコア ${sr.now.toFixed(1)}`}`;
         return invArtHTML(a,c.eff,right,who,r.pb>=0.5?'go':''); }).join('')+`</div>`;
       if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
   h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
@@ -1136,7 +1149,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
       <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['go','更新できる見込みが高い（緑の枠）'],['yes','いる'],['no','いない（餌の候補）']])}</select></label>
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
-    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位とカードの秘境レベルがどうなるかが出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
+    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b>${t?`<span class="tier" style="color:${t[2]}">${esc(t[1])}</span>・`:''}${x.lv<20?'+20の見込み':'いまの実力'}${x.us.length>1?`<span class="by" title="${esc(p.c.name)}の有効OPで測った値">${charIcon(p.c.name,'s')}${esc(p.c.name)}基準</span>`:''}`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
