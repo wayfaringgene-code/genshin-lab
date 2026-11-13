@@ -11,6 +11,7 @@
 #   scan/                ビデオスキャナー（build_scan.py）
 #   fonts/               カード画像に埋め込むフォント
 #   portraits/           同梱の立ち絵（src/portraits があれば）
+#   icons/               キャラのアイコン（src/icons があれば。tools/build_icons.py）
 #   og.png               X などにURLを貼ったときの画像（src/og.png があれば）
 #   lab/index.html       聖遺物ラボ：キャラ（LAB_MODE='chars'）
 #   card/index.html      以前の /card/ からトップへの転送
@@ -68,6 +69,8 @@ subprocess.run([sys.executable, os.path.join(TOOLS, 'build_scan.py'), os.path.jo
 shutil.copytree(os.path.join(SRC, 'fonts'), os.path.join(OUT, 'fonts'))
 if os.path.isdir(os.path.join(SRC, 'portraits')):
     shutil.copytree(os.path.join(SRC, 'portraits'), os.path.join(OUT, 'portraits'))
+if os.path.isdir(os.path.join(SRC, 'icons')):
+    shutil.copytree(os.path.join(SRC, 'icons'), os.path.join(OUT, 'icons'))  # キャラのアイコン（tools/build_icons.py）
 if os.path.exists(os.path.join(SRC, 'og.png')):
     shutil.copy(os.path.join(SRC, 'og.png'), OUT)
 

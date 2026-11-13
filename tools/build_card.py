@@ -942,6 +942,16 @@ CSS_INV = r"""
 .ia-r{grid-column:2; grid-row:1 / span 2; text-align:right; font-size:12px; color:var(--muted); align-self:center; font-variant-numeric:tabular-nums}
 .ia-r b{display:block; font-size:20px; color:var(--gold-hi); line-height:1.2}
 .ia-who{grid-column:1 / -1; font-size:12px; color:var(--muted)}
+.cico{display:inline-block; width:22px; height:22px; border-radius:50%; flex:none; background:#1c2140 50% 20%/165% no-repeat; box-shadow:0 0 0 1px rgba(233,211,154,.35); vertical-align:middle}
+.cico.s{width:18px; height:18px} .cico.l{width:34px; height:34px}
+.cico.ini{display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2); background:#1c2140}
+.cd-hd{display:flex; align-items:center; gap:10px}
+.ia-r .by{display:flex; align-items:center; justify-content:flex-end; gap:5px; margin-top:4px}
+.ia-who .tag2.cc{display:inline-flex; align-items:center; gap:6px; padding:2px 10px 2px 2px; font-size:12px}
+.ia-who .tag2.cc .nm{color:var(--ink)} .ia-who .tag2.cc .st{color:var(--ink2)} .ia-who .tag2.cc .st b{color:var(--ink); font-variant-numeric:tabular-nums}
+.ia-who .tag2.cc .sub{color:var(--muted); font-size:11px}
+.ia-who .tag2.cc.hi{border-color:rgba(233,211,154,.7)} .ia-who .tag2.cc.hi .st, .ia-who .tag2.cc.hi .st b{color:var(--gold-hi)}
+.ia-who .tag2.cc.ex .st{color:#ffb4a6} .ia-who .tag2.cc.own .st{color:var(--muted)}
 .ia-who .tag2{display:inline-block; border:1px solid var(--line); border-radius:999px; padding:0 8px; margin:2px 4px 0 0; color:var(--ink2)}
 .ia-who .tag2.ex{color:#ffb4a6; border-color:rgba(255,155,138,.5)}
 .ia-who button.tag2{background:none; font:inherit; font-size:12px; cursor:pointer}
@@ -957,13 +967,14 @@ CSS_INV = r"""
 @media (max-width:560px){ .cnav{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%} .cnav::-webkit-scrollbar{display:none} .cnav button{white-space:nowrap; flex:none; padding:6px 9px; font-size:12.5px} }
 .inv-sum{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink2)}
 .inv-sum b{color:var(--ink); font-size:16px; font-variant-numeric:tabular-nums}
-@media (max-width:560px){ .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} }
+@media (max-width:560px){ .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
 </style>
 """
 
 JS += r"""
 /* ================= 手持ちの聖遺物・育成候補（v2.3 試作） ================= */
-var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{};
+var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{}, ICONS=/*__ICONS__*/{};
+function charIcon(name,sz){ const f=ICONS[name]; return f?`<i class="cico${sz?' '+sz:''}" style="background-image:url(icons/${f})" aria-hidden="true"></i>`:`<i class="cico ini${sz?' '+sz:''}" aria-hidden="true">${esc(String(name||'？').slice(0,1))}</i>`; }
 var INV=null, INV_IDX=null, INV_VIEW=null; const PF_MEMO=new Map();
 const GOOD_STAT={hp:'HP',atk:'ATK',def:'DEF',hp_:'HP%',atk_:'ATK%',def_:'DEF%',enerRech_:'ER',eleMas:'EM',critRate_:'CR',critDMG_:'CD',heal_:'HEAL',physical_dmg_:'PHYS',pyro_dmg_:'DMG_炎',hydro_dmg_:'DMG_水',cryo_dmg_:'DMG_氷',electro_dmg_:'DMG_雷',anemo_dmg_:'DMG_風',geo_dmg_:'DMG_岩',dendro_dmg_:'DMG_草'};
 const INV_SUB={'HP':'HP','ATK':'攻撃力','DEF':'防御力','HP%':'HP%','ATK%':'攻撃力%','DEF%':'防御力%','ER':'元素チャージ','EM':'元素熟知','CR':'会心率','CD':'会心ダメ'};
@@ -1060,7 +1071,7 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
   const L=inv?(candFor(c,slot,{p41,noEquipped:!CAND.eq},st)||[]):[];
   const tabs=SLOTS.map(s=>{ const n=inv?(candFor(c,s,{p41,noEquipped:!CAND.eq},st)||[]).length:0; return `<button class="btn" data-cs="${s}" aria-pressed="${s===slot}">${SLOT_JP[s]}<small>${n}</small></button>`; }).join('');
   const x=st.slots[slot], mine=c.pieces[slot], effTxt=(c.eff||[]).map(q=>INV_SUB[q]||q).join('・')||'なし';
-  let h=`<div class="uv-box"><div class="uv-h"><div><b>${esc(c.name||'（名前なし）')}</b><span class="note">育成候補</span></div><button class="rv-x" id="cdX" aria-label="閉じる">×</button></div>
+  let h=`<div class="uv-box"><div class="uv-h"><div class="cd-hd">${charIcon(c.name,'l')}<b>${esc(c.name||'（名前なし）')}</b><span class="note">育成候補</span></div><button class="rv-x" id="cdX" aria-label="閉じる">×</button></div>
     <p class="note" style="margin:0">有効OP：${effTxt}${c.effGuess?(c.effDef?'（初期値）':'（装備からの推定）'):''}／使えるセット：${esc(planSetTxt(pl))}／${SLOT_JP[slot]}のメインOP：${(pl.main[slot]||[]).map(m=>esc(MAIN_SHORT(m))).join('・')||'—'}${pl.table?'':'（初期値の表にないキャラなので、いまの装備から）'}</p>
     <div class="cd-tabs" role="group" aria-label="部位">${tabs}</div>`;
   if(!inv) h+=`<div class="empty">手持ちの聖遺物がまだありません。「取り込む」のページで、動画を読むか、GOOD形式のファイルを読み込むと、ここに候補が出ます。</div>`;
@@ -1070,7 +1081,7 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
       <p class="note" style="margin:0">手持ちは ${esc(inv.at)} の取り込みの時点です${stale?`。<b class="err">このキャラのデータ（${esc(c.date)}）のほうが新しいので、もう付け替えた1個や、強化した1個が古いまま出ているかもしれません</b>`:''}。</p>`;
     if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
     else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
-        const right=`<b>${pctTxt(r.pb)}</b>いまを超える確率<br>平均の伸び +${Math.round(r.gain)}%${(a.p.lv==null?20:a.p.lv)<20?`<br>いま${r.f.cur}% → +20で平均${Math.round(r.exp)}%`:''}`;
+        const right=`<b>更新 ${pctTxt(r.pb)}</b>平均の伸び +${Math.round(r.gain)}%${(a.p.lv==null?20:a.p.lv)<20?`<br>いま${r.f.cur}% → +20で平均${Math.round(r.exp)}%`:''}`;
         return invArtHTML(a,c.eff,right,who); }).join('')+`</div>`;
       if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
   h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
@@ -1107,10 +1118,11 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
       <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['yes','いる'],['no','いない']])}</select></label>
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
-    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。「使うキャラ」＝初期値の表で、このセットを4セットで使うことになっていて、メインOPも合うキャラ（キャラ一覧にいるキャラだけ）。素質＝+20まで上げたときの平均の有効RVが、秘境で何日分か。使うキャラそれぞれの有効OPで測り、右端にはいちばん高く出たキャラの値を出します（サブOPの金色の枠も、そのキャラの有効OP）。キャラの名前を押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
+    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札を押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
-    const right=p?`<b>${fmtAge(p.days)}</b>${t?esc(t[1])+'・':''}${x.lv<20?'+20で平均':'いま'} ${Math.round(p.ex)}%${x.us.length>1?`<br>${esc(p.c.name)}の有効OPで測った値`:''}`:'<span>使うキャラなし</span>';
-    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>`<button class="tag2${u.own||u.pb>=0.01?'':' ex'}" data-cand="${u.c.id}" data-cslot="${a.slot}">${esc(u.c.name)}：${x.us.length>1?`素質 ${fmtAge(u.days)}・`:''}${u.own?'いま付けている':u.now==null?'部位が空き':(u.pb<0.01?`いま${Math.round(u.now)}%・いまのほうが上`:`いま${Math.round(u.now)}% → 超える${pctTxt(u.pb)}`)}</button>`).join(''):`<span class="tag2 ex">このセット・メインOPを使うキャラがいない</span>`);
+    const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%">${fmtAge(p.days)}</b>${t?esc(t[1])+'・':''}${x.lv<20?'+20の見込み':'いまの実力'}${x.us.length>1?`<span class="by" title="${esc(p.c.name)}の有効OPで測った値">${charIcon(p.c.name,'s')}${esc(p.c.name)}基準</span>`:''}`:'<span>使うキャラなし</span>';
+    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
+      return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" title="${esc(u.c.name)}：いまの${SLOT_JP[a.slot]} ${u.now==null?'なし':Math.round(u.now)+'%'}・この1個の素質 ${fmtAge(u.days)}（${esc(u.c.name)}の有効OPで）">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${x.us.length>1?`<span class="sub">${fmtAge(u.days)}</span>`:''}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
@@ -1151,6 +1163,9 @@ _builds = {}
 for _, _r in _rows:
     _builds[_r['キャラ'].strip()] = {'eff': _lst(_r['有効OP']), 'sets': [o.split('＋') for o in _r['使えるセット'].split('／') if o],
         'main': {k: _lst(_r[j]) for k, j in (('sands', '砂'), ('goblet', '杯'), ('circlet', '冠'))}, 'p41': _r['4+1'].strip() == '○', 'ok': _r['確認済み'].strip() == '○'}
+_ip = os.path.join(_root, 'src', 'icons', 'icons.json'); _icons = open(_ip, encoding='utf-8').read() if os.path.exists(_ip) else '{}'; _json.loads(_icons)
+assert s.count('/*__ICONS__*/{}') == 1
+s = s.replace('/*__ICONS__*/{}', _icons.strip())
 assert s.count('/*__GOOD_NAMES__*/{}') == 1 and s.count('/*__BUILDS__*/{}') == 1
 s = s.replace('/*__GOOD_NAMES__*/{}', _json.dumps(_gn, ensure_ascii=False)).replace('/*__BUILDS__*/{}', _json.dumps(_builds, ensure_ascii=False))
 open(dst, 'w', encoding='utf-8').write(s)
