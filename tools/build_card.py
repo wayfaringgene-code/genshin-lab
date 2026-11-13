@@ -918,6 +918,8 @@ function cardAppBindDel(){ const b=$('cDel'); if(b) b.addEventListener('click',(
 #     手持ち：GOOD 形式（動画の読み取り結果・GOODファイル）の★5を、そのまま「lab:inv」にまるごと保存（1個ごとのIDがないので、読み込むたびに入れ替え）
 #     育成候補：キャラの部位ごとに、手持ちの1個を+20まで上げたときの見込み（「1個を評価」と同じ数え方）と、いまの部位を超える確率・平均の伸び
 #     キャラの方針：有効OPは「遊ぶ人が決めたもの（effMap）→ 初期値の表（src/builds.csv）→ 装備からの推測」。使えるセット・メインOPは「表 → いまの装備」
+rep("if(c.effGuess){ const w=tw('推定')+14", "if(c.effGuess){ const EG=c.effDef?'初期値':'推定', w=tw(EG)+14")
+rep('fill="#ffb4a6">推定</text>`;', 'fill="#ffb4a6">${EG}</text>`;')
 rep("if(c.effGuess) labs.unshift({t:'推定',guess:true});", "if(c.effGuess) labs.unshift({t:c.effDef?'初期値':'推定',guess:true});")
 rep("const hadEff=Array.isArray(c.eff); if(!hadEff){ const g=guessEff(c.pieces);", "const hadEff=Array.isArray(c.eff); if(!hadEff){ const g=CARD_APP?guessEffFor(c):guessEff(c.pieces);")
 rep("if(m.effGuess){ const g=guessEff(m.pieces); if(g) m.eff=g; }", "if(m.effGuess){ const g=CARD_APP?guessEffFor(m):guessEff(m.pieces); if(g) m.eff=g; }")
