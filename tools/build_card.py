@@ -375,7 +375,7 @@ function cardAppInit(){
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.3（試作）。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.3。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
