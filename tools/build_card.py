@@ -950,6 +950,9 @@ CSS_INV = r"""
 .ia-sub{display:inline-flex; align-items:center; gap:6px; color:var(--muted); white-space:nowrap}
 .ia-sub i{width:5px; height:5px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px currentColor; opacity:.6}
 .ia-sub .v{font-variant-numeric:tabular-nums}
+.ia-sub .rv{font-style:normal; font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums; margin-left:-1px}
+.fb{display:inline-block; font-size:10.5px; line-height:1; padding:3px 6px; border-radius:4px; border:1px solid rgba(255,255,255,.14); color:var(--muted); letter-spacing:.02em; align-self:center; white-space:nowrap}
+.fb.hi{color:var(--ink2); border-color:rgba(255,255,255,.3)}
 .ia-sub.on{color:var(--ink)} .ia-sub.on i{background:var(--ink); box-shadow:none; opacity:1}
 .ia-sub.off{opacity:.8} .ia-sub small{font-size:10.5px; color:var(--muted); border:1px dashed rgba(255,255,255,.25); border-radius:4px; padding:0 4px}
 .ia.go{border-color:var(--okb)}
@@ -979,6 +982,8 @@ CSS_INV = r"""
 .ia-who .tag2 .tip{display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; width:max-content; max-width:min(420px,86vw); flex-direction:column; gap:3px; background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--ink2); text-align:left; white-space:normal; box-shadow:0 10px 28px rgba(0,0,0,.55); pointer-events:none}
 .ia-who .tag2.cc:hover .tip, .ia-who .tag2.cc:focus-visible .tip{display:flex}
 .ia-who .tag2 .tip > b{color:var(--ink); font-weight:700}
+.ia-who .tag2 .tip .cur{display:flex; flex-wrap:wrap; gap:1px 10px; margin-top:2px; padding:5px 8px; background:rgba(255,255,255,.04); border-radius:6px}
+.ia-who .tag2 .tip .cur .k{width:100%; font-size:10.5px; color:var(--muted)} .ia-who .tag2 .tip .cur em{font-style:normal; color:var(--muted); white-space:nowrap} .ia-who .tag2 .tip .cur em.on{color:var(--ink)}
 .ia-who .tag2 .tip .tt{display:grid; grid-template-columns:auto repeat(3,auto); gap:2px 14px; margin:4px 0 2px; font-style:normal; font-variant-numeric:tabular-nums}
 .ia-who .tag2 .tip .tt.t3{grid-template-columns:auto repeat(2,auto)} .ia-who .tag2 .tip .tt.t2{grid-template-columns:auto auto}
 .ia-who .tag2 .tip .tt i{font-style:normal; text-align:right; color:var(--ink)} .ia-who .tag2 .tip .tt i.k{text-align:left; color:var(--muted)} .ia-who .tag2 .tip .tt i.h{color:var(--muted); font-size:11px}
@@ -1108,13 +1113,27 @@ function invQm(x,p){ const nm=esc(p.c.name), all=x.us.map(u=>esc(u.c.name)).join
 const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*100).toFixed(1)+'%':'約1/'+Math.round(1/p).toLocaleString();
 function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y,k)=>{ const r=v=>Math.round((v||0)/(k||1)); return r(y)>r(x)?'up':r(y)<r(x)?'dn':''; }; // 見えている桁（MONTHS・スコアとも小数第1位）で比べる
   if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
-  const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`, now=u.slotAge||0, sn=u.scNow;
+  const cur=u.c.pieces&&u.c.pieces[a.slot], E=new Set(u.c.eff||[]), curL=cur&&cur.subs?cur.subs.filter(q=>q.s).map(q=>`<em class="${E.has(q.s)?'on':''}">${INV_GAME[q.s]||q.s}+${esc(q.v)}${invPct(q.s)?'%':''}</em>`).join(''):'';
+  const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>${curL?`<span class="cur"><span class="k">いま付けている${sl}</span>${curL}</span>`:''}`, now=u.slotAge||0, sn=u.scNow;
   if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i></span></span>`;
   return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i></span><span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
 /* ---- 1個の表示 ---- */
-function invArtHTML(a,eff,right,who,cls){ const E=new Set(eff||[]), p=a.p;
-  const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}"${E.has(x.s)?' title="有効OP"':''}><i></i>${INV_GAME[x.s]||x.s}<span class="v">+${esc(x.v)}${invPct(x.s)?'%':''}</span>${x.off?'<small>+4で付く</small>':''}</span>`).join('');
-  return `<div class="ia${cls?' '+cls:''}"><div class="ia-h"><b>${esc(a.set||'セット不明')}</b><span>${SLOT_JP[a.slot]||a.slot}・${esc(MAIN_SHORT(p.main))}</span><span class="lv">+${p.lv==null?20:p.lv}</span>${a.lk?'<span title="ロック中">🔒</span>':''}</div>
+const EST_MEMO=new Map();
+function estOf(p){ const k=JSON.stringify([p.main,p.subs,p.lv]); if(!EST_MEMO.has(k)) EST_MEMO.set(k,estPiece(p.main,p.subs,p.lv)); return EST_MEMO.get(k); }
+// 1個の特色：W会心（会心率と会心ダメージが両方ある。+4で付く4行目も数える）・有効OPの行数・有効OPに入ったロールの平均の伸び（70〜100%）
+function pieceFeat(p,eff){ const E=new Set(eff||[]), L=p.subs.filter(x=>x.s), est=estOf(p); let n=0,u=0;
+  if(est.ok) for(const d of est.det) if(E.has(d.s)){ n+=d.n; u+=d.u; }
+  return {w:L.some(x=>x.s==='CR')&&L.some(x=>x.s==='CD'), k:L.filter(x=>E.has(x.s)).length, avg:n?u/n*10:null}; }
+function featBadges(f){ if(!f) return ''; const b=[];
+  if(f.w) b.push(`<span class="fb hi" title="会心率と会心ダメージが両方ある">W会心</span>`);
+  if(f.k!=null) b.push(`<span class="fb${f.k>=4?' hi':''}" title="4行のうち、有効OPの行の数">有効OP ${f.k}</span>`);
+  if(f.avg!=null) b.push(`<span class="fb${f.avg>=90?' hi':''}" title="有効OPに入ったロールの、1回あたりの平均の伸び（最大100%）">平均RV ${Math.round(f.avg)}%</span>`);
+  return b.join(''); }
+// 特色は、並んだキャラのうちいちばんよく出るもの（有効OPの行の数 → 平均RV の順で比べる）
+function featBest(p,effs){ let best=null; for(const e of effs){ const f=pieceFeat(p,e); if(!best||f.k>best.k||(f.k===best.k&&(f.avg||0)>(best.avg||0))) best=f; } return best; }
+function invArtHTML(a,eff,right,who,cls,feat){ const E=new Set(eff||[]), p=a.p, est=estOf(p), det={}; if(est.ok) for(const d of est.det) det[d.s]=d;
+  const subs=p.subs.filter(x=>x.s).map(x=>`<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}"${E.has(x.s)?' title="有効OP"':''}><i></i>${INV_GAME[x.s]||x.s}<span class="v">+${esc(x.v)}${invPct(x.s)?'%':''}</span>${x.off?'<small>+4で付く</small>':det[x.s]?`<em class="rv" title="${det[x.s].n}回伸びた（見積もり）">${Math.round(det[x.s].u*10)}%</em>`:''}</span>`).join('');
+  return `<div class="ia${cls?' '+cls:''}"><div class="ia-h"><b>${esc(a.set||'セット不明')}</b><span>${SLOT_JP[a.slot]||a.slot}・${esc(MAIN_SHORT(p.main))}</span><span class="lv">+${p.lv==null?20:p.lv}</span>${a.lk?'<span title="ロック中">🔒</span>':''}${feat===undefined?featBadges(pieceFeat(p,eff)):featBadges(feat)}</div>
     <div class="ia-subs">${subs}</div>${right?`<div class="ia-r">${right}</div>`:''}${who?`<div class="ia-who">${who}</div>`:''}</div>`; }
 /* ---- 育成候補（キャラ一覧の行を押したとき） ---- */
 var CAND={id:null,slot:'flower',p41:null,eq:true,n:20};
@@ -1184,7 +1203,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
     const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
       return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
-    return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&(u.now==null||u.pb>=0.5))?'go':''); }).join('')+`</div>`;
+    return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
