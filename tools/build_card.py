@@ -962,7 +962,13 @@ CSS_INV = r"""
 .cico.s{width:18px; height:18px} .cico.l{width:34px; height:34px}
 .cico.ini{display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2); background:#1c2140}
 .cd-hd{display:flex; align-items:center; gap:10px}
-.ia-r .by{display:flex; align-items:center; justify-content:flex-end; gap:5px; margin-top:4px}
+.ia-r .scl{display:block; margin-top:3px; color:var(--ink2); font-variant-numeric:tabular-nums}
+.qwrap{position:relative; display:inline-block; margin-left:6px; vertical-align:middle}
+.qm{width:17px; height:17px; border-radius:50%; border:1px solid rgba(255,255,255,.3); background:none; color:var(--ink2); font:700 11px/1 system-ui,sans-serif; cursor:pointer; padding:0}
+.qm:hover,.qm:focus-visible{border-color:var(--ink); color:var(--ink)}
+.itip{display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:30; width:min(340px,82vw); background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:9px 12px; font-size:12px; line-height:1.6; color:var(--ink2); text-align:left; box-shadow:0 10px 28px rgba(0,0,0,.55); font-weight:400}
+.ia-r .itip b{display:inline; font-size:inherit; line-height:inherit; color:var(--ink); font-weight:700}
+.qwrap:hover .itip, .qwrap.open .itip, .qm:focus-visible + .itip{display:block}
 .ia-who .tag2.cc{display:inline-flex; align-items:center; gap:6px; padding:2px 10px 2px 2px; font-size:12px}
 .ia-who .tag2.cc .nm{color:var(--ink)} .ia-who .tag2.cc .st{color:var(--ink2)} .ia-who .tag2.cc .st b{color:var(--ink); font-variant-numeric:tabular-nums}
 .ia-who .tag2.cc{position:relative}
@@ -992,7 +998,7 @@ CSS_INV = r"""
 @media (max-width:560px){ .cnav{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%} .cnav::-webkit-scrollbar{display:none} .cnav button{white-space:nowrap; flex:none; padding:6px 9px; font-size:12.5px} }
 .inv-sum{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink2)}
 .inv-sum b{color:var(--ink); font-size:16px; font-variant-numeric:tabular-nums}
-@media (max-width:560px){ .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
+@media (max-width:560px){ .ia-r{position:relative} .qwrap{position:static} .itip{left:0; right:0; width:auto; top:calc(100% + 6px)} .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
 </style>
 """
 
@@ -1079,7 +1085,7 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=inv.at
       let pb=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU) pb+=q; }
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
-      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c}; }
+      us.push({c,own,now,pb:own?null:pb,ex:ex*10,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
     us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 /* ---- 1個のスコア（会心率×2＋会心ダメージ＋型の1項目。カードと同じ）：いま・+20で平均・+20で最大 ----
@@ -1090,6 +1096,9 @@ function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!
   const best=Math.max(0,...L.map(x=>W(x.s)*top(x.s))), nTop=L.filter(x=>best>0&&W(x.s)*top(x.s)===best).length; // 最大になる確率：残りの強化が毎回その行（同じ値の行が複数なら、どれか）に入り、伸び幅も最大（1/4）
   return {now, mean:now+add0+f.rem*L.reduce((a,x)=>a+W(x.s)*avg(x.s),0)/4, max:now+add0+f.rem*best, pMax:best>0?Math.pow(nTop/16,f.rem):1}; }
 /* ---- キャラの札の吹き出し：この1個を+20まで上げて付けたら、部位とカード全体の秘境レベルが平均でどうなるか ---- */
+// 右端の数字の「?」：何を表すかの説明（マウスを載せる・押す）
+function invQm(x,p){ const nm=esc(p.c.name), all=x.us.map(u=>esc(u.c.name)).join('・'), lv=x.lv;
+  return `<span class="qwrap"><button class="qm" type="button" aria-label="この数字の説明">?</button><span class="itip" role="tooltip"><b>素質</b>：${lv<20?'この1個を+20まで上げたら、平均で':'この1個（+20）は、いま'}秘境何か月分の1個になるか。秘境だけで同じ有効RVの1個をそろえるのに、平均的な人がかかる期間です。<br>${x.us.length>1?`このセットを使うキャラ（${all}）の有効OPでそれぞれ測り、いちばん高く出た<b>${nm}</b>の値です。`:`<b>${nm}</b>の有効OPで測った値です。`}★はカードと同じランクです。<br><b>スコア</b>：会心率×2＋会心ダメージ＋型の1項目（${nm}の型）。${lv<20?'+20まで上げたときの平均です。':'いまの値です。'}</span></span>`; }
 const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*100).toFixed(1)+'%':'約1/'+Math.round(1/p).toLocaleString();
 function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y,k)=>{ const r=v=>Math.round((v||0)/(k||1)); return r(y)>r(x)?'up':r(y)<r(x)?'dn':''; }; // 見えている桁（MONTHS・スコアとも小数第1位）で比べる
   if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
@@ -1166,7 +1175,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
-    const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b>${t?`<span class="tier" style="color:${t[2]}">${esc(t[1])}</span>・`:''}${x.lv<20?'+20の見込み':'いまの実力'}${x.us.length>1?`<span class="by" title="${esc(p.c.name)}の有効OPで測った値">${charIcon(p.c.name,'s')}${esc(p.c.name)}基準</span>`:''}`:'<span>使うキャラなし</span>';
+    const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b>${t?`<span class="tier" style="color:${t[2]}">${esc(t[1])}</span>・`:''}${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}<span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
       return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&(u.now==null||u.pb>=0.5))?'go':''); }).join('')+`</div>`;
@@ -1174,6 +1183,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
   box.innerHTML=h;
   box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
   box.querySelectorAll('[data-cand]').forEach(el=>el.addEventListener('click',()=>candOpen(el.dataset.cand,el.dataset.cslot)));
+  box.querySelectorAll('.qm').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const w=b.parentElement, on=!w.classList.contains('open'); box.querySelectorAll('.qwrap.open').forEach(q=>q.classList.remove('open')); w.classList.toggle('open',on); }));
   const m=$('invMore'); if(m) m.addEventListener('click',()=>{ V.n+=100; invRenderList(box,inv,idx,0); }); }
 """
 
