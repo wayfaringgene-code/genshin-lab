@@ -69,6 +69,13 @@ flowchart LR
 ### 立ち絵を足す・差し替える
 手順は **[docs/PORTRAITS.md](docs/PORTRAITS.md)**。画像（ファイル名はキャラ名）を ZIP にして Claude に「立ち絵を登録して」と頼めば、`tools/build_portraits.py` で `src/portraits/` に登録して公開まで進める。
 
+### キャラのアイコン（聖遺物のページ・育成候補）
+ゲーム公式の正面のアイコンを `src/icons/`（128px の WebP、`icons.json` が日本語名 → ファイル名）に置いている。新キャラが出たら Claude に「アイコンを更新して」と頼む。中身は：
+1. https://github.com/EnkaNetwork/API-docs の `store/characters.json` を取ってくる
+2. `python3 tools/build_icons.py <characters.json>`（まだないキャラだけ、Enka.Network から1秒に1枚ずつ取る。表にまだ載っていない新キャラは、スキャナーの表の英語のキーから推測する）
+- enka.network に接続できる環境が要る。Claude の作業環境は「genshin-lab」（enka.network を許可済み）を使う
+- 取れなかったキャラ（2026-11-13 時点でサンドローネ・Somnia）は、名前の頭文字の丸で代わりに出る
+
 ### 取り込んだあとの演出を確かめる・直す
 - 演出のコードは `tools/build_card.py` の「カードの登場の演出（v2.1）」の部分（`revealPlay` から始まる）。考え方と経緯は `docs/ROADMAP.md` の2
 - トップのURLの末尾に `#reveal` を付けて開くと、見本のキャラで演出を流す操作盤が出る（人数・最後のランクを選べる。保存はしない）
