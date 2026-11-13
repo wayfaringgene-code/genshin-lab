@@ -1107,10 +1107,10 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
       <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['yes','いる'],['no','いない']])}</select></label>
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
-    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。「使うキャラ」＝初期値の表で、このセットを4セットで使うことになっていて、メインOPも合うキャラ（キャラ一覧にいるキャラだけ）。素質＝+20まで上げたときの平均の有効RVが、秘境で何日分か（使うキャラの有効OPで測り、いちばん高く出る分）。キャラの名前を押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
+    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。「使うキャラ」＝初期値の表で、このセットを4セットで使うことになっていて、メインOPも合うキャラ（キャラ一覧にいるキャラだけ）。素質＝+20まで上げたときの平均の有効RVが、秘境で何日分か。使うキャラそれぞれの有効OPで測り、右端にはいちばん高く出たキャラの値を出します（サブOPの金色の枠も、そのキャラの有効OP）。キャラの名前を押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
-    const right=p?`<b>${fmtAge(p.days)}</b>${t?esc(t[1])+'・':''}${x.lv<20?'+20で平均':'いま'} ${Math.round(p.ex)}%`:'<span>使うキャラなし</span>';
-    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>`<button class="tag2${u.own||u.pb>=0.01?'':' ex'}" data-cand="${u.c.id}" data-cslot="${a.slot}">${esc(u.c.name)}：${u.own?'いま付けている':u.now==null?'部位が空き':(u.pb<0.01?`いま${Math.round(u.now)}%・いまのほうが上`:`いま${Math.round(u.now)}% → 超える${pctTxt(u.pb)}`)}</button>`).join(''):`<span class="tag2 ex">このセット・メインOPを使うキャラがいない</span>`);
+    const right=p?`<b>${fmtAge(p.days)}</b>${t?esc(t[1])+'・':''}${x.lv<20?'+20で平均':'いま'} ${Math.round(p.ex)}%${x.us.length>1?`<br>${esc(p.c.name)}の有効OPで測った値`:''}`:'<span>使うキャラなし</span>';
+    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>`<button class="tag2${u.own||u.pb>=0.01?'':' ex'}" data-cand="${u.c.id}" data-cslot="${a.slot}">${esc(u.c.name)}：${x.us.length>1?`素質 ${fmtAge(u.days)}・`:''}${u.own?'いま付けている':u.now==null?'部位が空き':(u.pb<0.01?`いま${Math.round(u.now)}%・いまのほうが上`:`いま${Math.round(u.now)}% → 超える${pctTxt(u.pb)}`)}</button>`).join(''):`<span class="tag2 ex">このセット・メインOPを使うキャラがいない</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
