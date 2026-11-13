@@ -485,7 +485,7 @@ const LAB_URL=ON_SITE?'lab/':'https://claude.ai/artifact/CyumpKAACPGCbSeY8sFpFA'
 /* ---- 同梱の立ち絵：portraits/{avatarId}.webp（tools/build_portraits.py で作る）。自分で選んだ立ち絵があれば、そちらが優先 ---- */
 const PORTRAITS=__PORTRAITS__; // {avatarId:{file, name, zoom?, pos?}}
 let _N2A=null; function name2aid(n){ if(!_N2A){ _N2A={}; for(const [k,v] of Object.entries(ENKA.avatar)) if(!(v in _N2A)) _N2A[v]=k; } return _N2A[n]; }
-function bundledPortrait(c){ if(!ON_SITE||!c) return null; const a=((/^(?:uid|enka|sample)-(\d+)$/.exec(c.id||''))||[])[1]||name2aid(c.name); const q=a&&PORTRAITS[a]; return q?{src:'portraits/'+q.file,zoom:q.zoom||0,pos:q.pos||null}:null; }
+function bundledPortrait(c){ if(!ON_SITE||!c) return null; const a=((/^(?:uid|enka|sample)-(\d+)$/.exec(c.id||''))||[])[1]||name2aid(c.name); const q=(a&&PORTRAITS[a])||Object.values(PORTRAITS).find(x=>x&&x.name===c.name); return q?{src:'portraits/'+q.file,zoom:q.zoom||0,pos:q.pos||null}:null; }
 function applyBundled(c){ if(!c||CARD_IMG[c.id]) return; const b=bundledPortrait(c); if(!b) return; CARD_IMG[c.id]=b.src; if(b.zoom&&!CARD_ZOOM[c.id]) CARD_ZOOM[c.id]=b.zoom; if(b.pos&&!CARD_POS[c.id]) CARD_POS[c.id]=b.pos; }
 /* ---- 見本のキャラ（実在のプレイヤーのデータではなく、伸び方を決めて作った例） ---- */
 function homeSampleChar(){
@@ -934,17 +934,20 @@ CSS_INV = r"""
 /* ===== 手持ちの聖遺物・育成候補（v2.3 試作） ===== */
 .ia-list{display:grid; gap:8px; margin-top:10px}
 .ia{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--inset)}
-.ia.cur{border-color:rgba(233,211,154,.45)}
+.ia.cur{border-color:rgba(255,255,255,.22)}
+.ia{--ok:#7fd6a4; --okb:rgba(127,214,164,.55); --ng:#ff9b8a}
 .ia-h{font-size:13px; color:var(--ink2); display:flex; flex-wrap:wrap; gap:2px 10px; align-items:baseline}
-.ia-h b{color:var(--ink); font-size:14px} .ia-h .lv{font-variant-numeric:tabular-nums; color:var(--gold-hi)}
+.ia-h b{color:var(--ink); font-size:14px} .ia-h .lv{font-variant-numeric:tabular-nums; color:var(--ink2)}
 .ia-subs{display:flex; flex-wrap:wrap; gap:4px 6px}
-.ia-sub{font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-variant-numeric:tabular-nums}
-.ia-sub.on{color:#f3e3b4; border-color:rgba(233,211,154,.7); background:rgba(233,211,154,.12)}
-.ia-sub.off{border-style:dashed}
+.ia-sub{font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid transparent; color:var(--muted); opacity:.75; font-variant-numeric:tabular-nums}
+.ia-sub.on{color:var(--ink); border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.06); opacity:1}
+.ia-sub.off{border-style:dashed; border-color:rgba(255,255,255,.22)}
 .ia-r{grid-column:2; grid-row:1 / span 2; text-align:right; font-size:12px; color:var(--muted); align-self:center; font-variant-numeric:tabular-nums}
-.ia-r b{display:block; font-size:20px; color:var(--gold-hi); line-height:1.2}
+.ia-r b{display:block; font-size:20px; color:var(--ink); line-height:1.2}
+.ia-r .tier{font-weight:700}
+.ia-r b.ok{color:var(--ok)}
 .ia-who{grid-column:1 / -1; font-size:12px; color:var(--muted)}
-.cico{display:inline-block; width:22px; height:22px; border-radius:50%; flex:none; background:#1c2140 50% 20%/165% no-repeat; box-shadow:0 0 0 1px rgba(233,211,154,.35); vertical-align:middle}
+.cico{display:inline-block; width:22px; height:22px; border-radius:50%; flex:none; background:#1c2140 50% 20%/165% no-repeat; box-shadow:0 0 0 1px rgba(255,255,255,.18); vertical-align:middle}
 .cico.s{width:18px; height:18px} .cico.l{width:34px; height:34px}
 .cico.ini{display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2); background:#1c2140}
 .cd-hd{display:flex; align-items:center; gap:10px}
@@ -952,8 +955,8 @@ CSS_INV = r"""
 .ia-who .tag2.cc{display:inline-flex; align-items:center; gap:6px; padding:2px 10px 2px 2px; font-size:12px}
 .ia-who .tag2.cc .nm{color:var(--ink)} .ia-who .tag2.cc .st{color:var(--ink2)} .ia-who .tag2.cc .st b{color:var(--ink); font-variant-numeric:tabular-nums}
 .ia-who .tag2.cc .sub{color:var(--muted); font-size:11px}
-.ia-who .tag2.cc.hi{border-color:rgba(233,211,154,.7)} .ia-who .tag2.cc.hi .st, .ia-who .tag2.cc.hi .st b{color:var(--gold-hi)}
-.ia-who .tag2.cc.ex .st{color:#ffb4a6} .ia-who .tag2.cc.own .st{color:var(--muted)}
+.ia-who .tag2.cc.hi{border-color:var(--okb)} .ia-who .tag2.cc.hi .st, .ia-who .tag2.cc.hi .st b{color:var(--ok)}
+.ia-who .tag2.cc.ex{border-color:var(--line)} .ia-who .tag2.cc.ex .st{color:var(--ng)} .ia-who .tag2.cc.ex .nm{color:var(--ink2)} .ia-who .tag2.cc.ex .cico{opacity:.6} .ia-who .tag2.cc.own .st{color:var(--muted)}
 .ia-who .tag2{display:inline-block; border:1px solid var(--line); border-radius:999px; padding:0 8px; margin:2px 4px 0 0; color:var(--ink2)}
 .ia-who .tag2.ex{color:#ffb4a6; border-color:rgba(255,155,138,.5)}
 .ia-who button.tag2{background:none; font:inherit; font-size:12px; cursor:pointer}
@@ -1083,7 +1086,7 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
       <p class="note" style="margin:0">手持ちは ${esc(inv.at)} の取り込みの時点です${stale?`。<b class="err">このキャラのデータ（${esc(c.date)}）のほうが新しいので、もう付け替えた1個や、強化した1個が古いまま出ているかもしれません</b>`:''}。</p>`;
     if(!L.length) h+=`<div class="empty">いまの${SLOT_JP[slot]}を超えうる1個は、手持ちにありません。</div>`;
     else{ h+=`<div class="ia-list">`+L.slice(0,CAND.n).map(r=>{ const a=r.a, who=[a.loc?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'',r.off?'<span class="tag2 ex">ほかのセット（4+1）</span>':''].join('');
-        const right=`<b>更新 ${pctTxt(r.pb)}</b>平均の伸び +${Math.round(r.gain)}%${(a.p.lv==null?20:a.p.lv)<20?`<br>いま${r.f.cur}% → +20で平均${Math.round(r.exp)}%`:''}`;
+        const right=`<b class="${r.pb>=0.5?'ok':''}">更新 ${pctTxt(r.pb)}</b>平均の伸び +${Math.round(r.gain)}%${(a.p.lv==null?20:a.p.lv)<20?`<br>いま${r.f.cur}% → +20で平均${Math.round(r.exp)}%`:''}`;
         return invArtHTML(a,c.eff,right,who); }).join('')+`</div>`;
       if(L.length>CAND.n) h+=`<div class="ia-more"><button class="btn" id="cdMore">もっと見る（あと${L.length-CAND.n}個）</button></div>`; } }
   h+=`<p class="note" style="margin-top:4px">超える確率＝その1個を+20まで上げたとき、いまの${SLOT_JP[slot]}の有効RVを上回る確率（+20の1個は、付け替えるだけで上がるなら100%）。平均の伸び＝上回る分の平均。計算は「1個を評価」と同じで、サブOPの値からロール数を見積もります。並びは平均の伸びの大きい順。</p>
@@ -1122,7 +1125,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label></div>
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札を押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
-    const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%">${fmtAge(p.days)}</b>${t?esc(t[1])+'・':''}${x.lv<20?'+20の見込み':'いまの実力'}${x.us.length>1?`<span class="by" title="${esc(p.c.name)}の有効OPで測った値">${charIcon(p.c.name,'s')}${esc(p.c.name)}基準</span>`:''}`:'<span>使うキャラなし</span>';
+    const right=p?`<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b>${t?`<span class="tier" style="color:${t[2]}">${esc(t[1])}</span>・`:''}${x.lv<20?'+20の見込み':'いまの実力'}${x.us.length>1?`<span class="by" title="${esc(p.c.name)}の有効OPで測った値">${charIcon(p.c.name,'s')}${esc(p.c.name)}基準</span>`:''}`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
       return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" title="${esc(u.c.name)}：いまの${SLOT_JP[a.slot]} ${u.now==null?'なし':Math.round(u.now)+'%'}・この1個の素質 ${fmtAge(u.days)}（${esc(u.c.name)}の有効OPで）">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${x.us.length>1?`<span class="sub">${fmtAge(u.days)}</span>`:''}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who); }).join('')+`</div>`;

@@ -21,6 +21,22 @@ def scanner_chars():
     d, _ = json.JSONDecoder().raw_decode(s, s.index('{', s.index('GSCAN_DATA')))
     return {k: ('旅人' if k.startswith('Traveler') else v) for k, v in d['chars'].items()}
 
+def targets(enka):
+    """取る候補：日本語名 → (Enka での英語のキー, 'Enka'|'推測', avatarId か None)。
+    Enka のキャラ表（characters.json の SideIconName）が先、表にまだない新キャラはスキャナーの英語のキーで推測。build_splash.py も使う"""
+    tbl = json.load(open(os.path.join(ROOT, 'tools', 'enka_tables.json'), encoding='utf-8'))['avatar']
+    sc = scanner_chars(); sc_low = {k.lower(): v for k, v in sc.items()}
+    want = {}
+    for aid, c in sorted(enka.items()):
+        side = c.get('SideIconName') or ''
+        if not aid.isdigit() or not side.startswith('UI_AvatarIcon_Side_'): continue
+        key = side[len('UI_AvatarIcon_Side_'):]
+        nm = tbl.get(aid) or sc_low.get(key.lower())
+        if nm and nm not in want: want[nm] = (key, 'Enka', aid if tbl.get(aid) == nm else None)
+    for key, nm in sc.items():
+        if nm not in want and not key.startswith('Traveler'): want[nm] = (key, '推測', None)
+    return want
+
 def fetch(key):
     url = 'https://enka.network/ui/UI_AvatarIcon_' + key + '.png'
     with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': UA}), timeout=30) as r:
@@ -30,23 +46,12 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if not args: print('使い方：python3 tools/build_icons.py <characters.json>'); sys.exit(1)
     enka = json.load(open(args[0], encoding='utf-8'))
-    tbl = json.load(open(os.path.join(ROOT, 'tools', 'enka_tables.json'), encoding='utf-8'))['avatar']
-    sc = scanner_chars(); sc_low = {k.lower(): v for k, v in sc.items()}
     os.makedirs(OUT, exist_ok=True)
     reg_path = os.path.join(OUT, 'icons.json')
     reg = json.load(open(reg_path, encoding='utf-8')) if os.path.exists(reg_path) and '--all' not in sys.argv else {}
-    # 取る候補：日本語名 → アイコンのキー（Enka のキャラ表が先、なければスキャナーの英語のキーで推測）
-    want = {}
-    for aid, c in sorted(enka.items()):
-        side = c.get('SideIconName') or ''
-        if not aid.isdigit() or not side.startswith('UI_AvatarIcon_Side_'): continue
-        key = side[len('UI_AvatarIcon_Side_'):]
-        nm = tbl.get(aid) or sc_low.get(key.lower())
-        if nm and nm not in want: want[nm] = (key, 'Enka')
-    for key, nm in sc.items():
-        if nm not in want and not key.startswith('Traveler'): want[nm] = (key, '推測')
+    want = targets(enka)
     got, miss = [], []
-    for nm, (key, how) in want.items():
+    for nm, (key, how, _aid) in want.items():
         if nm in reg and os.path.exists(os.path.join(OUT, reg[nm])): continue
         try: im = fetch(key)
         except Exception as e: miss.append(f'{nm}（UI_AvatarIcon_{key}・{how}：{e}）'); time.sleep(1); continue
