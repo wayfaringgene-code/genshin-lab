@@ -79,6 +79,9 @@ flowchart LR
 ### 同梱の立ち絵（スプラッシュアート）を新キャラの分だけ足す
 ゲーム公式のガチャの絵（背景が透明）を、Enka.Network から `src/portraits/` に入れている（2026-11-13 に118人分）。新キャラが出たら Claude に「立ち絵を更新して」と頼む。中身は `python3 tools/build_splash.py <characters.json>`（アイコンと同じ characters.json。まだ立ち絵がないキャラだけ、既定3秒に1枚ずつ取る）。手で集めた立ち絵（スカークなど）は上書きしない。サンドローネ・Somnia・旅人はまだない（手で集めるなら docs/PORTRAITS.md の手順）
 
+### ダメージの見積もり（試作）にキャラを足す・前提を確かめる
+考え方・キャラごとの前提・キャラ別の早見は **[docs/DAMAGE.md](docs/DAMAGE.md)**。コードは `tools/build_card.py` の `DMG_MODELS`。キャラを足す手順も DAMAGE.md の最後にある。
+
 ### 取り込んだあとの演出を確かめる・直す
 - 演出のコードは `tools/build_card.py` の「カードの登場の演出（v2.1）」の部分（`revealPlay` から始まる）。考え方と経緯は `docs/ROADMAP.md` の2
 - トップのURLの末尾に `#reveal` を付けて開くと、見本のキャラで演出を流す操作盤が出る（人数・最後のランクを選べる。保存はしない）

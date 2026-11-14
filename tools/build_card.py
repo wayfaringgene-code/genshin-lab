@@ -971,6 +971,14 @@ CSS_INV = r"""
 .cico.s{width:18px; height:18px} .cico.l{width:34px; height:34px}
 .cico.ini{display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2); background:#1c2140}
 .cd-hd{display:flex; align-items:center; gap:10px}
+.dmgw{box-sizing:border-box; max-width:100%; min-width:0; margin:8px 0 2px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:var(--inset); font-size:12.5px; color:var(--ink2)}
+.dmgw summary{cursor:pointer; line-height:1.6} .dmgw summary .hd{display:inline-block; margin-right:8px; font-size:11px; letter-spacing:.08em; color:var(--muted)} .dmgw summary b{color:var(--ink)}
+.dws{display:grid; grid-template-columns:max-content minmax(60px,220px) max-content; gap:3px 10px; align-items:center; font-variant-numeric:tabular-nums}
+.dws i{font-style:normal; text-align:right} .dws i.k{text-align:left; color:var(--muted)}
+.dws .bar{height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden} .dws .bar b{display:block; height:100%; background:var(--ink2); border-radius:3px}
+.dwtw{overflow-x:auto; max-width:100%} .dwt{border-collapse:collapse; font-variant-numeric:tabular-nums; font-size:12px} .dwt th,.dwt td{padding:2px 9px; text-align:right; white-space:nowrap} .dwt th{font-weight:400; color:var(--muted); font-size:11px}
+@media (max-width:520px){ .dwt{font-size:11px} .dwt th,.dwt td{padding:2px 4px} .dwt td small{display:block} .dmgw{padding:8px 9px} }
+.dwt td:first-child,.dwt th:first-child{text-align:left} .dwt td small{color:var(--muted)} .dwt td.on{color:var(--ink); font-weight:700} .dwt td.m{color:var(--muted)}
 .ia-r .scl{display:block; margin-top:3px; color:var(--ink2); font-variant-numeric:tabular-nums}
 .ia-r .cap{display:flex; align-items:center; justify-content:flex-end; gap:0; font-size:11px; letter-spacing:.08em; color:var(--muted); margin-bottom:2px}
 .ia-r .big{display:flex; align-items:center; justify-content:flex-end; gap:10px}
@@ -1108,16 +1116,40 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBe
     us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 /* ---- ダメージの見積もり（v2.3 試作）：「この1個に替えたら、基準の技のダメージが何%変わるか」 ----
-   ダメージそのものは求めない（天賦倍率・敵の耐性・防御は、どのサブOPでも同じだけ掛かるので、比べると消える）。
-   キャラごとに、ステータスの効き方だけを式にする。数字は genshin-db 5.2.15、式は gcsim（b107b5d）の実装で照らし合わせた（docs/ROADMAP.md 2.7） */
+   ダメージそのものは求めない（天賦倍率・敵の耐性・防御・反応の係数は、どのサブOPでも同じだけ掛かるので、比べると消える）。
+   キャラごとに、ステータスの効き方だけを式にする。数字は genshin-db 5.2.15、式は gcsim（b107b5d）の実装で照らし合わせた。考え方は docs/DAMAGE.md
+   dmg(t) の t（dmgTotal の戻り値）：atk＝攻撃力の合計、CR・CD・EM、dmgP＝ダメージバフ%（そのキャラの元素の杯を含む）、react＝反応ボーナス（倍率）
+   subs＝有効OP（src/builds.csv と同じ）、std＝標準の装備の砂・杯・冠（育成の段階ごとの重みの表に使う） */
+const dmgCrit=t=>1+Math.min(1,t.CR/100)*t.CD/100;
 const DMG_MODELS={
-  'フリンズ':{skill:'雷霆のシンフォニー',            // 元素爆発（特殊）。月感電の直接ダメージ（攻撃力×倍率×3×(1+基礎ボーナス)×(1+熟知ボーナス+反応ボーナス)×会心）
+  'フリンズ':{skill:'雷霆のシンフォニー', elem:'雷',  // 元素爆発（特殊）。月感電の直接ダメージ（攻撃力×倍率×3×(1+基礎ボーナス)×(1+熟知ボーナス+反応ボーナス)×会心）
     baseAtk:351.59+674.33,                          // Lv90 フリンズ＋Bloodsoaked Ruins
     cr:5+22.05, cd:50+38.4+28,                       // 基礎＋武器の会心率／基礎＋突破＋武器（月感電の後 +28%）
     react:0.36+0.20,                                 // 武器（元爆の後の月感電 +36%）＋固有天賦（昇輝の月感電 +20%）
     set:'天穹の顕現せし夜', set2:{EM:80}, set4:{CR:30,react:0.10}, // 2セット：熟知+80／4セット（昇輝）：会心率+30%・月反応+10%
+    subs:['CR','CD','ATK%','EM'], std:{sands:'ATK%',goblet:'ATK%',circlet:'CD'},
     dmg(t){ const atk=t.atk, em=t.EM+Math.min(0.08*atk,160), base=Math.min(atk/100*0.007,0.14);
-      return atk*(1+base)*(1+6*em/(em+2000)+t.react)*(1+Math.min(1,t.CR/100)*t.CD/100); } }
+      return atk*(1+base)*(1+6*em/(em+2000)+t.react)*dmgCrit(t); } },
+  'マーヴィカ':{skill:'墜陽斬（戦意200・溶解）', elem:'炎', // 元素爆発。戦意で足されるダメージ（戦意×攻撃力の割合）も攻撃力に比例するので、比べると消える
+    baseAtk:358.77+740.58,                          // Lv90 マーヴィカ＋千烈の日輪
+    cr:5+11.03, cd:50+38.4+35,                       // 基礎＋武器／基礎＋突破＋武器（焚光の+20%が夜魂の加護で1.75倍）
+    atkP:49+30, dmgP:40,                             // 焚光（+28%の1.75倍）＋固有天賦1（夜魂バーストの後 +30%）／固有天賦2（戦意200で+40%）
+    set:'黒曜の秘典', set2:{dmgP:15}, set4:{CR:40},   // 2セット：夜魂の加護中ダメージ+15%／4セット：夜魂値を使ったあと会心率+40%（E→Q が前提）
+    subs:['CR','CD','EM'], std:{sands:'EM',goblet:'DMG_炎',circlet:'CD'},
+    dmg(t){ return t.atk*(1+t.dmgP/100)*(1+2.78*t.EM/(t.EM+1400)+t.react)*dmgCrit(t); } }, // 溶解（炎→氷の×2）。×2 は比べると消える
+  'スカーク':{skill:'七相一閃の通常攻撃', elem:'氷',  // 溶解・凍結の増幅はしない前提
+    baseAtk:358.77+674.33,                          // Lv90 スカーク＋蒼耀
+    cr:5+22.05, cd:50+38.4+40,                       // 基礎＋武器／基礎＋突破＋蒼耀（エネルギー0で+40%）
+    atkP:48, dmgP:20,                                // 蒼耀（エネルギー0で+24%×2）／極悪技・尽（天賦10・裂け目3つで通常攻撃+20%）
+    set:'深廊の終曲', set2:{dmgP:15}, set4:{dmgP:60}, // 2セット：氷元素ダメージ+15%／4セット：エネルギー0で通常攻撃+60%（スカークはエネルギーの上限が0なので常に）
+    subs:['CR','CD','ATK%'], std:{sands:'ATK%',goblet:'DMG_氷',circlet:'CD'},
+    dmg(t){ return t.atk*(1+t.dmgP/100)*dmgCrit(t); } },
+  'ネフェル':{skill:'幻の戯（虚ろな影の月開花）', elem:'草', // 重撃。虚ろな影の3段（熟知×倍率、月開花の直接ダメージ）。本人の2段は月開花ではないので入れない
+    baseAtk:344.42+541.83,                          // Lv90 ネフェル＋真言の匣（月開花には効かないが、ベネットの表示のため）
+    cr:5+8, cd:50+38.4+88.2+36, em:120+100,          // 基礎＋武器／基礎＋突破＋武器＋真実の月（+24%の1.5倍）／嘘の秘密（+80の1.5倍）＋偽りの帳3層（+100）
+    set:'天穹の顕現せし夜', set2:{EM:80}, set4:{CR:30,react:0.10},
+    subs:['CR','CD','EM'], std:{sands:'EM',goblet:'EM',circlet:'CR'},
+    dmg(t){ const em=t.EM; return em*(1+Math.min(em*0.000175,0.14))*(1+6*em/(em+2000)+t.react)*dmgCrit(t); } } // 基礎ボーナス：固有天賦（熟知1につき0.0175%、上限14%）
 };
 const BENNETT_ATK=1.19*(191.16+674.33); // ベネットの元素爆発（天賦13）：ベネットの基礎攻撃力（キャラ＋基礎攻撃力674の武器）の119%
 const MAIN_NUM={HP:4780,ATK:311,'ATK%':46.6,'HP%':46.6,'DEF%':58.3,EM:186.5,ER:51.8,CR:31.1,CD:62.2,HEAL:35.9,PHYS:58.3};
@@ -1125,24 +1157,61 @@ const rollAvg=s=>ROLL[s]?ROLL[s].reduce((a,b)=>a+b,0)/4:0;
 function dmgBennett(){ return !!store.get('dmgBennett',0); }
 // いま付けている5部位（とセット）。部位のセットは手持ちの「装備中」から、分からなければキャラのセットのものとみなす
 function dmgSetOf(c,slot){ const inv=invLoad(); const a=inv&&inv.arts.find(x=>x.loc===c.name&&x.slot===slot); return a?a.set:((DMG_MODELS[c.name]||{}).set||''); }
-function dmgTotal(M,pieces,sets,bennett){ const t={atkP:0,atk:0,CR:M.cr,CD:M.cd,EM:0,react:M.react};
+// ex＝足すステータス（重みの計算用。{EM:18.65} など）
+function dmgTotal(M,pieces,sets,bennett,ex){ const t={atkP:M.atkP||0,atk:0,CR:M.cr,CD:M.cd,EM:M.em||0,dmgP:M.dmgP||0,react:M.react||0};
+  const add=(k,v)=>{ if(k==='ATK%') t.atkP+=v; else if(k==='ATK') t.atk+=v; else if(k==='CR'||k==='CD'||k==='EM') t[k]+=v; else if(k==='DMG_'+M.elem) t.dmgP+=v; };
   for(const s of SLOTS){ const p=pieces[s]; if(!p||!p.main) continue; const mv=MAIN_NUM[p.main]!=null?MAIN_NUM[p.main]:(String(p.main).startsWith('DMG_')?46.6:0);
-    const add=(k,v)=>{ if(k==='ATK%') t.atkP+=v; else if(k==='ATK') t.atk+=v; else if(k==='CR'||k==='CD'||k==='EM') t[k]+=v; };
     add(p.main,mv); for(const q of p.subs||[]){ if(!q.s||q.off) continue; add(q.s,parseFloat(q.v)||0); } }
-  const n=SLOTS.filter(s=>sets[s]===M.set).length; if(n>=2) t.EM+=M.set2.EM; if(n>=4){ t.CR+=M.set4.CR; t.react+=M.set4.react; }
+  if(ex) for(const k in ex) add(k,ex[k]);
+  const n=SLOTS.filter(s=>sets[s]===M.set).length, put=o=>{ for(const k in o) t[k]+=o[k]; }; if(n>=2) put(M.set2); if(n>=4) put(M.set4);
   t.atk=M.baseAtk*(1+t.atkP/100)+t.atk+(bennett?BENNETT_ATK:0); return t; }
 // この1個（+20まで上げたときの伸び方を、強化が4行に入る回数の組み合わせごとに数える。伸び幅は平均）
 function dmgCompare(c,a,f){ const M=DMG_MODELS[c.name]; if(!M||!f) return null; const ben=dmgBennett(), slot=a.slot;
   const sets={}; for(const s of SLOTS) sets[s]=dmgSetOf(c,s); const D0=M.dmg(dmgTotal(M,c.pieces,sets,ben)); if(!(D0>0)) return null;
   const sets2=Object.assign({},sets,{[slot]:a.set}), L=a.p.subs.filter(x=>x.s), rem=f.rem||0;
   const evalWith=adds=>{ const subs=L.map((x,i)=>({s:x.s,v:String((parseFloat(x.v)||0)+adds[i])})); /* off も付いた値として数える */ return M.dmg(dmgTotal(M,Object.assign({},c.pieces,{[slot]:{main:a.p.main,subs}}),sets2,ben))/D0-1; };
-  const base=L.map(()=>0); // 4行目が+4で付くなら、付いた値はそのまま（subs の off を外して数える）
   let mean=0,pUp=0,best=-Infinity,pBest=0; const fact=n=>{ let r=1; for(let i=2;i<=n;i++) r*=i; return r; };
   (function rec(i,left,ns){ if(i===L.length-1){ ns.push(left); const pr=fact(rem)/ns.reduce((a,n)=>a*fact(n),1)/Math.pow(L.length,rem); const r=evalWith(ns.map((n,j)=>n*rollAvg(L[j].s)));
       mean+=pr*r; if(r>1e-9) pUp+=pr; ns.pop(); return; } for(let n=0;n<=left;n++){ ns.push(n); rec(i+1,left-n,ns); ns.pop(); } })(0,rem,[]);
   for(let j=0;j<L.length;j++){ const r=evalWith(L.map((x,k)=>k===j?rem*(ROLL[x.s]?ROLL[x.s][3]:0):0)); if(r>best+1e-12){ best=r; pBest=Math.pow(1/16,rem); } else if(Math.abs(r-best)<=1e-12) pBest+=Math.pow(1/16,rem); }
   if(!rem){ best=mean; pBest=1; }
   return {skill:M.skill,mean,pUp,max:best,pMax:pBest,ben}; }
+/* ---- 重み（説明用）：サブOP 1回分（平均の伸び）で、基準の技のダメージが何%上がるか。判定には使わない（装備で変わるので） ---- */
+const DMG_W=['CR','CD','ATK%','EM','ATK','HP%','DEF%','ER'], DMG_W4=['CR','CD','ATK%','EM'];
+function dmgWeightsOf(M,pieces,sets,ben){ const D0=M.dmg(dmgTotal(M,pieces,sets,ben)); if(!(D0>0)) return null; const w={};
+  for(const k of DMG_W){ const v=M.dmg(dmgTotal(M,pieces,sets,ben,{[k]:rollAvg(k)}))/D0-1; w[k]=v>1e-9?v:0; } return w; }
+function dmgWeights(c){ const M=DMG_MODELS[c&&c.name]; if(!M||!c.pieces) return null; const sets={}, ben=dmgBennett(); for(const s of SLOTS) sets[s]=dmgSetOf(c,s);
+  const w=dmgWeightsOf(M,c.pieces,sets,ben); return w?{M,w,t:dmgTotal(M,c.pieces,sets,ben),ben}:null; }
+// 育成の段階：標準の装備（5部位とも M.set、メインOPは M.std）に、有効OP（M.subs）のロールを n 回、均等に足す。会心率は100%で止め、余りはほかの有効OPへ
+const DMG_STAGES=[[0,'メインOPだけ'],[10,'育て始め'],[20,'ふつう'],[30,'よく育った'],[40,'かなりの厳選']];
+function dmgStdPieces(M,n,ben){ const P={flower:{main:'HP',subs:[]},plume:{main:'ATK',subs:[]}}, sets={}; for(const s of ['sands','goblet','circlet']) P[s]={main:M.std[s],subs:[]}; for(const s of SLOTS) sets[s]=M.set;
+  const al={}; for(const k of M.subs) al[k]=n/M.subs.length;
+  if(al.CR!=null){ const need=Math.max(0,(100-dmgTotal(M,P,sets,ben).CR)/rollAvg('CR')), o=M.subs.filter(k=>k!=='CR'); if(al.CR>need&&o.length){ const r=al.CR-need; al.CR=need; for(const k of o) al[k]+=r/o.length; } }
+  P.flower.subs=M.subs.map(k=>({s:k,v:String(al[k]*rollAvg(k))})); return {P,sets}; }
+function dmgStages(M,ben){ return DMG_STAGES.map(([n,lab])=>{ const {P,sets}=dmgStdPieces(M,n,ben); return {n,lab,t:dmgTotal(M,P,sets,ben),w:dmgWeightsOf(M,P,sets,ben)}; }); }
+// 「簡単に言えば」の一言（いまの装備の重みから）
+function dmgSay(x){ const w=x.w, t=x.t, ks=DMG_W4.slice().sort((a,b)=>w[b]-w[a]), top=ks[0], sec=ks[1], cd=w.CD||0, nm=k=>INV_SUB[k]||k, r=k=>cd>0?(w[k]/cd).toFixed(1)+'倍':'';
+  const capped=t.CR>=95&&w.CR<cd; // 会心率が上限の100%にかかって、会心ダメより効かなくなっている
+  const nt=[top!=='CD'&&cd>0?`会心ダメ1回の${r(top)}`:'',x.M.subs.includes(top)?'':'有効OPには入れていない項目です'].filter(Boolean).join('。');
+  let s=`いまの装備では、いちばん効くのは<b>${nm(top)}</b>${nt?`（${nt}）`:''}`;
+  if(sec&&w[sec]>=w[top]*0.8) s+=`、次に${nm(sec)}${sec!=='CD'&&cd>0?`（${r(sec)}）`:''}`;
+  if(capped) s+=`。会心率はもう${Math.min(100,t.CR).toFixed(0)}%${t.CR>=100?'（上限）':''}なので、${w.CR>0?`会心ダメの${r('CR')}しか効きません`:'会心率を足しても伸びません'}`;
+  const zero=DMG_W4.filter(k=>w[k]<=0&&!(k==='CR'&&capped)), low=DMG_W4.filter(k=>k!==top&&k!==sec&&w[k]>0&&w[k]<w[top]*0.45&&!(k==='CR'&&capped));
+  if(low.length) s+=`。${low.map(nm).join('・')}は思ったほど効きません`;
+  if(zero.length) s+=`。${zero.map(nm).join('・')}は、この技のダメージに関係しません`;
+  if(x.ben&&w['ATK%']>0) s+=`（ベネットのバフで攻撃力が高いぶん、攻撃力%の価値は下がります）`;
+  return s+'。'; }
+function dmgPanel(c){ const x=dmgWeights(c); if(!x) return ''; const w=x.w, ks=DMG_W.filter(k=>w[k]>0||DMG_W4.includes(k)).sort((a,b)=>w[b]-w[a]), top=w[ks[0]]||1e-9, pc=v=>v>0?'+'+(v*100).toFixed(2)+'%':'0';
+  const bars=ks.map(k=>`<i class="k">${INV_SUB[k]||k}</i><span class="bar"><b style="width:${(w[k]/top*100).toFixed(0)}%"></b></span><i>${pc(w[k])}</i>`).join('');
+  const st=dmgStages(x.M,x.ben), sk=DMG_W4.filter(k=>st.some(r=>r.w&&r.w[k]>0));
+  const tbl=`<div class="dwtw"><table class="dwt"><tr><th>有効OPのロール</th>${sk.map(k=>`<th>${INV_SUB[k]}</th>`).join('')}<th>そのときの<br>会心率</th></tr>${st.map(r=>{ const mx=Math.max(...sk.map(k=>r.w[k]));
+    return `<tr><td>${r.n}回 <small>${r.lab}</small></td>${sk.map(k=>`<td class="${r.w[k]>=mx-1e-12?'on':''}">${pc(r.w[k])}</td>`).join('')}<td class="m">${Math.min(100,r.t.CR).toFixed(0)}%</td></tr>`; }).join('')}</table></div>`;
+  const sd=x.M.std, mt=m=>MAIN_SHORT(m);
+  return `<details class="dmgw"><summary><span class="hd">ダメージの効き方（試作）</span>${dmgSay(x)}</summary>
+    <p class="note" style="margin:6px 0 4px">基準の技＝${esc(x.M.skill)}（Lv90・無凸・モチーフ武器R1・${x.ben?'ベネットのバフあり':'バフなし'}）。いまの装備に、サブOPを1回分（平均の伸び）足したら、ダメージが何%上がるか：</p>
+    <div class="dws">${bars}</div>
+    <p class="note" style="margin:10px 0 4px">育成の段階で変わります。標準の装備（${esc(x.M.set)}4セット・${mt(sd.sands)}／${mt(sd.goblet)}／${mt(sd.circlet)}）に、有効OP（${x.M.subs.map(k=>INV_SUB[k]).join('・')}）のロールを均等に足していったとき（会心率は100%で止めて、余りはほかへ）：</p>${tbl}
+    <p class="note" style="margin:6px 0 0">重みは説明のための目安です。1個を比べるとき（ダメージの何%）は、強化が入る組み合わせごとに数えています。</p></details>`; }
 /* ---- 1個のスコア（会心率×2＋会心ダメージ＋型の1項目。カードと同じ）：いま・+20で平均・+20で最大 ----
    平均＝残りの強化が4行に等しく入り、伸び幅も平均。最大＝残りの強化がすべて、スコアにいちばん効く行に最大の伸びで入ったとき */
 function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!=='CRIT'&&s===t?STYPES[t][2]:0), L=p.subs.filter(x=>x.s);
@@ -1207,6 +1276,7 @@ function candRender(){ const ov=$('cdOv'), c=CHARS.find(x=>x.id===CAND.id); if(!
   const x=st.slots[slot], mine=c.pieces[slot], effTxt=(c.eff||[]).map(q=>INV_SUB[q]||q).join('・')||'なし';
   let h=`<div class="uv-box"><div class="uv-h"><div class="cd-hd">${charIcon(c.name,'l')}<b>${esc(c.name||'（名前なし）')}</b><span class="note">育成候補</span></div><button class="rv-x" id="cdX" aria-label="閉じる">×</button></div>
     <p class="note" style="margin:0">有効OP：${effTxt}${c.effGuess?(c.effDef?'（初期値）':'（装備からの推定）'):''}／使えるセット：${esc(planSetTxt(pl))}／${SLOT_JP[slot]}のメインOP：${(pl.main[slot]||[]).map(m=>esc(MAIN_SHORT(m))).join('・')||'—'}${pl.table?'':'（初期値の表にないキャラなので、いまの装備から）'}</p>
+    ${dmgPanel(c)}
     <div class="cd-tabs" role="group" aria-label="部位">${tabs}</div>`;
   if(!inv) h+=`<div class="empty">手持ちの聖遺物がまだありません。「取り込む」のページで、動画を読むか、GOOD形式のファイルを読み込むと、ここに候補が出ます。</div>`;
   else{ const stale=(c.date||'')>inv.at;
@@ -1253,7 +1323,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>装備<select data-iv="eq">${opt(V.eq,[['free','装備なし'],['eq','装備中'],['all','すべて']])}</select></label>
       <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['go','更新できる見込みが高い（緑の枠）'],['yes','いる'],['no','いない（餌の候補）']])}</select></label>
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label>
-      <label title="ダメージの見積もりは、いまはフリンズ（雷霆のシンフォニー）だけの試作です"><input type="checkbox" id="invBen" ${dmgBennett()?'checked':''}>ダメージの見積もりにベネットのバフを入れる（試作・フリンズのみ）</label></div>
+      <label title="ダメージの見積もりは試作です（${Object.keys(DMG_MODELS).join('・')}）"><input type="checkbox" id="invBen" ${dmgBennett()?'checked':''}>ダメージの見積もりにベネットのバフを入れる（試作・${Object.keys(DMG_MODELS).join('・')}）</label></div>
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
