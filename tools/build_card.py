@@ -1607,7 +1607,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       // 横軸の文字：読みのかたまり（axis）・読み取りの札と重なるものは出さない
       const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, xc=BG&&px!=null?{w:UTW(fmtAge(age),10.5*.6,10.5)+18}:null, xcL=xc?Math.max(GX0-30,Math.min(GX1+24-xc.w,px-xc.w/2)):null,
         hideX=x=>axL!=null&&x>axL-14&&x<axL+o0.w+14, hideXE=x=>hideX(x)||(xcL!=null&&x>xcL-16&&x<xcL+xc.w+16); // 横軸の札は目盛りの数字の行に置くので、★の段の名前は消さず、数字だけ消す
-      for(let k=0;k<EN;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:'#9aa6bb'}); }
+      const kAge=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():-1; // あなたの点が入っている段（G では札と同じ金で着色）
+      for(let k=0;k<EN;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:BG&&k===kAge?ACC:'#9aa6bb'}); }
       { let last=-99; for(let i=1;i<EN;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
       if(XS==='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
       g+=TX(GX1,GY1+(BG?53:36),'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
