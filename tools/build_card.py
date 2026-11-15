@@ -987,13 +987,19 @@ CSS_INV = r"""
 .ia-who .tag2.cc{display:inline-flex; align-items:center; gap:6px; padding:2px 10px 2px 2px; font-size:12px}
 .ia-who .tag2.cc .nm{color:var(--ink)} .ia-who .tag2.cc .st{color:var(--ink2)} .ia-who .tag2.cc .st b{color:var(--ink); font-variant-numeric:tabular-nums}
 .ia-who .tag2.cc{position:relative}
-.ia-who .tag2 .tip{display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; width:max-content; max-width:min(420px,86vw); flex-direction:column; gap:3px; background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--ink2); text-align:left; white-space:normal; box-shadow:0 10px 28px rgba(0,0,0,.55); pointer-events:none}
+.ia-who .tag2 .tip{display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; width:max-content; max-width:min(560px,92vw); flex-direction:column; gap:3px; background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--ink2); text-align:left; white-space:normal; box-shadow:0 10px 28px rgba(0,0,0,.55); pointer-events:none}
 .ia-who .tag2.cc:hover .tip, .ia-who .tag2.cc:focus-visible .tip{display:flex}
 .ia-who .tag2 .tip > b{color:var(--ink); font-weight:700}
 .ia-who .tag2 .tip .cmp{display:grid; grid-template-columns:auto auto auto auto; gap:1px 16px; margin:4px 0 2px; padding:6px 9px; background:rgba(255,255,255,.04); border-radius:6px; font-variant-numeric:tabular-nums}
 .ia-who .tag2 .tip .cmp i{font-style:normal; color:var(--muted); text-align:right; white-space:nowrap} .ia-who .tag2 .tip .cmp i.k{text-align:left} .ia-who .tag2 .tip .cmp i.h{font-size:10.5px}
 .ia-who .tag2 .tip .cmp i.on{color:var(--ink)} .ia-who .tag2 .tip .cmp i.ar{color:var(--muted); opacity:.7; padding:0 2px}
 .ia-who .tag2 .tip .cmp i.up{color:var(--ok); font-weight:700} .ia-who .tag2 .tip .cmp i.dn{color:var(--ng); font-weight:700} .ia-who .tag2 .tip .cmp i.chg{color:#ffd27a}
+.ia-who .tag2 .tip .cmp.c5{grid-template-columns:auto auto auto auto auto} .ia-who .tag2 .tip .cmp i.sx{display:flex; align-items:center}
+.sbw{display:inline-flex; align-items:center; gap:6px} .sbw em{font-style:normal; font-size:10.5px; color:var(--muted); min-width:44px; text-align:right}
+.sb{position:relative; display:inline-block; width:64px; height:8px; border-radius:4px; background:rgba(255,255,255,.08)}
+.sb .rg{position:absolute; top:0; bottom:0; border-radius:4px; background:rgba(127,214,164,.45)} .sb .mn{position:absolute; top:1px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:var(--ok)}
+.sb .cu{position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:#fff; border-radius:1px}
+.ia-who .tag2.cc.alt .st{color:var(--muted)} .ia-who .tag2.cc.alt .nm{color:var(--ink2)}
 .ia-who .tag2 .tip .cmp i.up small,.ia-who .tag2 .tip .cmp i.dn small{color:inherit}
 .ia-who .tag2 .tip .wn{color:#ffb4a6} .ia-who .tag2 .tip .mk{color:var(--ok)} .ia-who .tag2.cc .wn{color:#ffb4a6; font-size:12px; margin-left:-2px} .ia-who .tag2 .tip .cmp small{font-size:9.5px; color:var(--muted); margin-left:2px}
 .ia-who .tag2 .tip .cur{display:flex; flex-wrap:wrap; gap:1px 10px; margin-top:2px; padding:5px 8px; background:rgba(255,255,255,.04); border-radius:6px}
@@ -1113,7 +1119,7 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBe
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
       const dm=own?null:dmgCompare(c,a,f);
       us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
-    us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
+    const ord=u=>u.own?2:u.sw&&u.sw.brk?-1+u.pb/10:u.pb; us.sort((x,y)=>ord(y)-ord(x)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 // 付け替えたときのセットの変わり方：{brk：切れる4セット, n：替えた後の数} か {mk：そろう4セット} か null。手持ちに装備中の1個がなければ null
 function setSwap(c,a){ const inv=invLoad(); if(!inv) return null; const eq={}; for(const b of inv.arts) if(b.loc===c.name) eq[b.slot]=b.set;
@@ -1180,17 +1186,24 @@ function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=
   const f=lv<20?pieceFinal(a.p,u.c.eff||[]):null, rem=f?f.rem:0, num=(L,k)=>{ const q=L.find(z=>z.s===k); return q?parseFloat(q.v)||0:null; };
   const exp=k=>{ const v=num(A,k); return v==null?null:v+rem/4*(ROLL[k]?ROLL[k].reduce((x,y)=>x+y,0)/4:0); };
   const fv=(k,v)=>v==null?'—':'+'+(invPct(k)?v.toFixed(1)+'%':Math.round(v));
+  // 棒：灰の線＝ありうる範囲（いまの値〜全部この行に入ったとき）、明るい帯＝8割が収まる幅、点＝平均、白い縦線＝いまの装備の値。右の%＝いまの装備の値を上回る確率
+  const subBar=(k,c0)=>{ const b=num(A,k); if(b==null||!rem||!ROLL[k]) return ''; const mx=ROLL[k][3]; let d=new Map([[0,1]]);
+    for(let i=0;i<rem;i++){ const nd=new Map(); for(const [u,w] of d){ nd.set(u,(nd.get(u)||0)+w*0.75); for(let t=7;t<=10;t++) nd.set(u+t,(nd.get(u+t)||0)+w/16); } d=nd; }
+    const L=[...d.entries()].map(([u,w])=>[b+u/10*mx,w]).sort((x,y)=>x[0]-y[0]); let acc=0,lo=null,hi=null,up=0,mean=0;
+    for(const [v,w] of L){ acc+=w; mean+=v*w; if(lo==null&&acc>=0.1) lo=v; if(hi==null&&acc>=0.9) hi=v; if(v>(c0||0)+1e-6) up+=w; }
+    const top=b+rem*mx, a0=Math.min(b,c0==null?b:c0), sp=Math.max(top-a0,1e-9), X=v=>Math.max(0,Math.min(100,(v-a0)/sp*100)).toFixed(1);
+    return `<span class="sbw" title="+20で8割が ${fv(k,lo)}〜${fv(k,hi)}（最大 ${fv(k,top)}）。いまの装備の値を上回る確率 ${pctTxt(up)}"><span class="sb"><span class="rg" style="left:${X(lo)}%;width:${(X(hi)-X(lo)).toFixed(1)}%"></span><span class="mn" style="left:${X(mean)}%"></span>${c0!=null?`<span class="cu" style="left:${X(c0)}%"></span>`:''}</span><em>${pctTxt(up)}</em></span>`; };
   const rows=ks.map(k=>{ const on=E.has(k), c0=num(B,k), c1=exp(k), h=ROLL[k]?ROLL[k][3]/2:0, d=(c1||0)-(c0||0);
     const cls=!on?'':d>=h?'up':d<=-h?'dn':'', mk=cls==='up'?'<small>▲</small>':cls==='dn'?'<small>▼</small>':'', off=A.find(z=>z.s===k&&z.off)?'<small>+4で付く</small>':'';
-    return `<i class="k${on?' on':''}">${INV_SUB[k]||k}</i><i class="${on?'on':''}">${fv(k,c0)}</i><i class="ar">→</i><i class="${on?'on ':''}${cls}">${lv<20&&c1!=null?'≈':''}${fv(k,c1)}${mk}${off}</i>`; }).join('');
+    return `<i class="k${on?' on':''}">${INV_SUB[k]||k}</i><i class="${on?'on':''}">${fv(k,c0)}</i><i class="ar">→</i><i class="${on?'on ':''}${cls}">${lv<20&&c1!=null?'≈':''}${fv(k,c1)}${mk}${off}</i>${rem?`<i class="sx">${on?subBar(k,c0):''}</i>`:''}`; }).join('');
   const mc=cur&&cur.main&&cur.main!==a.p.main;
-  const cmp=`<span class="cmp"><i></i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i><i></i><i class="h">この1個${lv<20?`（+${lv}→+20の平均）`:''}</i>`
-    +`<i class="k">メイン</i><i class="${mc?'chg':''}">${cur&&cur.main?esc(MAIN_SHORT(cur.main)):'—'}</i><i class="ar">→</i><i class="${mc?'chg':''}">${esc(MAIN_SHORT(a.p.main))}</i>${rows}</span>`;
-  const notes=(u.sw&&u.sw.brk?`<span class="wn">⚠ ${esc(u.sw.brk)}の4セット効果が切れます（4→${u.sw.n}）</span>`:'')+(u.sw&&u.sw.mk?`<span class="mk">${esc(u.sw.mk)}が4セットになります</span>`:'')
+  const cmp=`<span class="cmp${rem?' c5':''}"><i></i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i><i></i><i class="h">この1個${lv<20?`（+${lv}→+20の平均）`:''}</i>${rem?'<i class="h">伸び方・上回る確率</i>':''}`
+    +`<i class="k">メイン</i><i class="${mc?'chg':''}">${cur&&cur.main?esc(MAIN_SHORT(cur.main)):'—'}</i><i class="ar">→</i><i class="${mc?'chg':''}">${esc(MAIN_SHORT(a.p.main))}</i>${rem?'<i></i>':''}${rows}</span>`;
+  const notes=(u.sw&&u.sw.brk?`<span class="pb">この1個だけ替えると4セット効果が切れるので、「更新」には数えていません。下の表は、いまの${sl}との比べです</span>`:'')+(u.sw&&u.sw.mk?`<span class="mk">${esc(u.sw.mk)}が4セットになります</span>`:'')
     +(mc?`<span class="pb">メインOPが変わります（有効RVの比べ方はサブOPだけ）</span>`:'');
-  const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>${cmp}${notes}`, rvr=x=>x==null?'—':Math.round(x)+'%', now=u.slotAge||0, sn=u.scNow;
+  const head=(u.sw&&u.sw.brk?`<b>${esc(u.c.name)}はいま${esc(u.sw.brk)}の4セット。${esc(a.set)}に乗り換えるなら、${sl}はこの1個で</b>`:`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`)+cmp+notes, rvr=x=>x==null?'—':Math.round(x)+'%', now=u.slotAge||0, sn=u.scNow;
   if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
-  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="${cl(u.now||0,u.rvMax,10)}">${rvr(u.rvMax)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
+  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="${cl(u.now||0,u.rvMax,10)}">${rvr(u.rvMax)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">${u.sw&&u.sw.brk?'いまの'+sl+'を上回る確率':'更新できる確率'} ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
 /* ---- 1個の表示 ---- */
 // ロールの棒：伸びた回数だけ「箱4つの組」を並べ、伸び幅の合計（70%＝箱1つ … 100%＝箱4つ）だけ塗る。合計は見積もり（RV÷10−6×回数）
 function rollBar(n,u){ if(!n) return ''; const fill=Math.max(n,Math.min(4*n,Math.round(u-6*n))); let k=fill, g='';
@@ -1281,9 +1294,9 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
-    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
-      return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${u.sw&&u.sw.brk?`<span class="wn" title="${esc(u.sw.brk)}の4セット効果が切れる">⚠</span>`:''}${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
-    return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
+    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.sw&&u.sw.brk?['alt','乗り換え用']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
+      return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
+    return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&!(u.sw&&u.sw.brk)&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
   box.querySelectorAll('[data-iv]').forEach(el=>el.addEventListener('change',()=>{ V[el.dataset.iv]=el.value; if(el.dataset.iv==='slot') V.main=''; V.n=50; store.set('invView',Object.assign({},V,{n:undefined})); invRenderList(box,inv,idx,0); }));
