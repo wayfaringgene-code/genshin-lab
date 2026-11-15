@@ -913,7 +913,7 @@ window.CC2_ELEM=/*__ELEM_ICONS__*/{};
 const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',fl:2,up:'br',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
-  const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar());
+  const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
   const s2={id:'cc2-low',name:'行秋',set:'絶縁の旗印4',eff:['ATK%','CR','CD','ER'],date:'見本',pieces:{
     flower:P('HP',[['CR',[1,2,1]],['CD',[0,1]],['DEF',[2]],['EM',[1]]]),
     plume:P('ATK',[['ATK%',[0,1]],['CR',[2,1]],['DEF%',[1]],['EM',[3]]]),
@@ -926,6 +926,7 @@ function cc2Samples(){ // 見本（実在のプレイヤーのデータではな
     sands:P('ER',[['CR',[3,3,2]],['CD',[3,3,3]],['ATK%',[2,3]],['DEF',[0]]]),
     goblet:P('DMG_雷',[['CR',[3,3,3]],['CD',[3,3,3,3]],['ATK%',[2]],['HP',[3]]]),
     circlet:P('CR',[['CD',[3,3,2,2,2]],['ATK%',[3]],['ER',[2,3]],['DEF',[0]]])}};
+  PS2(s2,'絶縁の旗印','circlet','剣闘士のフィナーレ'); PS2(s100,'絶縁の旗印','circlet','剣闘士のフィナーレ');
   return [{c:sm,l:'見本：フリーナ（★5）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'}]; }
 // 新しいカード用の立ち絵の切り出し：fitCardArt と同じ切り出しで、減光（下へ薄く・外周を丸く薄く）を焼き込まない。端はカードの側で溶かす
 function fitCardArt2(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
@@ -1515,7 +1516,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     if(BARS) for(let k=0;k<EN;k++) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'});
     SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), pim=c.pimg&&c.pimg[s], y1=Y+(BRH?25:33);
       g+=LN(rx,Y+4,RE,Y+4,'#c9b98f',.12,1);
-      const rid=typeof RELICS!=='undefined'&&eq?(p.setId||RELICS[(String(c.set||'').split('＋').map(z=>/^(.+?)4$/.exec(z.trim())).find(Boolean)||[])[1]]):null, rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
+      const rid=typeof RELICS!=='undefined'&&eq?(p.setId||(p.set&&RELICS[p.set])||null):null, /* 部位ごとのセットが分かるときだけ絵を出す（4セットの名前からの推測はしない：自由枠の1個まで4セットに見えてしまうため） */ rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
       g+=`<g transform="translate(${rx+16},${y1-5})">${pim?`<image href="${pim}" x="-15" y="-15" width="30" height="30" preserveAspectRatio="xMidYMid slice" clip-path="url(#ccP${k})"/>`:rimg?`<image href="${rimg}" x="-19" y="-19" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>`:slotIcon(s,0,0,18,'#8a93a6')}${rimg&&!pim?'':`<circle r="15" fill="none" stroke="#c9b98f" stroke-opacity=".4" stroke-width="1"/>`}</g>`;
       g+=`<text x="${SX}" y="${y1}" font-family='${sans}' font-size="11" fill="#9aa6bb">${SLOT_JP[s]}<tspan dx="8" font-size="15" font-weight="700" fill="${eq?'#e6dfcf':'#ff9b8a'}">${eq?esc(MAIN_SHORT(p.main)):'未装備'}</tspan>${eq&&p.lv!=null&&+p.lv<20?`<tspan dx="8" font-family='${mono}' font-size="12" font-weight="700" fill="#e8a15a">+${+p.lv}</tspan>`:''}${UPM==='row'&&eq?`<tspan dx="14" font-size="10" fill="#8a93a6">1か月で更新 <tspan font-family='${mono}' font-size="11.5" font-weight="${PS[k]===PSB&&PSB>0?700:400}" fill="${PS[k]===PSB&&PSB>0?'#f3ead6':'#cfd4e6'}">${FPc(PS[k])}</tspan></tspan>`:''}</text>`;
       const b=BADGE(RE,y1-5,25,d); g+=b.s;
@@ -1553,7 +1554,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     if(LV==='E'||LV==='F'||LV==='G'){ // 2次元のグラフ（G は立ち絵を左上・分析を右隣・グラフを左下に横長）：横＝秘境を回った期間、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
       // 切り替え（window.CC2_OPT）：ov＝全体の★と値の置き場（pt 点のそば／hdr 右上／ttl グラフの見出し／axis 横軸の読み）、xs＝横軸（band 段ごとに等幅／log 対数／lin 線形）、pz＝立ち絵との重なり（none／fade 溶かす／glass すりガラスの板／side 立ち絵を右へ）
       const O=window.CC2_OPT||{}, G3=LV==='G', OV=G3?'hdr':(O.ov||'pt'), XS=O.xs||'band', PZ=G3?'grid':(O.pz||'none'), WH=G3&&O.fl===2, f1=v=>(+v).toFixed(1);
-      const GX0=PZ==='side'?62:G3?76:70, GX1=PZ==='side'?372:G3?(WH&&UPM!=='br'?398:616):606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?(WH?414:436):318, GY1=OV==='axis'?552:G3?588:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
+      const GX0=PZ==='side'?62:G3?76:70, GX1=PZ==='side'?372:G3?(WH&&UPM!=='br'?398:616):606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?(WH?408:436):318, GY1=OV==='axis'?552:G3?572:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
       const ESI=f=>{ const x=Math.min(EN-1e-9,Math.max(0,f*EN)), k=Math.floor(x), lo=Math.log(Math.max(1,EB[k])), hi=Math.log(EB[k+1]); return Math.exp(lo+(x-k)*(hi-lo)); };
       const LMX=Math.log(EB[EN]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
       const XF=XS==='log'?(d=>d>0?Math.min(1,Math.log(Math.max(1,d))/LMX):0):XS==='lin'?(d=>Math.min(1,Math.max(0,d)/DMX)):ES, XI=XS==='log'?(f=>Math.exp(f*LMX)):XS==='lin'?(f=>Math.max(1e-3,f*DMX)):ESI, GXp=d=>GX0+XF(d)*(GX1-GX0);
@@ -1593,28 +1594,37 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const N=160, fs=[...Array(N+1)].map((_,i)=>i/N), ds=fs.map(XI), sl=SLOTS.map(s=>ds.map(d=>st.slots[s].M.mean(d))), cum=[]; let acc=ds.map(()=>0);
       sl.forEach(a=>{ acc=acc.map((v,i)=>v+a[i]); cum.push(acc); });
       const PL=arr=>arr.map((r,i)=>`${f1(GX0+fs[i]*(GX1-GX0))},${f1(GYp(r))}`);
-      // 目盛り：段の境目（縦の細線、★5+より先は点線）、上限（横の点線）、RVの目盛り
+      // 目盛り：段の境目（縦の細線、★5+より先は点線）、上限（横の点線）、RVの目盛り。G は文字を大きく、段ごとの淡い縞・曲線の下の金の光・読み取りの札で「目を引く」形に（色はカードの枠と同じ金だけ）
+      const BG=G3, FA=BG?9.5:7.5, FLb=BG?10.5:8, FB=BG?11.5:9, FE=BG?9:7, ACC='#e9d39a', py0=age>0?GYp(st.tot):null;
       const BX=[...Array(EN+1)].map((_,i)=>GX0+XF(EB[i])*(GX1-GX0)); BX[0]=GX0;
+      if(BG){ g+=`<defs><linearGradient id="c2Area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ACC}" stop-opacity=".26"/><stop offset="1" stop-color="${ACC}" stop-opacity="0"/></linearGradient><linearGradient id="c2Curve" gradientUnits="userSpaceOnUse" x1="${GX0}" x2="${GX1}" y1="0" y2="0"><stop offset="0" stop-color="#cfd4e6"/><stop offset="1" stop-color="#f6e2a8"/></linearGradient></defs>`;
+        for(let k=0;k<EN;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
       for(let i=1;i<EN;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
-      const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=5)||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+TX(GX0-6,GYp(r)+3,r.toLocaleString('en-US'),{a:'end',fs:7.5,c:'#6f7a8e',m:1});
-      g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+TX(GX0-6,GY0+3,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:7.5,c:'#9aa6bb',m:1})+TX(GX0+4,GY0-5,'上限（この装備で届く有効RVの最大）',{fs:8,c:'#8a93a6'});
-      g+=LN(GX0,GY1,GX1,GY1,'#fff',.3,1)+LN(GX0,GY0,GX0,GY1,'#fff',.2,1)+TX(GX0-6,GY0-16,'有効RV %',{a:'end',fs:8,c:'#8a93a6'});
-      // 横軸の文字：読みのかたまり（axis）と重なるものは出さない
-      const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, hideX=x=>axL!=null&&x>axL-14&&x<axL+o0.w+14;
-      for(let k=0;k<EN;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+14,ELB[k],{a:'middle',fs:9,fw:700,c:'#8a93a6'}); }
-      { let last=-99; for(let i=1;i<EN;i++){ const x=BX[i]; if(x>GX1-1||x-last<20||hideX(x)) continue; last=x; g+=TX(x,GY1+25,EMO[i-1],{a:'middle',fs:7,c:'#6f7a8e',m:1}); } }
-      if(XS==='lin'&&!hideX(GX1)) g+=TX(GX1,GY1+25,MOP(DMX),{a:'end',fs:7,c:'#6f7a8e',m:1});
-      g+=TX(GX1,GY1+36,'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:7.5,c:'#6f7a8e'});
+      const nearY=y=>BG&&py0!=null&&Math.abs(y-py0)<13;
+      const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=(BG?4:5))||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||GYp(r)-GY0<12?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
+      g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'});
+      g+=LN(GX0,GY1,GX1,GY1,'#fff',.3,1)+LN(GX0,GY0,GX0,GY1,'#fff',.2,1)+TX(GX0-6,GY0-(BG?20:16),'有効RV %',{a:'end',fs:FLb,c:'#9aa6bb'});
+      // 横軸の文字：読みのかたまり（axis）・読み取りの札と重なるものは出さない
+      const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, xc=BG&&px!=null?{w:UTW(fmtAge(age),10.5*.6,10.5)+18}:null, xcL=xc?Math.max(GX0-30,Math.min(GX1+24-xc.w,px-xc.w/2)):null,
+        hideX=x=>(axL!=null&&x>axL-14&&x<axL+o0.w+14)||(xcL!=null&&x>xcL-16&&x<xcL+xc.w+16);
+      for(let k=0;k<EN;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:'#9aa6bb'}); }
+      { let last=-99; for(let i=1;i<EN;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideX(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
+      if(XS==='lin'&&!hideX(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
+      g+=TX(GX1,GY1+(BG?42:36),'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
       // 曲線
       if(LV==='E'||G3){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
-          const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-9,(yt+yb)/2,Math.min(12,yb-yt-2),'#cfc6ae'); }); }
+          const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-10,(yt+yb)/2,Math.min(BG?14:12,yb-yt-2),'#cfc6ae'); }); }
       else g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="${CREAM}" fill-opacity=".08"/>`;
-      g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
+      if(BG) g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="url(#c2Area)"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${ACC}" stroke-opacity=".35" stroke-width="6" stroke-linejoin="round" filter="url(#ccSoft)"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="2.4" stroke-linejoin="round"/>`;
+      else g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
       // 原神のリリースから毎日回った線
-      { const x=GXp(REL), lf=x+165>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="8" fill="${RELC}">${REL_T}</text>`; }
-      // あなた：有効RVの横線が曲線とぶつかる点 → 真下が秘境レベル
-      if(age>0){ const py=GYp(st.tot); g+=LN(GX0,py,px,py,'#fff',.55,1,' stroke-dasharray="2 2.5"')+LN(px,py,px,OV==='axis'?GY1+8:GY1,'#fff',.55,1,' stroke-dasharray="2 2.5"')+MARK(px,py);
-        g+=TX(GX0+4,py-4,`あなたの有効RV ${Math.round(st.tot)}%`,{fs:8,c:'#cfd4e6'});
+      { const x=GXp(REL), lf=x+(BG?190:165)>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="${BG?9.5:8}" fill="${RELC}">${REL_T}</text>`; }
+      // あなた：有効RVの横線が曲線とぶつかる点 → 真下が秘境レベル。G は縦軸・横軸に読み取りの札
+      if(age>0){ const py=py0; g+=LN(GX0,py,px,py,'#fff',BG?.7:.55,1,' stroke-dasharray="2 2.5"')+LN(px,py,px,OV==='axis'?GY1+8:GY1,'#fff',BG?.7:.55,1,' stroke-dasharray="2 2.5"');
+        if(BG){ const CH=(x,y,w,t)=>`<rect x="${f1(x)}" y="${f1(y-9.5)}" width="${f1(w)}" height="19" rx="4" fill="#0b0e22" stroke="${ACC}" stroke-opacity=".75" stroke-width="1"/><text x="${f1(x+w/2)}" y="${f1(y+4)}" text-anchor="middle" font-family='${mono}' font-size="10.5" font-weight="700" fill="#f3ead6">${t}</text>`, yt=Math.round(st.tot).toLocaleString('en-US')+'%', yw=yt.length*6.6+14;
+          g+=`<circle cx="${f1(px)}" cy="${f1(py)}" r="14" fill="${ACC}" opacity=".22" filter="url(#ccSoft)"/><circle cx="${f1(px)}" cy="${f1(py)}" r="8" fill="none" stroke="${ACC}" stroke-opacity=".8" stroke-width="1.2"/><circle cx="${f1(px)}" cy="${f1(py)}" r="4.2" fill="#fff"/>`+TX(px+12,py-10,'あなた',{fs:10.5,fw:700,c:'#f3ead6'});
+          g+=CH(GX0-4-yw,py,yw,yt)+CH(xcL,GY1+12,xc.w,UHT(fmtAge(age),10.5,null)); }
+        else g+=MARK(px,py)+TX(GX0+4,py-4,`あなたの有効RV ${Math.round(st.tot)}%`,{fs:8,c:'#cfd4e6'});
         if(OV==='pt'){ const below=py+78<GY1, x0=below?Math.max(40,Math.min(630-o0.w,px+16)):Math.max(40,Math.min(630-o0.w,px-o0.w/2)), yc=below?py+42:Math.max(150,py-(MYTH(age)?72:52)); g+=OVR(x0,yc).s; }
         if(OV==='ttl') g+=OVR(GX0-8,GY0-(MYTH(age)?66:52)).s;
         if(OV==='axis') g+=`<path d="M${f1(px-6)},${GY1+8} L${f1(px)},${GY1+2} L${f1(px+6)},${GY1+8} Z" fill="#fff" fill-opacity=".8"/>`+OVR(axL,GY1+32).s;
