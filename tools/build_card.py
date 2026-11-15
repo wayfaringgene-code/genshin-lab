@@ -909,7 +909,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    右＝部位の★の札が主役の5行（値は白系で裏付け、棒は5行で縮尺をそろえる、サブOPは枠なしの小さな文字）
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
-const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',list:[]}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',fl:0,list:[]}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar());
@@ -936,10 +936,11 @@ function cc2Proto(){ if($('cc2Proto')) return;
   const box=cardEl('div',{class:'cc2-proto',id:'cc2Proto'}), B=(k,v,t,on)=>`<button class="btn" type="button" data-${k}="${v}" aria-pressed="${on}">${t}</button>`;
   const draw=()=>{ const it=CC2.list[CC2.ci]||CC2.list[0], cc=it.c, st=charStats(cc), vs=CC2.v==='all'?CC2_VS.map(x=>x[0]):[CC2.v];
     applyBundled(cc); if(CARD_IMG[cc.id]&&!(cc.id in CARD_FIT)&&!CARD_FITTING[cc.id]){ CARD_FITTING[cc.id]=1; fitCardArt(CARD_IMG[cc.id],CARD_ZOOM[cc.id]).then(u=>{ delete CARD_FITTING[cc.id]; CARD_FIT[cc.id]=u||''; if($('cc2Proto')) draw(); }); }
-    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz}; return constellationCardSVG(cc,st,'v2'); };
+    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl}; return constellationCardSVG(cc,st,'v2'); };
     box.innerHTML=`<div class="cc2-bar"><div class="row"><b>カードのデザインの見直し（試作）</b><span class="note">保存はしません</span><button class="btn" type="button" data-x style="margin-left:auto">閉じる</button></div>
       <div class="row">${[...CC2_VS,['NOW','今のカード'],['all','4案を並べる'],['SHEET','バッジ一覧']].map(([k,t])=>B('v',k,t,CC2.v===k)).join('')}</div>
       <div class="row">バッジ ${CC2_BS.map(([k,t])=>B('b',k,t,CC2.b===k)).join('')}　余白 ${B('tg',0,'標準',!CC2.tight)}${B('tg',1,'詰める',!!CC2.tight)}</div>
+      <div class="row">G の立ち絵 ${B('fl',0,'枠',!CC2.fl)}${B('fl',1,'枠なし',!!CC2.fl)}</div>
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
       <div class="row">横軸 ${[['band','段ごとに等幅'],['log','対数'],['lin','線形']].map(([k,t])=>B('xs',k,t,CC2.xs===k)).join('')}　立ち絵 ${[['none','そのまま'],['fade','溶かす'],['glass','すりガラス'],['side','右へずらす']].map(([k,t])=>B('pz',k,t,CC2.pz===k)).join('')}</div>
       <div class="row"><select data-ci aria-label="キャラ">${CC2.list.map((x,i)=>`<option value="${i}"${i===CC2.ci?' selected':''}>${esc(x.l)}</option>`).join('')}</select></div></div>
@@ -947,6 +948,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
     box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ CC2.v=b.dataset.v; draw(); });
     box.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{ CC2.b=b.dataset.b; draw(); });
     box.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{ CC2.tight=+b.dataset.tg; draw(); });
+    box.querySelectorAll('[data-fl]').forEach(b=>b.onclick=()=>{ CC2.fl=+b.dataset.fl; draw(); });
     ['ov','xs','pz'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
     box.querySelector('[data-ci]').onchange=e=>{ CC2.ci=+e.target.value; draw(); };
     box.querySelector('[data-x]').onclick=()=>box.remove(); };
@@ -1505,13 +1507,14 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       else if(PZ!=='grid'){ const strong=PZ==='fade'||PZ==='side'; g+=`<defs><linearGradient id="c2Fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060d" stop-opacity="0"/><stop offset="${strong?.42:.3}" stop-color="#05060d" stop-opacity="${strong?.94:.72}"/><stop offset="1" stop-color="#05060d" stop-opacity="${strong?.96:.88}"/></linearGradient></defs>`+(PZ==='side'?'':`<rect x="22" y="${GY0-(strong?150:90)}" width="626" height="${H-50-GY0+(strong?152:92)}" fill="url(#c2Fade)"/>`);
         if(PZ==='side') g+=`<defs><linearGradient id="c2FadeX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#05060d" stop-opacity=".9"/><stop offset=".7" stop-color="#05060d" stop-opacity=".75"/><stop offset="1" stop-color="#05060d" stop-opacity="0"/></linearGradient></defs><rect x="22" y="${GY0-50}" width="${GX1+20}" height="${H-50-GY0+50}" fill="url(#c2FadeX)"/>`; }
       if(G3){ // 立ち絵は左上の枠に収める。右隣に分析（次の★まで／1か月で更新できる見込み／有効OPごとの伸び）
-        const PW=390, PH=364, PX=183-PW/2, PY=259-PH/2; /* 枠（306×286）より少し大きく描いて、枠で切る（立ち絵の画像の余白を詰める） */ g=g.replace(/(<image id="ccArtImg"[^>]*? x=")[-\d.]+(" y=")[-\d.]+(" width=")600(" height=")560"/,(m,a,b2,c2,d2)=>`${a}${PX}${b2}${PY}${c2}${PW}${d2}${PH}" clip-path="url(#c2Por)"`).replace(`<rect width="${W}" height="${H}" fill="url(#ccVig)"/>`,'');
-        g+=`<defs><clipPath id="c2Por"><rect x="30" y="116" width="306" height="286" rx="10"/></clipPath></defs><rect x="30" y="116" width="306" height="286" rx="10" fill="none" stroke="#e9d39a" stroke-opacity=".22"/>`;
+        const FL=!!(window.CC2_OPT||{}).fl, PW=FL?520:390, PH=FL?486:364, PX=FL?200-PW/2:183-PW/2, PY=FL?272-PH/2:259-PH/2; /* 枠：306×286 の枠より少し大きく描いて枠で切る／枠なし：名前の下からグラフの手前まで縦いっぱいに描き、右と下を暗く溶かす */ g=g.replace(/(<image id="ccArtImg"[^>]*? x=")[-\d.]+(" y=")[-\d.]+(" width=")600(" height=")560"/,(m,a,b2,c2,d2)=>`${a}${PX}${b2}${PY}${c2}${PW}${d2}${PH}"${FL?'':' clip-path="url(#c2Por)"'}`).replace(`<rect width="${W}" height="${H}" fill="url(#ccVig)"/>`,''); if(FL) g=g.replace(/<image id="ccArtImg"[^>]*\/>/,m=>`<g mask="url(#c2MY)"><g mask="url(#c2MX)">${m}</g></g>`);
+        if(FL) g+=`<defs><linearGradient id="c2GX" gradientUnits="userSpaceOnUse" x1="22" x2="648" y1="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset=".42" stop-color="#fff"/><stop offset=".6" stop-color="#000"/></linearGradient><linearGradient id="c2GY" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="104" y2="440"><stop offset="0" stop-color="#000"/><stop offset=".08" stop-color="#fff"/><stop offset=".76" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="c2MX" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="url(#c2GX)"/></mask><mask id="c2MY" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="url(#c2GY)"/></mask></defs>`;
+        else g+=`<defs><clipPath id="c2Por"><rect x="30" y="116" width="306" height="286" rx="10"/></clipPath></defs><rect x="30" y="116" width="306" height="286" rx="10" fill="none" stroke="#e9d39a" stroke-opacity=".22"/>`;
         const IX=352, IX1=636, SEC=(t,y)=>`<text x="${IX}" y="${y}" font-family='${sans}' font-size="9.5" font-weight="700" letter-spacing=".12em" fill="#9aa6bb">${t}</text>`, BAR=(x0,x1,y,f,w=3)=>LN(x0,y,x1,y,'#fff',.12,w,' stroke-linecap="round"')+(f>0?LN(x0,y,x0+(x1-x0)*Math.min(1,f),y,CREAM,.8,w,' stroke-linecap="round"'):'');
         // 1. これから1か月で更新できる見込み（どこか1部位でも／部位ごと）。部位の秘境レベルの言い直しに近いが、「次にどこを回るか」の向きの数字として残す
         { const pa=upProbAll(st,30), ps=SLOTS.map(s2=>upProb(st.slots[s2],30)), cw=(IX1-IX)/5, FP=p0=>p0>=.995?'>99%':p0<.005?(p0<=0?'0%':'<1%'):Math.round(p0*100)+'%';
           g+=SEC('これから1か月で更新できる見込み',134)+`<text x="${IX}" y="164" font-family='${mono}' font-size="24" font-weight="700" fill="#f3ead6">${FP(pa)}<tspan dx="10" font-family='${sans}' font-size="10" font-weight="400" fill="#8a93a6">どこか1部位でも、いまより良い1個が出る確率</tspan></text>`;
-          SLOTS.forEach((s2,j)=>{ const x=IX+j*cw, best=ps[j]===Math.max(...ps)&&ps[j]>0; g+=slotIcon(s2,x+6,186,11,best?'#f3ead6':'#8a93a6')+`<text x="${x+15}" y="190" font-family='${mono}' font-size="10" font-weight="${best?700:400}" fill="${best?'#f3ead6':'#9aa6bb'}">${FP(ps[j])}</text>`+BAR(x+2,x+cw-8,200,ps[j]/Math.max(.01,...ps),2); }); }
+          SLOTS.forEach((s2,j)=>{ const x=IX+j*cw, best=ps[j]===Math.max(...ps)&&ps[j]>0; g+=slotIcon(s2,x+6,186,11,best?'#f3ead6':'#8a93a6')+`<text x="${x+15}" y="190" font-family='${mono}' font-size="10" font-weight="${best?700:400}" fill="${best?'#f3ead6':'#9aa6bb'}">${FP(ps[j])}</text>`+BAR(x+2,x+cw-8,200,ps[j],2); }); }
         // 2. 有効OPごとの伸び（5部位のサブOPの合計値・強化で伸びた回数（最初の1回は除く。右の行の点と同じ）・1回あたりの伸び）。最後に合計の行
         { const effL=(c.eff||[]).filter(k=>ROLL[k]), cols=[IX,IX+142,IX+214,IX1]; let UP=0, UA=0, NA=0, UU=0;
           SLOTS.forEach(s2=>{ const x=st.slots[s2]; if(x.est&&x.est.ok) UA+=x.est.four?5:4; });
