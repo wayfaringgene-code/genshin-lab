@@ -997,6 +997,8 @@ CSS_INV = r"""
 .ia-who .tag2 .tip .cmp i{font-style:normal; color:var(--muted); text-align:right; white-space:nowrap} .ia-who .tag2 .tip .cmp i.k{text-align:left} .ia-who .tag2 .tip .cmp i.h{font-size:10.5px}
 .ia-who .tag2 .tip .cmp i.on{color:var(--ink)} .ia-who .tag2 .tip .cmp i.ar{color:var(--muted); opacity:.7; padding:0 2px}
 .ia-who .tag2 .tip .cmp i.up{color:var(--ok); font-weight:700} .ia-who .tag2 .tip .cmp i.dn{color:var(--ng); font-weight:700} .ia-who .tag2 .tip .cmp i.chg{color:#ffd27a}
+.ia-who .fxl{display:block; margin:6px 0 1px; font-size:11px; letter-spacing:.06em; color:var(--muted)}
+.ia-who .tag2.cc.fx{padding:1px 8px 1px 2px; font-size:11px; border-style:dashed} .ia-who .tag2.cc.fx .cico{width:20px; height:20px}
 .ia-who .tag2.cc.alt .st{color:var(--muted)} .ia-who .tag2.cc.alt .nm{color:var(--ink2)}
 .ia-who .tag2 .tip .cmp.c5{grid-template-columns:auto auto auto auto auto} .ia-who .tag2 .tip .cmp i.pr{color:var(--ink2); font-size:11.5px}
 .ia-who .tag2 .tip .cmp i.up small,.ia-who .tag2 .tip .cmp i.dn small{color:inherit}
@@ -1127,8 +1129,8 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBe
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
       const dm=own?null:dmgCompare(c,a,f);
-      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),fs:fs&&fs.slot===a.slot?fs:null,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr,f,M}; }
-    const ord=u=>u.own?2:u.sw&&u.sw.alt?-1+u.pb/10:u.pb; us.sort((x,y)=>ord(y)-ord(x)); info.set(a,{us,pot,lv}); }
+      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),fs:fs&&fs.slot===a.slot?fs:null,fx,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr,f,M}; }
+    const ord=u=>u.own?2:u.fx?-3+u.pb/10:u.sw&&u.sw.alt?-1+u.pb/10:u.pb; us.sort((x,y)=>ord(y)-ord(x)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 // いまのセットの状態と、この1個に替えたとき：
 //   null＝ふつうの更新（いまこのセットの4セット、または替えると4セットになる＝mk）
@@ -1311,8 +1313,8 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const est=x.lv<20, right=p?`<span class="cap">${est?'+20で平均的に伸びたら':'いまの実力'}${invQm(x,p)}</span><span class="big${est?' est':''}">${t?rankBadge(t,est):''}<b title="${est?'+20で平均の有効RV':'有効RV'} ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span>${est&&t?`<span class="prk">${esc(t[1])}${TIERS.indexOf(t)<TIERS.length-1?'以上':''}になる確率 <b>${pctTxt(potRankP(p,t))}</b></span>`:''}<span class="scl">スコア ${est?'平均 ':''}${(est?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
-    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own',u.fs?'装備中（自由枠）':'装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`${u.fs?'自由枠 ':''}更新 <b>${pctTxt(u.pb)}</b>`];
-      return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
+    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map((u,i)=>{ const st=u.own?['own',u.fs?'装備中（自由枠）':'装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
+      return (u.fx&&!(i&&x.us[i-1].fx)?`<span class="fxl">${x.us.some(v=>!v.fx)?'自由枠でも使えるキャラ':'4セットで使うキャラはいません。自由枠でなら使えるキャラ'}</span>`:'')+`<button class="tag2 cc ${st[0]}${u.fx?' fx':''}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&!(u.sw&&u.sw.alt)&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
