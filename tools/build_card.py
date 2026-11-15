@@ -909,7 +909,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    右＝部位の★の札が主役の5行（値は白系で裏付け、棒は5行で縮尺をそろえる、サブOPは枠なしの小さな文字）
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
-const CC2={v:'E',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',list:[]}, CC2_VS=[['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',list:[]}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar());
@@ -1464,10 +1464,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     const LN=(x1,y1,x2,y2,c,op,w,ex='')=>`<line x1="${(+x1).toFixed(1)}" y1="${(+y1).toFixed(1)}" x2="${(+x2).toFixed(1)}" y2="${(+y2).toFixed(1)}" stroke="${c}" stroke-opacity="${op}" stroke-width="${w}"${ex}/>`;
     const CREAM='#e6dfcf', RELC='#a9bddc', age=st.age>0?st.age:0;
     // ---- 右上：部位の見出し（全体の★と値は左の物差しへ移した） ----
-    g+=TX(rx,58,(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)?'秘境レベル':'部位ごとの秘境レベル',{fs:12,c:'#9aa6bb'}).replace('<text ','<text letter-spacing=".15em" ');
+    g+=TX(rx,58,(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)||LV==='G'?'秘境レベル':'部位ごとの秘境レベル',{fs:12,c:'#9aa6bb'}).replace('<text ','<text letter-spacing=".15em" ');
     g+=`<text x="${RE}" y="58" text-anchor="end" font-family='${sans}' font-size="12" fill="#9aa6bb">有効RV <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${Math.round(st.tot)}%</tspan>　スコア <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${st.score.toFixed(1)}</tspan></text>`;
     // ---- 右：5部位の行（2秒目＝部位の★の札、3秒目＝値と棒、最後＝サブOP） ----
-    const SUBN={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}, effS=new Set(c.eff), BARS=true, RT=(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)?132:96, RH=(H-50-RT)/5, SX=rx+44, bx0=SX, bx1=RE, BX=d=>bx0+ES(d)*(bx1-bx0), bw=(bx1-bx0)/EN;
+    const SUBN={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}, effS=new Set(c.eff), BARS=true, RT=(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)||LV==='G'?132:96, RH=(H-50-RT)/5, SX=rx+44, bx0=SX, bx1=RE, BX=d=>bx0+ES(d)*(bx1-bx0), bw=(bx1-bx0)/EN;
     if(BARS) for(let k=0;k<EN;k++) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'});
     SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), pim=c.pimg&&c.pimg[s], y1=Y+33;
       g+=LN(rx,Y+4,RE,Y+4,'#c9b98f',.12,1);
@@ -1489,12 +1489,12 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     const REL_T=`原神のリリースから毎日回ると <tspan font-family='${mono}' font-weight="700" fill="${RELC}">${UHT(fmtAge(REL),8.5,null)}</tspan>`;
     g+=`<defs><filter id="c2Blur" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="9"/></filter></defs>`;
     // 全体のかたまり：★の札＋値（MONTHS）。x0＝左端、yc＝札の中心。下に激レアの呼び名
-    const OVR=(x0,yc)=>{ const b=BADGE(x0,yc,42,age,{left:1}), txt=fmtAge(st.age), nx=x0+(b.w?b.w+14:0), nw=UTW(txt,34*.58,34)*.97, ML=MYTH(age), W2=nx-x0+nw;
-      return {w:W2, s:`<rect x="${x0-14}" y="${yc-34}" width="${W2+28}" height="${ML?84:68}" rx="16" fill="#05060d" opacity=".72" filter="url(#c2Blur)"/>`+b.s+`<text x="${nx}" y="${(yc+12).toFixed(1)}" font-family='${mono}' font-size="34" font-weight="600" fill="#f3ead6" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${UHT(txt,34,null)}</text>`+(ML?MTX(x0,yc+40,ML,'start'):'')}; };
-    if(LV==='E'||LV==='F'){ // 2次元のグラフ：横＝秘境を回った期間、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
+    const OVR=(x0,yc,noML)=>{ const b=BADGE(x0,yc,42,age,{left:1}), txt=fmtAge(st.age), nx=x0+(b.w?b.w+14:0), nw=UTW(txt,34*.58,34)*.97, ML=MYTH(age), W2=nx-x0+nw;
+      return {w:W2, s:`<rect x="${x0-14}" y="${yc-34}" width="${W2+28}" height="${ML?84:68}" rx="16" fill="#05060d" opacity=".72" filter="url(#c2Blur)"/>`+b.s+`<text x="${nx}" y="${(yc+12).toFixed(1)}" font-family='${mono}' font-size="34" font-weight="600" fill="#f3ead6" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${UHT(txt,34,null)}</text>`+(ML&&!noML?MTX(x0,yc+40,ML,'start'):'')}; };
+    if(LV==='E'||LV==='F'||LV==='G'){ // 2次元のグラフ（G は立ち絵を左上・分析を右隣・グラフを左下に横長）：横＝秘境を回った期間、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
       // 切り替え（window.CC2_OPT）：ov＝全体の★と値の置き場（pt 点のそば／hdr 右上／ttl グラフの見出し／axis 横軸の読み）、xs＝横軸（band 段ごとに等幅／log 対数／lin 線形）、pz＝立ち絵との重なり（none／fade 溶かす／glass すりガラスの板／side 立ち絵を右へ）
-      const O=window.CC2_OPT||{}, OV=O.ov||'pt', XS=O.xs||'band', PZ=O.pz||'none', f1=v=>(+v).toFixed(1);
-      const GX0=PZ==='side'?62:70, GX1=PZ==='side'?372:606, GY0=PZ==='side'?(OV==='ttl'?236:196):318, GY1=OV==='axis'?552:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
+      const O=window.CC2_OPT||{}, G3=LV==='G', OV=G3?'hdr':(O.ov||'pt'), XS=O.xs||'band', PZ=G3?'grid':(O.pz||'none'), f1=v=>(+v).toFixed(1);
+      const GX0=PZ==='side'?62:G3?76:70, GX1=PZ==='side'?372:G3?616:606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?418:318, GY1=OV==='axis'?552:G3?588:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
       const ESI=f=>{ const x=Math.min(EN-1e-9,Math.max(0,f*EN)), k=Math.floor(x), lo=Math.log(Math.max(1,EB[k])), hi=Math.log(EB[k+1]); return Math.exp(lo+(x-k)*(hi-lo)); };
       const LMX=Math.log(EB[EN]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
       const XF=XS==='log'?(d=>d>0?Math.min(1,Math.log(Math.max(1,d))/LMX):0):XS==='lin'?(d=>Math.min(1,Math.max(0,d)/DMX)):ES, XI=XS==='log'?(f=>Math.exp(f*LMX)):XS==='lin'?(f=>Math.max(1e-3,f*DMX)):ESI, GXp=d=>GX0+XF(d)*(GX1-GX0);
@@ -1502,8 +1502,31 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       if(PZ==='side'){ g=g.replace(/(<image id="ccArtImg"[^>]*? x=")([-\d.]+)"/,(m,a,x)=>a+(+x+130)+'"').replace('<stop offset=".33" stop-color="#05060d" stop-opacity="0"/><stop offset=".56"','<stop offset=".45" stop-color="#05060d" stop-opacity="0"/><stop offset=".6"'); }
       if(PZ==='glass'){ const px0=GX0-52, py0=GY0-(OV==='ttl'?96:40), pw=GX1-px0+22, ph=GY1+(OV==='axis'?70:46)-py0, im=(g.match(/<image id="ccArtImg"[^>]*\/>/)||[''])[0];
         g+=`<defs><clipPath id="c2Glass"><rect x="${px0}" y="${py0}" width="${pw}" height="${ph}" rx="14"/></clipPath><filter id="c2Frost" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="10"/></filter></defs>`+(im?`<g clip-path="url(#c2Glass)">${im.replace(' id="ccArtImg"','').replace(/filter="[^"]*"/,'filter="url(#c2Frost)"')}</g>`:'')+`<rect x="${px0}" y="${py0}" width="${pw}" height="${ph}" rx="14" fill="#0b0e22" fill-opacity=".62" stroke="#e9d39a" stroke-opacity=".22"/>`; }
-      else { const strong=PZ==='fade'||PZ==='side'; g+=`<defs><linearGradient id="c2Fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060d" stop-opacity="0"/><stop offset="${strong?.42:.3}" stop-color="#05060d" stop-opacity="${strong?.94:.72}"/><stop offset="1" stop-color="#05060d" stop-opacity="${strong?.96:.88}"/></linearGradient></defs>`+(PZ==='side'?'':`<rect x="22" y="${GY0-(strong?150:90)}" width="626" height="${H-50-GY0+(strong?152:92)}" fill="url(#c2Fade)"/>`);
+      else if(PZ!=='grid'){ const strong=PZ==='fade'||PZ==='side'; g+=`<defs><linearGradient id="c2Fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060d" stop-opacity="0"/><stop offset="${strong?.42:.3}" stop-color="#05060d" stop-opacity="${strong?.94:.72}"/><stop offset="1" stop-color="#05060d" stop-opacity="${strong?.96:.88}"/></linearGradient></defs>`+(PZ==='side'?'':`<rect x="22" y="${GY0-(strong?150:90)}" width="626" height="${H-50-GY0+(strong?152:92)}" fill="url(#c2Fade)"/>`);
         if(PZ==='side') g+=`<defs><linearGradient id="c2FadeX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#05060d" stop-opacity=".9"/><stop offset=".7" stop-color="#05060d" stop-opacity=".75"/><stop offset="1" stop-color="#05060d" stop-opacity="0"/></linearGradient></defs><rect x="22" y="${GY0-50}" width="${GX1+20}" height="${H-50-GY0+50}" fill="url(#c2FadeX)"/>`; }
+      if(G3){ // 立ち絵は左上の枠に収める。右隣に分析（次の★まで／1か月で更新できる見込み／有効OPごとの伸び）
+        const PX=24, PY=112, PW=268, PH=250; g=g.replace(/(<image id="ccArtImg"[^>]*? x=")[-\d.]+(" y=")[-\d.]+(" width=")600(" height=")560"/,(m,a,b2,c2,d2)=>`${a}${PX}${b2}${PY}${c2}${PW}${d2}${PH}" clip-path="url(#c2Por)"`).replace(`<rect width="${W}" height="${H}" fill="url(#ccVig)"/>`,'');
+        g+=`<defs><clipPath id="c2Por"><rect x="30" y="116" width="238" height="250" rx="10"/></clipPath></defs><rect x="30" y="116" width="238" height="250" rx="10" fill="none" stroke="#e9d39a" stroke-opacity=".22"/>`;
+        const IX=290, IX1=636, SEC=(t,y)=>`<text x="${IX}" y="${y}" font-family='${sans}' font-size="9.5" font-weight="700" letter-spacing=".12em" fill="#9aa6bb">${t}</text>`, BAR=(x0,x1,y,f,w=3)=>LN(x0,y,x1,y,'#fff',.12,w,' stroke-linecap="round"')+(f>0?LN(x0,y,x0+(x1-x0)*Math.min(1,f),y,CREAM,.8,w,' stroke-linecap="round"'):'');
+        // 1. 次の★まで（物差しの次の段の始まりで、平均的な人の手持ちが届いている有効RV − いまの有効RV）
+        if(age>0&&isFinite(age)){ let kk=0; for(let i=0;i<EN;i++) if(age>=EB[i]) kk=i;
+          if(kk<EN-1){ const dN=EB[kk+1], need=Math.max(0,st.meanTot(dN)-st.tot), base=kk?st.meanTot(EB[kk]):0, pr=(st.tot-base)/Math.max(1,st.meanTot(dN)-base);
+            g+=SEC('次の★まで',134)+`<text x="${IX}" y="162" font-family='${sans}' font-size="12" fill="#cfd4e6">${ELB[kk+1]} まで あと<tspan dx="8" font-family='${mono}' font-size="22" font-weight="700" fill="#f3ead6">+${Math.round(need).toLocaleString('en-US')}%</tspan><tspan dx="8" font-size="10" fill="#8a93a6">有効RV・強化 約${Math.max(1,Math.ceil(need/85))}回ぶん</tspan></text>`+BAR(IX,IX1,174,pr); }
+          else g+=SEC('次の★まで',134)+`<text x="${IX}" y="162" font-family='${sans}' font-size="13" fill="#f3ead6">いちばん上の段です</text>`; }
+        // 2. これから1か月で更新できる見込み（どこか1部位でも／部位ごと）
+        { const pa=upProbAll(st,30), ps=SLOTS.map(s2=>upProb(st.slots[s2],30)), cw=(IX1-IX)/5;
+          g+=SEC('これから1か月で更新できる見込み',204)+`<text x="${IX}" y="230" font-family='${mono}' font-size="22" font-weight="700" fill="#f3ead6">${fmtProb(pa)}<tspan dx="8" font-family='${sans}' font-size="10" font-weight="400" fill="#8a93a6">どこか1部位でも、いまより有効RVの高い1個が出る確率</tspan></text>`;
+          SLOTS.forEach((s2,j)=>{ const x=IX+j*cw, best=ps[j]===Math.max(...ps)&&ps[j]>0; g+=slotIcon(s2,x+7,250,12,best?'#f3ead6':'#8a93a6')+`<text x="${x+18}" y="254" font-family='${mono}' font-size="10.5" font-weight="${best?700:400}" fill="${best?'#f3ead6':'#9aa6bb'}">${fmtProb(ps[j])}</text>`+BAR(x+2,x+cw-10,264,ps[j]/Math.max(.01,...ps),2); }); }
+        // 3. 有効OPごとの伸び（5部位のサブOPの合計・強化の回数・1回あたりの伸び・同じ期間の平均的な人との比べ（目安：サブOPの付きやすさで割り振り））
+        { const effL=(c.eff||[]).filter(k=>ROLL[k]), cols=[IX,IX+92,IX+158,IX+206,IX1];
+          g+=SEC('有効OPごとの伸び（5部位の合計）',290)+[['合計',cols[1]],['強化',cols[2]],['1回の伸び',cols[3]],['平均的な人と比べて',cols[4]]].map(([t,x])=>`<text x="${x}" y="306" text-anchor="end" font-family='${sans}' font-size="8.5" fill="#6f7a8e">${t}</text>`).join('');
+          effL.slice(0,4).forEach((k,ri)=>{ let v=0,n=0,u=0,exp=0; SLOTS.forEach(s2=>{ const pc=c.pieces[s2], x=st.slots[s2]; if(!pc||!pc.subs) return; const q=pc.subs.find(z=>z.s===k&&!z.off); if(q) v+=parseFloat(q.v)||0; const dd=x.est&&x.est.ok&&x.est.det.find(z=>z.s===k); if(dd){ n+=dd.n; u+=dd.u; }
+              const pool=effL.filter(e=>e!==pc.main), ws=pool.reduce((a2,e)=>a2+WEIGHT[e],0); if(k!==pc.main&&ws>0) exp+=x.M.mean(age)*WEIGHT[k]/ws; });
+            const y=324+ri*17, ev=exp/100*ROLL[k][3], rt=ev>0?v/ev-1:0, pct=!FLAT.has(k), vt=pct?v.toFixed(1)+'%':Math.round(v).toLocaleString('en-US');
+            g+=`<text x="${IX}" y="${y}" font-family='${sans}' font-size="11" fill="#d8d2c2">${SUBN[k]||k}</text><text x="${cols[1]}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="#f3ead6">+${vt}</text><text x="${cols[2]}" y="${y}" text-anchor="end" font-family='${mono}' font-size="11" fill="#cfd4e6">${n}回</text><text x="${cols[3]}" y="${y}" text-anchor="end" font-family='${mono}' font-size="11" fill="#cfd4e6">${n?Math.round(u*10/n)+'%':'—'}</text>`;
+            const bx0=cols[3]+20, bx1=cols[4]-44, mid=(bx0+bx1)/2, f=Math.max(-1,Math.min(1,rt)), xe=mid+f*(bx1-bx0)/2;
+            g+=LN(mid,y-9,mid,y+2,'#fff',.3,1)+LN(mid,y-3.5,xe,y-3.5,CREAM,rt>=0?.8:.4,4)+`<text x="${cols[4]}" y="${y}" text-anchor="end" font-family='${mono}' font-size="10.5" fill="${rt>=0?'#f3ead6':'#8a93a6'}">${rt>=0?'▲':'▼'}${Math.abs(Math.round(rt*100))}%</text>`; });
+          g+=`<text x="${IX1}" y="${330+Math.min(4,effL.length)*17}" text-anchor="end" font-family='${sans}' font-size="7.5" fill="#6f7a8e">平均的な人＝同じ期間（${MOP(age||0)} MONTHS）秘境を回った人の目安</text>`; } }
       const N=160, fs=[...Array(N+1)].map((_,i)=>i/N), ds=fs.map(XI), sl=SLOTS.map(s=>ds.map(d=>st.slots[s].M.mean(d))), cum=[]; let acc=ds.map(()=>0);
       sl.forEach(a=>{ acc=acc.map((v,i)=>v+a[i]); cum.push(acc); });
       const PL=arr=>arr.map((r,i)=>`${f1(GX0+fs[i]*(GX1-GX0))},${f1(GYp(r))}`);
@@ -1520,7 +1543,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       if(XS==='lin'&&!hideX(GX1)) g+=TX(GX1,GY1+25,MOP(DMX),{a:'end',fs:7,c:'#6f7a8e',m:1});
       g+=TX(GX1,GY1+36,'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:7.5,c:'#6f7a8e'});
       // 曲線
-      if(LV==='E'){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
+      if(LV==='E'||G3){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
           const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-9,(yt+yb)/2,Math.min(12,yb-yt-2),'#cfc6ae'); }); }
       else g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="${CREAM}" fill-opacity=".08"/>`;
       g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
@@ -1532,7 +1555,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
         if(OV==='pt'){ const below=py+78<GY1, x0=below?Math.max(40,Math.min(630-o0.w,px+16)):Math.max(40,Math.min(630-o0.w,px-o0.w/2)), yc=below?py+42:Math.max(150,py-(MYTH(age)?72:52)); g+=OVR(x0,yc).s; }
         if(OV==='ttl') g+=OVR(GX0-8,GY0-(MYTH(age)?66:52)).s;
         if(OV==='axis') g+=`<path d="M${f1(px-6)},${GY1+8} L${f1(px)},${GY1+2} L${f1(px+6)},${GY1+8} Z" fill="#fff" fill-opacity=".8"/>`+OVR(axL,GY1+32).s;
-        if(OV==='hdr') g+=OVR(rx+8,90).s; } }
+        if(OV==='hdr') g+=OVR(rx+8,90,1).s+(MYTH(age)?MTX(rx+86,58,MYTH(age),'start'):''); } }
     if(LV==='A'){ // 縦の物差し（左端）。全体のかたまりは印の右に
       const LT=150, LB=600, AX=46, LY=d=>LB-ES(d)*(LB-LT), bh=(LB-LT)/EN, ym=LB-ES5*(LB-LT), yb=age>0?Math.max(LT+24,Math.min(LB-30,LY(age))):null, near=y=>yb!=null&&Math.abs(y-yb)<38;
       g+=`<g filter="url(#c2Halo)">`+LN(AX,LB,AX,ym,'#fff',.22,2,' stroke-linecap="round"')+LN(AX,ym,AX,LT,'#fff',.3,1,' stroke-dasharray="2 3"');
