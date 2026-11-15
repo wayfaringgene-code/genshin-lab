@@ -37,6 +37,7 @@ patch('core.js', [
           .concat((a.unactivatedSubstats || []).map(x => ({ s: LAB_STAT[x.key], v: String(x.value), off: true })));
         while (subs.length < 4) subs.push({ s: '', v: '' });
         const p = { main: LAB_STAT[a.mainStatKey], subs: subs.slice(0, 4) };
+        if (D.sets[a.setKey]) p.set = D.sets[a.setKey].n;   // 1個ごとのセット名（カードの聖遺物の絵に使う。自由枠の1個も正しく出せる）
         if (a.level < 20) { p.lv = a.level; notes.partial++; }
         pieces[a.slotKey] = p;
 """),
