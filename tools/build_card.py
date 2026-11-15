@@ -995,6 +995,7 @@ CSS_INV = r"""
 .ia-who .tag2 .tip .cmp i.on{color:var(--ink)} .ia-who .tag2 .tip .cmp i.ar{color:var(--muted); opacity:.7; padding:0 2px}
 .ia-who .tag2 .tip .cmp i.up{color:var(--ok); font-weight:700} .ia-who .tag2 .tip .cmp i.dn{color:var(--ng); font-weight:700} .ia-who .tag2 .tip .cmp i.chg{color:#ffd27a}
 .ia-who .tag2.cc.alt .st{color:var(--muted)} .ia-who .tag2.cc.alt .nm{color:var(--ink2)}
+.ia-who .tag2 .tip .cmp.c5{grid-template-columns:auto auto auto auto auto} .ia-who .tag2 .tip .cmp i.pr{color:var(--ink2); font-size:11.5px}
 .ia-who .tag2 .tip .cmp i.up small,.ia-who .tag2 .tip .cmp i.dn small{color:inherit}
 .ia-who .tag2 .tip .wn{color:#ffb4a6} .ia-who .tag2 .tip .mk{color:var(--ok)} .ia-who .tag2.cc .wn{color:#ffb4a6; font-size:12px; margin-left:-2px} .ia-who .tag2 .tip .cmp small{font-size:9.5px; color:var(--muted); margin-left:2px}
 .ia-who .tag2 .tip .cur{display:flex; flex-wrap:wrap; gap:1px 10px; margin-top:2px; padding:5px 8px; background:rgba(255,255,255,.04); border-radius:6px}
@@ -1127,9 +1128,9 @@ function setSwap(c,a){ const inv=invLoad(), eq={}; if(inv) for(const b of inv.ar
     four=Object.keys(b).find(k=>b[k]>=4)||null; twos=Object.keys(b).filter(k=>b[k]>=2&&b[k]<4); }
   else { const ps=String(c.set||'').split('＋').map(x=>x.trim()).filter(Boolean); if(!ps.length) return null;
     const f=ps.map(x=>/^(.+?)4$/.exec(x)).find(Boolean); if(f){ if(f[1]===a.set) return null; four=f[1]; } else twos=ps.map(x=>x.replace(/2$/,'')); }
-  if(four) return {alt:true,label:`他セット装備中（${four}）`,desc:`${four}の4セット`};
-  if(twos.length) return {alt:true,label:`他セット装備中（${twos.map(bon).join('＋')}）`,desc:`${twos.map(bon).join('＋')}の${twos.length>1?'2セット＋2セット':'2セット'}`};
-  return {alt:true,label:'4セット発動なし',desc:'4セット効果なし'}; }
+  if(four) return {alt:true,label:`現在、他セット装備中（${four}）`,desc:`${four}の4セット`};
+  if(twos.length) return {alt:true,label:`現在、他セット装備中（${twos.map(bon).join('＋')}）`,desc:`${twos.map(bon).join('＋')}の${twos.length>1?'2セット＋2セット':'2セット'}`};
+  return {alt:true,label:'現在、4セット発動なし',desc:'4セット効果なし'}; }
 /* ---- ダメージの見積もり（v2.3 試作）：「この1個に替えたら、基準の技のダメージが何%変わるか」 ----
    ダメージそのものは求めない（天賦倍率・敵の耐性・防御は、どのサブOPでも同じだけ掛かるので、比べると消える）。
    キャラごとに、ステータスの効き方だけを式にする。数字は genshin-db 5.2.15、式は gcsim（b107b5d）の実装で照らし合わせた（docs/ROADMAP.md 2.7） */
@@ -1190,12 +1191,16 @@ function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=
   const f=lv<20?pieceFinal(a.p,u.c.eff||[]):null, rem=f?f.rem:0, num=(L,k)=>{ const q=L.find(z=>z.s===k); return q?parseFloat(q.v)||0:null; };
   const exp=k=>{ const v=num(A,k); return v==null?null:v+rem/4*(ROLL[k]?ROLL[k].reduce((x,y)=>x+y,0)/4:0); };
   const fv=(k,v)=>v==null?'—':'+'+(invPct(k)?v.toFixed(1)+'%':Math.round(v));
+  // 行ごとの更新率：残りの強化が1/4ずつこの行に入り、伸びは最大の70/80/90/100%のどれか、として +20 でいまの装備のその行の値を上回る確率
+  const upP=(k,c0)=>{ const b=num(A,k); if(b==null||!ROLL[k]) return null; const mx=ROLL[k][3]; let d=new Map([[0,1]]);
+    for(let i=0;i<rem;i++){ const nd=new Map(); for(const [u,w] of d){ nd.set(u,(nd.get(u)||0)+w*0.75); for(let t=7;t<=10;t++) nd.set(u+t,(nd.get(u+t)||0)+w/16); } d=nd; }
+    let up=0; for(const [u,w] of d) if(b+u/10*mx>(c0||0)+1e-6) up+=w; return up; };
   const rows=ks.map(k=>{ const on=E.has(k), c0=num(B,k), c1=exp(k), h=ROLL[k]?ROLL[k][3]/2:0, d=(c1||0)-(c0||0);
     const cls=!on?'':d>=h?'up':d<=-h?'dn':'', mk=cls==='up'?'<small>▲</small>':cls==='dn'?'<small>▼</small>':'', off=A.find(z=>z.s===k&&z.off)?'<small>+4で付く</small>':'';
-    return `<i class="k${on?' on':''}">${INV_SUB[k]||k}</i><i class="${on?'on':''}">${fv(k,c0)}</i><i class="ar">→</i><i class="${on?'on ':''}${cls}">${lv<20&&c1!=null?'≈':''}${fv(k,c1)}${mk}${off}</i>`; }).join('');
+    return `<i class="k${on?' on':''}">${INV_SUB[k]||k}</i><i class="${on?'on':''}">${fv(k,c0)}</i><i class="ar">→</i><i class="${on?'on ':''}${cls}">${fv(k,c1)}${mk}${off}</i>${rem?`<i class="pr">${on?(q=>q==null?'—':pctTxt(q))(upP(k,c0)):''}</i>`:''}`; }).join('');
   const mc=cur&&cur.main&&cur.main!==a.p.main;
-  const cmp=`<span class="cmp"><i></i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i><i></i><i class="h">この1個${lv<20?`（+${lv}→+20の平均）`:''}</i>`
-    +`<i class="k">メイン</i><i class="${mc?'chg':''}">${cur&&cur.main?esc(MAIN_SHORT(cur.main)):'—'}</i><i class="ar">→</i><i class="${mc?'chg':''}">${esc(MAIN_SHORT(a.p.main))}</i>${rows}</span>`;
+  const cmp=`<span class="cmp${rem?' c5':''}"><i></i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i><i></i><i class="h">${lv<20?`この1個（+20で平均）`:'この1個'}</i>${rem?'<i class="h">更新率</i>':''}`
+    +`<i class="k">メイン</i><i class="${mc?'chg':''}">${cur&&cur.main?esc(MAIN_SHORT(cur.main)):'—'}</i><i class="ar">→</i><i class="${mc?'chg':''}">${esc(MAIN_SHORT(a.p.main))}</i>${rem?'<i></i>':''}${rows}</span>`;
   const notes=(u.sw&&u.sw.alt?`<span class="pb">いまは${esc(a.set)}の4セットではないので、「更新」には数えていません。下の表は、いまの${sl}との比べです</span>`:'')+(u.sw&&u.sw.mk?`<span class="mk">${esc(u.sw.mk)}が4セットになります</span>`:'')
     +(mc?`<span class="pb">メインOPが変わります（有効RVの比べ方はサブOPだけ）</span>`:'');
   const head=(u.sw&&u.sw.alt?`<b>${esc(u.c.name)}はいま${esc(u.sw.desc)}。${esc(a.set)}の4セットにするなら、${sl}はこの1個で</b>`:`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`)+cmp+notes, rvr=x=>x==null?'—':Math.round(x)+'%', now=u.slotAge||0, sn=u.scNow;
