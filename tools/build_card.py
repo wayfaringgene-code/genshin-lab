@@ -1102,19 +1102,29 @@ function candFor(c,slot,opt,st){ const inv=invLoad(); if(!inv) return null; opt=
   return out.sort((x,y)=>y.gain-x.gain||y.pb-x.pb); }
 // 聖遺物のページ用：1個ごとに「そのセットを4セットで使うキャラ」（表の使えるセット。メインOPも合うもの）を並べ、+20での素質（秘境何日分か）を出す
 //   2＋2・「どれでも」・使えるセットが空欄のキャラは並べない（表に4セットで書いたキャラだけ）。4+1 は出さない（キャラ一覧の育成候補では出せる）
+// 自由枠：いまの装備が「あるセットの4個＋ほかの1個（★4や空きも含む）」のとき、その1か所 {slot, four：4セットのセット, set：いま付けている1個のセット（なければ null）}
+//   5部位とも同じセット・4セットが発動していないキャラは、自由枠なし（null）
+function freeSlotOf(eq){ const cnt={}; for(const s of SLOTS) if(eq[s]) cnt[eq[s]]=(cnt[eq[s]]||0)+1; const four=Object.keys(cnt).find(k=>cnt[k]===4); if(!four) return null;
+  const slot=SLOTS.find(s=>eq[s]!==four); return slot?{slot,four,set:eq[slot]||null}:null; }
 function invUsers(c){ const b=BUILDS[c.name]; return b&&b.sets?b.sets.filter(o=>o.length===1).map(o=>o[0]):[]; }
 function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBennett()?'B':'-')+inv.at+'|'+inv.arts.length+'|'+CHARS.map(c=>c.id+':'+(c.eff||[]).join('')+':'+(c.date||'')+':'+SLOTS.map(s=>pieceSig(c.pieces&&c.pieces[s])).join('/')).join(',');
   if(INV_IDX&&INV_IDX.sig===sig) return INV_IDX;
-  const bySet=new Map(); for(const c of CHARS){ const pl=planOf(c), st=charStats(c); for(const set of invUsers(c)){ if(!bySet.has(set)) bySet.set(set,[]); bySet.get(set).push({c,pl,st}); } }
+  const eqBy=new Map(); for(const b of inv.arts) if(b.loc){ if(!eqBy.has(b.loc)) eqBy.set(b.loc,{}); eqBy.get(b.loc)[b.slot]=b.set; }
+  const bySet=new Map(), bySlot=new Map(); for(const c of CHARS){ const pl=planOf(c), st=charStats(c), fs=freeSlotOf(eqBy.get(c.name)||{}), sets=invUsers(c);
+    for(const set of sets){ if(!bySet.has(set)) bySet.set(set,[]); bySet.get(set).push({c,pl,st,fs}); }
+    if(fs&&sets.includes(fs.four)){ if(!bySlot.has(fs.slot)) bySlot.set(fs.slot,[]); bySlot.get(fs.slot).push({c,pl,st,fs,sets}); } } // 自由枠は、いまの4セットが表の使えるセットのキャラだけ
   const info=new Map();
   for(const a of inv.arts){ const us=[], lv=a.p.lv==null?20:a.p.lv; let pot=null;
-    for(const {c,pl,st} of bySet.get(a.set)||[]){ if(!(pl.main[a.slot]||[]).includes(a.p.main)) continue;
+    // 表のセットで使うキャラ＋自由枠がこの部位のキャラ（表にないセットの1個は、自由枠で上回るときだけ。下で pb を見る）
+    const cand=(bySet.get(a.set)||[]).map(x=>Object.assign({fx:false},x)).concat((bySlot.get(a.slot)||[]).filter(x=>!x.sets.includes(a.set)).map(x=>Object.assign({fx:true},x)));
+    for(const {c,pl,st,fs,fx} of cand){ if(!(pl.main[a.slot]||[]).includes(a.p.main)) continue;
       const f=pieceFinal(a.p,c.eff||[]); if(!f) continue; const own=a.loc===c.name, now=st.slots[a.slot].rv, nowU=now==null?-1:Math.round(now/10);
       let pb=0,ex=0; for(const [v,q] of f.dist){ ex+=v*q; if(v>nowU) pb+=q; }
+      if(fx&&!own&&(now==null||pb<0.01)) continue;
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
       const dm=own?null:dmgCompare(c,a,f);
-      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
+      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),fs:fs&&fs.slot===a.slot?fs:null,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
     const ord=u=>u.own?2:u.sw&&u.sw.alt?-1+u.pb/10:u.pb; us.sort((x,y)=>ord(y)-ord(x)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 // いまのセットの状態と、この1個に替えたとき：
@@ -1125,7 +1135,7 @@ function setSwap(c,a){ const inv=invLoad(), eq={}; if(inv) for(const b of inv.ar
   const bon=n=>SET_BONUS2[n]||n; let four=null, twos=[];
   if(Object.keys(eq).length){ const cnt=o=>{ const m={}; for(const s of SLOTS) if(o[s]) m[o[s]]=(m[o[s]]||0)+1; return m; }, b=cnt(eq), af=cnt(Object.assign({},eq,{[a.slot]:a.set}));
     if((b[a.set]||0)>=4) return null; if((af[a.set]||0)>=4) return {mk:a.set};
-    four=Object.keys(b).find(k=>b[k]>=4)||null; twos=Object.keys(b).filter(k=>b[k]>=2&&b[k]<4); }
+    four=Object.keys(b).find(k=>b[k]>=4)||null; twos=Object.keys(b).filter(k=>b[k]>=2&&b[k]<4); if(four&&(af[four]||0)>=4) return null; }
   else { const ps=String(c.set||'').split('＋').map(x=>x.trim()).filter(Boolean); if(!ps.length) return null;
     const f=ps.map(x=>/^(.+?)4$/.exec(x)).find(Boolean); if(f){ if(f[1]===a.set) return null; four=f[1]; } else twos=ps.map(x=>x.replace(/2$/,'')); }
   if(four) return {alt:true,label:`現在、他セット装備中（${four}）`,desc:`${four}の4セット`};
@@ -1202,7 +1212,7 @@ function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=
   const cmp=`<span class="cmp${rem?' c5':''}"><i></i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i><i></i><i class="h">${lv<20?`この1個（+20で平均）`:'この1個'}</i>${rem?'<i class="h">更新率</i>':''}`
     +`<i class="k">メイン</i><i class="${mc?'chg':''}">${cur&&cur.main?esc(MAIN_SHORT(cur.main)):'—'}</i><i class="ar">→</i><i class="${mc?'chg':''}">${esc(MAIN_SHORT(a.p.main))}</i>${rem?'<i></i>':''}${rows}</span>`;
   const notes=(u.sw&&u.sw.alt?`<span class="pb">いまは${esc(a.set)}の4セットではないので、「更新」には数えていません。下の表は、いまの${sl}との比べです</span>`:'')+(u.sw&&u.sw.mk?`<span class="mk">${esc(u.sw.mk)}が4セットになります</span>`:'')
-    +(mc?`<span class="pb">メインOPが変わります（有効RVの比べ方はサブOPだけ）</span>`:'');
+    +(mc?`<span class="pb">メインOPが変わります（有効RVの比べ方はサブOPだけ）</span>`:'')+(u.fs&&!(u.sw&&u.sw.alt)?`<span class="pb">${sl}はいま自由枠（${esc(u.fs.set||'★5なし')}）。${esc(u.fs.four)}の4セットのまま、どのセットにも替えられます</span>`:'');
   const head=(u.sw&&u.sw.alt?`<b>${esc(u.c.name)}はいま${esc(u.sw.desc)}。${esc(a.set)}の4セットにするなら、${sl}はこの1個で</b>`:`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`)+cmp+notes, rvr=x=>x==null?'—':Math.round(x)+'%', now=u.slotAge||0, sn=u.scNow;
   if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
   return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="${cl(u.now||0,u.rvMax,10)}">${rvr(u.rvMax)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">${u.sw&&u.sw.alt?'いまの'+sl+'を上回る確率':'更新できる確率'} ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
@@ -1296,7 +1306,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
-    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
+    const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own',u.fs?'装備中（自由枠）':'装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`${u.fs?'自由枠 ':''}更新 <b>${pctTxt(u.pb)}</b>`];
       return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&!(u.sw&&u.sw.alt)&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
