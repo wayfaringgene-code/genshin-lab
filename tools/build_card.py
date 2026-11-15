@@ -990,9 +990,12 @@ CSS_INV = r"""
 .ia-who .tag2 .tip{display:none; position:absolute; left:0; bottom:calc(100% + 6px); z-index:30; width:max-content; max-width:min(420px,86vw); flex-direction:column; gap:3px; background:#11152e; border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.5; color:var(--ink2); text-align:left; white-space:normal; box-shadow:0 10px 28px rgba(0,0,0,.55); pointer-events:none}
 .ia-who .tag2.cc:hover .tip, .ia-who .tag2.cc:focus-visible .tip{display:flex}
 .ia-who .tag2 .tip > b{color:var(--ink); font-weight:700}
-.ia-who .tag2 .tip .cmp{display:grid; grid-template-columns:auto auto auto; gap:1px 16px; margin:4px 0 2px; padding:6px 9px; background:rgba(255,255,255,.04); border-radius:6px; font-variant-numeric:tabular-nums}
+.ia-who .tag2 .tip .cmp{display:grid; grid-template-columns:auto auto auto auto; gap:1px 16px; margin:4px 0 2px; padding:6px 9px; background:rgba(255,255,255,.04); border-radius:6px; font-variant-numeric:tabular-nums}
 .ia-who .tag2 .tip .cmp i{font-style:normal; color:var(--muted); text-align:right; white-space:nowrap} .ia-who .tag2 .tip .cmp i.k{text-align:left} .ia-who .tag2 .tip .cmp i.h{font-size:10.5px}
-.ia-who .tag2 .tip .cmp i.on{color:var(--ink)} .ia-who .tag2 .tip .cmp small{font-size:9.5px; color:var(--muted); margin-left:2px}
+.ia-who .tag2 .tip .cmp i.on{color:var(--ink)} .ia-who .tag2 .tip .cmp i.ar{color:var(--muted); opacity:.7; padding:0 2px}
+.ia-who .tag2 .tip .cmp i.up{color:var(--ok); font-weight:700} .ia-who .tag2 .tip .cmp i.dn{color:var(--ng); font-weight:700} .ia-who .tag2 .tip .cmp i.chg{color:#ffd27a}
+.ia-who .tag2 .tip .cmp i.up small,.ia-who .tag2 .tip .cmp i.dn small{color:inherit}
+.ia-who .tag2 .tip .wn{color:#ffb4a6} .ia-who .tag2 .tip .mk{color:var(--ok)} .ia-who .tag2.cc .wn{color:#ffb4a6; font-size:12px; margin-left:-2px} .ia-who .tag2 .tip .cmp small{font-size:9.5px; color:var(--muted); margin-left:2px}
 .ia-who .tag2 .tip .cur{display:flex; flex-wrap:wrap; gap:1px 10px; margin-top:2px; padding:5px 8px; background:rgba(255,255,255,.04); border-radius:6px}
 .ia-who .tag2 .tip .cur .k{width:100%; font-size:10.5px; color:var(--muted)} .ia-who .tag2 .tip .cur em{font-style:normal; color:var(--muted); white-space:nowrap} .ia-who .tag2 .tip .cur em.on{color:var(--ink)}
 .ia-who .tag2 .tip .tt{display:grid; grid-template-columns:auto repeat(3,auto); gap:2px 14px; margin:4px 0 2px; font-style:normal; font-variant-numeric:tabular-nums}
@@ -1109,9 +1112,14 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBe
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
       const dm=own?null:dmgCompare(c,a,f);
-      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
+      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
     us.sort((x,y)=>(y.own?2:y.pb)-(x.own?2:x.pb)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
+// 付け替えたときのセットの変わり方：{brk：切れる4セット, n：替えた後の数} か {mk：そろう4セット} か null。手持ちに装備中の1個がなければ null
+function setSwap(c,a){ const inv=invLoad(); if(!inv) return null; const eq={}; for(const b of inv.arts) if(b.loc===c.name) eq[b.slot]=b.set;
+  if(!Object.keys(eq).length) return null; const cnt=o=>{ const m={}; for(const s of SLOTS) if(o[s]) m[o[s]]=(m[o[s]]||0)+1; return m; }, four=m=>Object.keys(m).find(k=>m[k]>=4)||null;
+  const b=cnt(eq), af=cnt(Object.assign({},eq,{[a.slot]:a.set})), f0=four(b), f1=four(af);
+  if(f0&&f0!==f1) return {brk:f0,n:af[f0]||0}; if(f1&&f1!==f0) return {mk:f1}; return null; }
 /* ---- ダメージの見積もり（v2.3 試作）：「この1個に替えたら、基準の技のダメージが何%変わるか」 ----
    ダメージそのものは求めない（天賦倍率・敵の耐性・防御は、どのサブOPでも同じだけ掛かるので、比べると消える）。
    キャラごとに、ステータスの効き方だけを式にする。数字は genshin-db 5.2.15、式は gcsim（b107b5d）の実装で照らし合わせた（docs/ROADMAP.md 2.7） */
@@ -1167,11 +1175,22 @@ const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*
 function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y,k)=>{ const r=v=>Math.round((v||0)/(k||1)); return r(y)>r(x)?'up':r(y)<r(x)?'dn':''; }; // 見えている桁（MONTHS・スコアとも小数第1位）で比べる
   if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
   const cur=u.c.pieces&&u.c.pieces[a.slot], E=new Set(u.c.eff||[]), A=a.p.subs.filter(q=>q.s), B=cur&&cur.subs?cur.subs.filter(q=>q.s):[];
-  const ks=[...new Set([...A.map(q=>q.s),...B.map(q=>q.s)])].sort((x,y)=>(E.has(y)?1:0)-(E.has(x)?1:0)), val=(L,k)=>{ const q=L.find(z=>z.s===k); return q?`+${esc(q.v)}${invPct(k)?'%':''}${q.off?'<small>+4</small>':''}`:'—'; };
-  const cmp=`<span class="cmp"><i></i><i class="h">この1個（+${lv}）</i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i>${ks.map(k=>`<i class="k${E.has(k)?' on':''}">${INV_SUB[k]||k}</i><i class="${E.has(k)?'on':''}">${val(A,k)}</i><i class="${E.has(k)?'on':''}">${val(B,k)}</i>`).join('')}</span>`;
-  const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>${cmp}`, now=u.slotAge||0, sn=u.scNow;
-  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
-  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
+  const ks=[...new Set([...B.map(q=>q.s),...A.map(q=>q.s)])].sort((x,y)=>(E.has(y)?1:0)-(E.has(x)?1:0));
+  // この1個は+20まで上げたときの平均（残りの強化が4行に等しく入るとして、1回あたり平均の伸び＝4段階の平均）
+  const f=lv<20?pieceFinal(a.p,u.c.eff||[]):null, rem=f?f.rem:0, num=(L,k)=>{ const q=L.find(z=>z.s===k); return q?parseFloat(q.v)||0:null; };
+  const exp=k=>{ const v=num(A,k); return v==null?null:v+rem/4*(ROLL[k]?ROLL[k].reduce((x,y)=>x+y,0)/4:0); };
+  const fv=(k,v)=>v==null?'—':'+'+(invPct(k)?v.toFixed(1)+'%':Math.round(v));
+  const rows=ks.map(k=>{ const on=E.has(k), c0=num(B,k), c1=exp(k), h=ROLL[k]?ROLL[k][3]/2:0, d=(c1||0)-(c0||0);
+    const cls=!on?'':d>=h?'up':d<=-h?'dn':'', mk=cls==='up'?'<small>▲</small>':cls==='dn'?'<small>▼</small>':'', off=A.find(z=>z.s===k&&z.off)?'<small>+4で付く</small>':'';
+    return `<i class="k${on?' on':''}">${INV_SUB[k]||k}</i><i class="${on?'on':''}">${fv(k,c0)}</i><i class="ar">→</i><i class="${on?'on ':''}${cls}">${lv<20&&c1!=null?'≈':''}${fv(k,c1)}${mk}${off}</i>`; }).join('');
+  const mc=cur&&cur.main&&cur.main!==a.p.main;
+  const cmp=`<span class="cmp"><i></i><i class="h">いまの${sl}${cur&&cur.lv!=null&&cur.lv<20?`（+${cur.lv}）`:''}</i><i></i><i class="h">この1個${lv<20?`（+${lv}→+20の平均）`:''}</i>`
+    +`<i class="k">メイン</i><i class="${mc?'chg':''}">${cur&&cur.main?esc(MAIN_SHORT(cur.main)):'—'}</i><i class="ar">→</i><i class="${mc?'chg':''}">${esc(MAIN_SHORT(a.p.main))}</i>${rows}</span>`;
+  const notes=(u.sw&&u.sw.brk?`<span class="wn">⚠ ${esc(u.sw.brk)}の4セット効果が切れます（4→${u.sw.n}）</span>`:'')+(u.sw&&u.sw.mk?`<span class="mk">${esc(u.sw.mk)}が4セットになります</span>`:'')
+    +(mc?`<span class="pb">メインOPが変わります（有効RVの比べ方はサブOPだけ）</span>`:'');
+  const head=`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>${cmp}${notes}`, rvr=x=>x==null?'—':Math.round(x)+'%', now=u.slotAge||0, sn=u.scNow;
+  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
+  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="${cl(u.now||0,u.rvMax,10)}">${rvr(u.rvMax)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">更新できる確率 ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
 /* ---- 1個の表示 ---- */
 // ロールの棒：伸びた回数だけ「箱4つの組」を並べ、伸び幅の合計（70%＝箱1つ … 100%＝箱4つ）だけ塗る。合計は見積もり（RV÷10−6×回数）
 function rollBar(n,u){ if(!n) return ''; const fill=Math.max(n,Math.min(4*n,Math.round(u-6*n))); let k=fill, g='';
@@ -1263,7 +1282,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own','装備中']:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
-      return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
+      return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${u.sw&&u.sw.brk?`<span class="wn" title="${esc(u.sw.brk)}の4セット効果が切れる">⚠</span>`:''}${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
   if(L.length>V.n) h+=`<div class="ia-more"><button class="btn" id="invMore">もっと見る（あと${(L.length-V.n).toLocaleString()}個）</button></div>`;
   box.innerHTML=h;
