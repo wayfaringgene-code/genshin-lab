@@ -909,7 +909,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    右＝部位の★の札が主役の5行（値は白系で裏付け、棒は5行で縮尺をそろえる、サブOPは枠なしの小さな文字）
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
-const CC2={v:'E',ci:0,b:'p',list:[]}, CC2_VS=[['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'E',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',list:[]}, CC2_VS=[['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar());
@@ -936,14 +936,18 @@ function cc2Proto(){ if($('cc2Proto')) return;
   const box=cardEl('div',{class:'cc2-proto',id:'cc2Proto'}), B=(k,v,t,on)=>`<button class="btn" type="button" data-${k}="${v}" aria-pressed="${on}">${t}</button>`;
   const draw=()=>{ const it=CC2.list[CC2.ci]||CC2.list[0], cc=it.c, st=charStats(cc), vs=CC2.v==='all'?CC2_VS.map(x=>x[0]):[CC2.v];
     applyBundled(cc); if(CARD_IMG[cc.id]&&!(cc.id in CARD_FIT)&&!CARD_FITTING[cc.id]){ CARD_FITTING[cc.id]=1; fitCardArt(CARD_IMG[cc.id],CARD_ZOOM[cc.id]).then(u=>{ delete CARD_FITTING[cc.id]; CARD_FIT[cc.id]=u||''; if($('cc2Proto')) draw(); }); }
-    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; return constellationCardSVG(cc,st,'v2'); };
+    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz}; return constellationCardSVG(cc,st,'v2'); };
     box.innerHTML=`<div class="cc2-bar"><div class="row"><b>カードのデザインの見直し（試作）</b><span class="note">保存はしません</span><button class="btn" type="button" data-x style="margin-left:auto">閉じる</button></div>
       <div class="row">${[...CC2_VS,['NOW','今のカード'],['all','4案を並べる'],['SHEET','バッジ一覧']].map(([k,t])=>B('v',k,t,CC2.v===k)).join('')}</div>
-      <div class="row">バッジ ${CC2_BS.map(([k,t])=>B('b',k,t,CC2.b===k)).join('')}</div>
+      <div class="row">バッジ ${CC2_BS.map(([k,t])=>B('b',k,t,CC2.b===k)).join('')}　余白 ${B('tg',0,'標準',!CC2.tight)}${B('tg',1,'詰める',!!CC2.tight)}</div>
+      <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
+      <div class="row">横軸 ${[['band','段ごとに等幅'],['log','対数'],['lin','線形']].map(([k,t])=>B('xs',k,t,CC2.xs===k)).join('')}　立ち絵 ${[['none','そのまま'],['fade','溶かす'],['glass','すりガラス'],['side','右へずらす']].map(([k,t])=>B('pz',k,t,CC2.pz===k)).join('')}</div>
       <div class="row"><select data-ci aria-label="キャラ">${CC2.list.map((x,i)=>`<option value="${i}"${i===CC2.ci?' selected':''}>${esc(x.l)}</option>`).join('')}</select></div></div>
       <div class="cc2-cards">${vs.map(v=>`<figure>${CC2.v==='all'?`<figcaption>${(CC2_VS.find(x=>x[0]===v)||[])[1]||v}</figcaption>`:''}${svg(v)}</figure>`).join('')}</div>`;
     box.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ CC2.v=b.dataset.v; draw(); });
     box.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{ CC2.b=b.dataset.b; draw(); });
+    box.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{ CC2.tight=+b.dataset.tg; draw(); });
+    ['ov','xs','pz'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
     box.querySelector('[data-ci]').onchange=e=>{ CC2.ci=+e.target.value; draw(); };
     box.querySelector('[data-x]').onclick=()=>box.remove(); };
   window.cc2Debug=()=>CC2.list.map(({c,l})=>{ const st=charStats(c); return l+'  全体 '+fmtAge(st.age)+' '+tierOf(st.age)[1]+' ｜ '+SLOTS.map(s=>fmtAge(st.slots[s].age)+' '+tierOf(st.slots[s].age)[1]).join(' ／ '); }); // 確認用
@@ -1424,7 +1428,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     // ランクの札。ランクの色を使うのは、この札（全体と5部位）だけ。見た目は window.CC2_BADGE（12通り。#card2 の「バッジ一覧」で見比べる）
     let BS=window.CC2_BADGE||'p'; const DK='#0b0e22';
     const BADGE=(xr,yc,h,d,o={})=>{ const t=RNK(d); if(!t) return {s:'',w:0}; const k=TIERS.indexOf(t), ML=MYTH(d), fill=ML?'url(#ccPrism)':`url(#c2Rk${k})`, col=t[2], gl=k>=4||ML?` filter="url(#c2Gw${k})"`:'', n=[...t[1]].length, num=esc(t[1].slice(1)), f1=v=>(+v).toFixed(1);
-      const W0=(fs,pad)=>Math.round(pad+fs*(1+.62*(n-1))), at=w=>o.left?xr:xr-w;
+      const TG=window.CC2_TIGHT?.55:1, W0=(fs,pad)=>Math.round(pad*TG+fs*(1+.62*(n-1))), at=w=>o.left?xr:xr-w;
       const TXT=(cx,fs,c,ex='')=>`<text x="${f1(cx)}" y="${f1(yc+fs*.36)}" text-anchor="middle" font-family='${sans}' font-size="${f1(fs)}" font-weight="800" letter-spacing=".03em" fill="${c}"${ex}>${t[1]}</text>`;
       const POLY=(pts,fl,ex='')=>`<polygon points="${pts.map(q=>q.map(f1).join(',')).join(' ')}" fill="${fl}"${ex}/>`;
       if(BS==='g'){ const fs=h*.95, w=Math.round(fs*(1+.6*(n-1))), x0=at(w); return {w, s:`<text x="${x0}" y="${f1(yc+fs*.36)}" font-family='${sans}' font-size="${f1(fs)}" font-weight="800" fill="${fill}" paint-order="stroke" stroke="#05060d" stroke-width="${f1(fs*.06)}" stroke-opacity=".8"${gl}>★<tspan dx="${f1(fs*.04)}">${num}</tspan></text>`}; }
@@ -1436,8 +1440,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
         if(BS==='shield') shp=`<path d="M${f1(cx-R0*.85)},${f1(cy-R0*.85)} H${f1(cx+R0*.85)} V${f1(cy+R0*.05)} Q${f1(cx+R0*.85)},${f1(cy+R0*.7)} ${f1(cx)},${f1(cy+R0*1.05)} Q${f1(cx-R0*.85)},${f1(cy+R0*.7)} ${f1(cx-R0*.85)},${f1(cy+R0*.05)} Z" fill="${fill}"${gl}/>`;
         if(BS==='diamond') shp=POLY([[cx,cy-R0],[cx+R0,cy],[cx,cy+R0],[cx-R0,cy]],fill,gl);
         const tc=BS==='medal'?fill:DK, fs=R0*(BS==='e'?.62:BS==='diamond'?.72:.9), ty=cy+(BS==='e'?R0*.08:BS==='shield'?-R0*.05:0);
-        const star=BS==='medal'?`<text x="${f1(cx)}" y="${f1(cy-R0*.38)}" text-anchor="middle" font-family='${sans}' font-size="${f1(R0*.32)}" fill="${fill}">★</text>`:'';
-        return {w, s:shp+star+`<text x="${f1(cx)}" y="${f1(ty+fs*.36+(BS==='medal'?R0*.12:0))}" text-anchor="middle" font-family='${mono}' font-size="${f1(fs)}" font-weight="800" fill="${tc}">${num.slice(0,1)}</text>`+(n>2?`<text x="${f1(cx+R0*.95)}" y="${f1(cy-R0*.3)}" font-family='${mono}' font-size="${f1(R0*.75)}" font-weight="800" fill="${fill}"${gl}>+</text>`:'')}; }
+        const star=BS==='medal'||BS==='diamond'?`<text x="${f1(cx)}" y="${f1(cy-R0*.38)}" text-anchor="middle" font-family='${sans}' font-size="${f1(R0*.32)}" fill="${BS==='diamond'?DK:fill}">★</text>`:'';
+        return {w, s:shp+star+`<text x="${f1(cx)}" y="${f1(ty+fs*.36+(BS==='medal'||BS==='diamond'?R0*.12:0))}" text-anchor="middle" font-family='${mono}' font-size="${f1(fs)}" font-weight="800" fill="${tc}">${num.slice(0,1)}</text>`+(n>2?`<text x="${f1(cx+R0*.95)}" y="${f1(cy-R0*.3)}" font-family='${mono}' font-size="${f1(R0*.75)}" font-weight="800" fill="${fill}"${gl}>+</text>`:'')}; }
       if(BS==='pill'){ const fs=h*.5, w=W0(fs,h*1.25), x0=at(w); return {w, s:`<rect x="${x0}" y="${f1(yc-h*.42)}" width="${w}" height="${f1(h*.84)}" rx="${f1(h*.42)}" fill="${col}" fill-opacity=".12" stroke="${col}" stroke-opacity=".55" stroke-width="1"/><circle cx="${f1(x0+h*.38)}" cy="${yc}" r="${f1(h*.1)}" fill="${fill}"${gl}/>`+TXT(x0+w/2+h*.12,fs,fill)}; }
       if(BS==='split'){ const fs=h*.56, a=h*.95, w=Math.round(a+fs*(.62*(n-1))+h*.7), x0=at(w); return {w, s:`<rect x="${x0}" y="${f1(yc-h/2)}" width="${w}" height="${h}" rx="3" fill="${DK}" stroke="${fill}" stroke-width="1"/><rect x="${f1(x0+a)}" y="${f1(yc-h/2)}" width="${f1(w-a)}" height="${h}" rx="3" fill="${fill}"${gl}/><text x="${f1(x0+a/2)}" y="${f1(yc+fs*.36)}" text-anchor="middle" font-family='${sans}' font-size="${f1(fs)}" fill="${fill}">★</text><text x="${f1(x0+a+(w-a)/2)}" y="${f1(yc+fs*.38)}" text-anchor="middle" font-family='${mono}' font-size="${f1(fs*1.05)}" font-weight="800" fill="${DK}">${num}</text>`}; }
       if(BS==='under'){ const fs=h*.7, w=W0(fs,4), x0=at(w); return {w, s:TXT(x0+w/2,fs,'#f3ead6')+`<rect x="${x0}" y="${f1(yc+fs*.5)}" width="${w}" height="${f1(Math.max(2.5,h*.12))}" rx="1" fill="${fill}"${gl}/>`}; }
@@ -1460,10 +1464,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     const LN=(x1,y1,x2,y2,c,op,w,ex='')=>`<line x1="${(+x1).toFixed(1)}" y1="${(+y1).toFixed(1)}" x2="${(+x2).toFixed(1)}" y2="${(+y2).toFixed(1)}" stroke="${c}" stroke-opacity="${op}" stroke-width="${w}"${ex}/>`;
     const CREAM='#e6dfcf', RELC='#a9bddc', age=st.age>0?st.age:0;
     // ---- 右上：部位の見出し（全体の★と値は左の物差しへ移した） ----
-    g+=TX(rx,58,'部位ごとの秘境レベル',{fs:12,c:'#9aa6bb'}).replace('<text ','<text letter-spacing=".15em" ');
+    g+=TX(rx,58,(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)?'秘境レベル':'部位ごとの秘境レベル',{fs:12,c:'#9aa6bb'}).replace('<text ','<text letter-spacing=".15em" ');
     g+=`<text x="${RE}" y="58" text-anchor="end" font-family='${sans}' font-size="12" fill="#9aa6bb">有効RV <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${Math.round(st.tot)}%</tspan>　スコア <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${st.score.toFixed(1)}</tspan></text>`;
     // ---- 右：5部位の行（2秒目＝部位の★の札、3秒目＝値と棒、最後＝サブOP） ----
-    const SUBN={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}, effS=new Set(c.eff), BARS=true, RT=96, RH=(H-50-RT)/5, SX=rx+44, bx0=SX, bx1=RE, BX=d=>bx0+ES(d)*(bx1-bx0), bw=(bx1-bx0)/EN;
+    const SUBN={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}, effS=new Set(c.eff), BARS=true, RT=(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)?132:96, RH=(H-50-RT)/5, SX=rx+44, bx0=SX, bx1=RE, BX=d=>bx0+ES(d)*(bx1-bx0), bw=(bx1-bx0)/EN;
     if(BARS) for(let k=0;k<EN;k++) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'});
     SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), pim=c.pimg&&c.pimg[s], y1=Y+33;
       g+=LN(rx,Y+4,RE,Y+4,'#c9b98f',.12,1);
@@ -1487,21 +1491,34 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     // 全体のかたまり：★の札＋値（MONTHS）。x0＝左端、yc＝札の中心。下に激レアの呼び名
     const OVR=(x0,yc)=>{ const b=BADGE(x0,yc,42,age,{left:1}), txt=fmtAge(st.age), nx=x0+(b.w?b.w+14:0), nw=UTW(txt,34*.58,34)*.97, ML=MYTH(age), W2=nx-x0+nw;
       return {w:W2, s:`<rect x="${x0-14}" y="${yc-34}" width="${W2+28}" height="${ML?84:68}" rx="16" fill="#05060d" opacity=".72" filter="url(#c2Blur)"/>`+b.s+`<text x="${nx}" y="${(yc+12).toFixed(1)}" font-family='${mono}' font-size="34" font-weight="600" fill="#f3ead6" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${UHT(txt,34,null)}</text>`+(ML?MTX(x0,yc+40,ML,'start'):'')}; };
-    if(LV==='E'||LV==='F'){ // 2次元のグラフ：横＝秘境を回った期間（物差しと同じ段）、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
-      const GX0=70, GX1=606, GY0=318, GY1=578, ymax=Math.max(st.ceil||0,st.tot||0,1), GXp=d=>GX0+ES(d)*(GX1-GX0), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
+    if(LV==='E'||LV==='F'){ // 2次元のグラフ：横＝秘境を回った期間、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
+      // 切り替え（window.CC2_OPT）：ov＝全体の★と値の置き場（pt 点のそば／hdr 右上／ttl グラフの見出し／axis 横軸の読み）、xs＝横軸（band 段ごとに等幅／log 対数／lin 線形）、pz＝立ち絵との重なり（none／fade 溶かす／glass すりガラスの板／side 立ち絵を右へ）
+      const O=window.CC2_OPT||{}, OV=O.ov||'pt', XS=O.xs||'band', PZ=O.pz||'none', f1=v=>(+v).toFixed(1);
+      const GX0=PZ==='side'?62:70, GX1=PZ==='side'?372:606, GY0=PZ==='side'?(OV==='ttl'?236:196):318, GY1=OV==='axis'?552:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
       const ESI=f=>{ const x=Math.min(EN-1e-9,Math.max(0,f*EN)), k=Math.floor(x), lo=Math.log(Math.max(1,EB[k])), hi=Math.log(EB[k+1]); return Math.exp(lo+(x-k)*(hi-lo)); };
-      g+=`<defs><linearGradient id="c2Fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060d" stop-opacity="0"/><stop offset=".3" stop-color="#05060d" stop-opacity=".72"/><stop offset="1" stop-color="#05060d" stop-opacity=".88"/></linearGradient></defs><rect x="22" y="${GY0-90}" width="626" height="${H-50-GY0+92}" fill="url(#c2Fade)"/>`;
-      const N=120, fs=[...Array(N+1)].map((_,i)=>i/N), ds=fs.map(ESI), sl=SLOTS.map(s=>ds.map(d=>st.slots[s].M.mean(d))), cum=[]; let acc=ds.map(()=>0);
+      const LMX=Math.log(EB[EN]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
+      const XF=XS==='log'?(d=>d>0?Math.min(1,Math.log(Math.max(1,d))/LMX):0):XS==='lin'?(d=>Math.min(1,Math.max(0,d)/DMX)):ES, XI=XS==='log'?(f=>Math.exp(f*LMX)):XS==='lin'?(f=>Math.max(1e-3,f*DMX)):ESI, GXp=d=>GX0+XF(d)*(GX1-GX0);
+      // 立ち絵との重なり
+      if(PZ==='side'){ g=g.replace(/(<image id="ccArtImg"[^>]*? x=")([-\d.]+)"/,(m,a,x)=>a+(+x+130)+'"').replace('<stop offset=".33" stop-color="#05060d" stop-opacity="0"/><stop offset=".56"','<stop offset=".45" stop-color="#05060d" stop-opacity="0"/><stop offset=".6"'); }
+      if(PZ==='glass'){ const px0=GX0-52, py0=GY0-(OV==='ttl'?96:40), pw=GX1-px0+22, ph=GY1+(OV==='axis'?70:46)-py0, im=(g.match(/<image id="ccArtImg"[^>]*\/>/)||[''])[0];
+        g+=`<defs><clipPath id="c2Glass"><rect x="${px0}" y="${py0}" width="${pw}" height="${ph}" rx="14"/></clipPath><filter id="c2Frost" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="10"/></filter></defs>`+(im?`<g clip-path="url(#c2Glass)">${im.replace(' id="ccArtImg"','').replace(/filter="[^"]*"/,'filter="url(#c2Frost)"')}</g>`:'')+`<rect x="${px0}" y="${py0}" width="${pw}" height="${ph}" rx="14" fill="#0b0e22" fill-opacity=".62" stroke="#e9d39a" stroke-opacity=".22"/>`; }
+      else { const strong=PZ==='fade'||PZ==='side'; g+=`<defs><linearGradient id="c2Fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060d" stop-opacity="0"/><stop offset="${strong?.42:.3}" stop-color="#05060d" stop-opacity="${strong?.94:.72}"/><stop offset="1" stop-color="#05060d" stop-opacity="${strong?.96:.88}"/></linearGradient></defs>`+(PZ==='side'?'':`<rect x="22" y="${GY0-(strong?150:90)}" width="626" height="${H-50-GY0+(strong?152:92)}" fill="url(#c2Fade)"/>`);
+        if(PZ==='side') g+=`<defs><linearGradient id="c2FadeX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#05060d" stop-opacity=".9"/><stop offset=".7" stop-color="#05060d" stop-opacity=".75"/><stop offset="1" stop-color="#05060d" stop-opacity="0"/></linearGradient></defs><rect x="22" y="${GY0-50}" width="${GX1+20}" height="${H-50-GY0+50}" fill="url(#c2FadeX)"/>`; }
+      const N=160, fs=[...Array(N+1)].map((_,i)=>i/N), ds=fs.map(XI), sl=SLOTS.map(s=>ds.map(d=>st.slots[s].M.mean(d))), cum=[]; let acc=ds.map(()=>0);
       sl.forEach(a=>{ acc=acc.map((v,i)=>v+a[i]); cum.push(acc); });
-      const PL=arr=>arr.map((r,i)=>`${f1(GX0+fs[i]*(GX1-GX0))},${f1(GYp(r))}`), f1=v=>(+v).toFixed(1);
+      const PL=arr=>arr.map((r,i)=>`${f1(GX0+fs[i]*(GX1-GX0))},${f1(GYp(r))}`);
       // 目盛り：段の境目（縦の細線、★5+より先は点線）、上限（横の点線）、RVの目盛り
-      for(let i=1;i<EN;i++){ const x=GX0+i/EN*(GX1-GX0); g+=LN(x,GY0,x,GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':''); }
+      const BX=[...Array(EN+1)].map((_,i)=>GX0+XF(EB[i])*(GX1-GX0)); BX[0]=GX0;
+      for(let i=1;i<EN;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
       const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=5)||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+TX(GX0-6,GYp(r)+3,r.toLocaleString('en-US'),{a:'end',fs:7.5,c:'#6f7a8e',m:1});
       g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+TX(GX0-6,GY0+3,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:7.5,c:'#9aa6bb',m:1})+TX(GX0+4,GY0-5,'上限（この装備で届く有効RVの最大）',{fs:8,c:'#8a93a6'});
       g+=LN(GX0,GY1,GX1,GY1,'#fff',.3,1)+LN(GX0,GY0,GX0,GY1,'#fff',.2,1)+TX(GX0-6,GY0-16,'有効RV %',{a:'end',fs:8,c:'#8a93a6'});
-      for(let k=0;k<EN;k++) g+=TX(GX0+(k+.5)/EN*(GX1-GX0),GY1+14,ELB[k],{a:'middle',fs:9,fw:700,c:'#8a93a6'});
-      for(let i=1;i<EN;i++) g+=TX(GX0+i/EN*(GX1-GX0),GY1+25,EMO[i-1],{a:'middle',fs:7,c:'#6f7a8e',m:1});
-      g+=TX(GX1,GY1+36,'秘境を回った期間（MONTHS）',{a:'end',fs:7.5,c:'#6f7a8e'});
+      // 横軸の文字：読みのかたまり（axis）と重なるものは出さない
+      const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, hideX=x=>axL!=null&&x>axL-14&&x<axL+o0.w+14;
+      for(let k=0;k<EN;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+14,ELB[k],{a:'middle',fs:9,fw:700,c:'#8a93a6'}); }
+      { let last=-99; for(let i=1;i<EN;i++){ const x=BX[i]; if(x>GX1-1||x-last<20||hideX(x)) continue; last=x; g+=TX(x,GY1+25,EMO[i-1],{a:'middle',fs:7,c:'#6f7a8e',m:1}); } }
+      if(XS==='lin'&&!hideX(GX1)) g+=TX(GX1,GY1+25,MOP(DMX),{a:'end',fs:7,c:'#6f7a8e',m:1});
+      g+=TX(GX1,GY1+36,'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:7.5,c:'#6f7a8e'});
       // 曲線
       if(LV==='E'){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
           const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-9,(yt+yb)/2,Math.min(12,yb-yt-2),'#cfc6ae'); }); }
@@ -1509,10 +1526,13 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
       // 原神のリリースから毎日回った線
       { const x=GXp(REL); g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text x="${f1(x+4)}" y="${GY1-6}" font-family='${sans}' font-size="8" fill="${RELC}">${REL_T}</text>`; }
-      // あなた：有効RVの横線が曲線とぶつかる点 → 真下が秘境レベル。印の上に全体の★と値
-      if(age>0){ const px=GXp(age), py=GYp(st.tot); g+=LN(GX0,py,px,py,'#fff',.55,1,' stroke-dasharray="2 2.5"')+LN(px,py,px,GY1,'#fff',.55,1,' stroke-dasharray="2 2.5"')+MARK(px,py);
+      // あなた：有効RVの横線が曲線とぶつかる点 → 真下が秘境レベル
+      if(age>0){ const py=GYp(st.tot); g+=LN(GX0,py,px,py,'#fff',.55,1,' stroke-dasharray="2 2.5"')+LN(px,py,px,OV==='axis'?GY1+8:GY1,'#fff',.55,1,' stroke-dasharray="2 2.5"')+MARK(px,py);
         g+=TX(GX0+4,py-4,`あなたの有効RV ${Math.round(st.tot)}%`,{fs:8,c:'#cfd4e6'});
-        const o0=OVR(0,0), below=py+78<GY1, x0=below?Math.max(40,Math.min(630-o0.w,px+16)):Math.max(40,Math.min(630-o0.w,px-o0.w/2)), yc=below?py+42:Math.max(150,py-(MYTH(age)?72:52)); g+=OVR(x0,yc).s; } }
+        if(OV==='pt'){ const below=py+78<GY1, x0=below?Math.max(40,Math.min(630-o0.w,px+16)):Math.max(40,Math.min(630-o0.w,px-o0.w/2)), yc=below?py+42:Math.max(150,py-(MYTH(age)?72:52)); g+=OVR(x0,yc).s; }
+        if(OV==='ttl') g+=OVR(GX0-8,GY0-(MYTH(age)?66:52)).s;
+        if(OV==='axis') g+=`<path d="M${f1(px-6)},${GY1+8} L${f1(px)},${GY1+2} L${f1(px+6)},${GY1+8} Z" fill="#fff" fill-opacity=".8"/>`+OVR(axL,GY1+32).s;
+        if(OV==='hdr') g+=OVR(rx+8,90).s; } }
     if(LV==='A'){ // 縦の物差し（左端）。全体のかたまりは印の右に
       const LT=150, LB=600, AX=46, LY=d=>LB-ES(d)*(LB-LT), bh=(LB-LT)/EN, ym=LB-ES5*(LB-LT), yb=age>0?Math.max(LT+24,Math.min(LB-30,LY(age))):null, near=y=>yb!=null&&Math.abs(y-yb)<38;
       g+=`<g filter="url(#c2Halo)">`+LN(AX,LB,AX,ym,'#fff',.22,2,' stroke-linecap="round"')+LN(AX,ym,AX,LT,'#fff',.3,1,' stroke-dasharray="2 3"');
