@@ -375,7 +375,7 @@ function cardAppInit(){
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.7。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.8。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
@@ -975,7 +975,8 @@ CSS_INV = r"""
 .cd-hd{display:flex; align-items:center; gap:10px}
 .ia-r .scl{display:block; margin-top:3px; color:var(--ink2); font-variant-numeric:tabular-nums}
 .ia-r .cap{display:flex; align-items:center; justify-content:flex-end; gap:0; font-size:11px; letter-spacing:.08em; color:var(--muted); margin-bottom:2px}
-.ia-r .big{display:flex; align-items:center; justify-content:flex-end; gap:10px}
+.ia-r .big{display:grid; grid-template-columns:auto 156px; justify-content:end; align-items:center; gap:8px} .ia-r .big > b{text-align:right; white-space:nowrap}
+.ia-r .rkw .rk{min-width:60px; justify-content:center} .ia-r .prk.dn{color:var(--muted)}
 .rkw.est .rk{background:color-mix(in srgb,var(--rc) 12%,transparent); color:var(--rc); box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--rc) 70%,transparent)}
 .ia-r .big.est b{opacity:.68; font-weight:500}
 .ia-r .prk{display:block; margin-top:2px; font-size:12px; color:var(--ink2)} .ia-r .prk b{display:inline; font-size:12px; color:var(--ink); font-weight:700}
@@ -1028,7 +1029,7 @@ CSS_INV = r"""
 @media (max-width:560px){ .cnav{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%} .cnav::-webkit-scrollbar{display:none} .cnav button{white-space:nowrap; flex:none; padding:6px 9px; font-size:12.5px} }
 .inv-sum{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink2)}
 .inv-sum b{color:var(--ink); font-size:16px; font-variant-numeric:tabular-nums}
-@media (max-width:560px){ .ia-r .cap,.ia-r .big{justify-content:flex-start} .ia-r{position:relative} .qwrap{position:static} .itip{left:0; right:0; width:auto; top:calc(100% + 6px)} .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:44px minmax(0,1fr)} .ia-ic{width:44px; height:44px; grid-row:1} .ia-subs{grid-column:1 / -1} .ia-r{grid-column:1 / -1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
+@media (max-width:560px){ .ia-r .cap{justify-content:flex-start} .ia-r .big{display:flex; justify-content:flex-start} .ia-r{position:relative} .qwrap{position:static} .itip{left:0; right:0; width:auto; top:calc(100% + 6px)} .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:44px minmax(0,1fr)} .ia-ic{width:44px; height:44px; grid-row:1} .ia-subs{grid-column:1 / -1} .ia-r{grid-column:1 / -1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
 </style>
 """
 
@@ -1312,7 +1313,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label title="ダメージの見積もりは、いまはフリンズ（雷霆のシンフォニー）だけの試作です"><input type="checkbox" id="invBen" ${dmgBennett()?'checked':''}>ダメージの見積もりにベネットのバフを入れる（試作・フリンズのみ）</label></div>
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
-    const est=x.lv<20, right=p?`<span class="cap">${est?'+20で平均的に伸びたら':'いまの実力'}${invQm(x,p)}</span><span class="big${est?' est':''}">${t?rankBadge(t,est):''}<b title="${est?'+20で平均の有効RV':'有効RV'} ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span>${est&&t?`<span class="prk">${esc(t[1])}${TIERS.indexOf(t)<TIERS.length-1?'以上':''}になる確率 <b>${pctTxt(potRankP(p,t))}</b></span>`:''}<span class="scl">スコア ${est?'平均 ':''}${(est?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
+    const est=x.lv<20, right=p?`<span class="cap">${est?'+20で平均的に伸びたら':'いまの実力'}${invQm(x,p)}</span><span class="big${est?' est':''}">${t?rankBadge(t,est):''}<b title="${est?'+20で平均の有効RV':'有効RV'} ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span>${t?(est?`<span class="prk">${esc(t[1])}${TIERS.indexOf(t)<TIERS.length-1?'以上':''}になる確率 <b>${pctTxt(potRankP(p,t))}</b></span>`:`<span class="prk dn">+20まで強化済み</span>`):''}<span class="scl">スコア ${est?'平均 ':''}${(est?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map((u,i)=>{ const st=u.own?['own',u.fs?'装備中（自由枠）':'装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
       return (u.fx&&!(i&&x.us[i-1].fx)?`<span class="fxl">${x.us.some(v=>!v.fx)?'自由枠でも使えるキャラ':'4セットで使うキャラはいません。自由枠でなら使えるキャラ'}</span>`:'')+`<button class="tag2 cc ${st[0]}${u.fx?' fx':''}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&!(u.sw&&u.sw.alt)&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
