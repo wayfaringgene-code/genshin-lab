@@ -11,7 +11,7 @@
 #   scan/                ビデオスキャナー（build_scan.py）
 #   fonts/               カード画像に埋め込むフォント
 #   portraits/           同梱の立ち絵（src/portraits があれば）
-#   icons/               キャラのアイコン（src/icons があれば。tools/build_icons.py）
+#   icons/               キャラのアイコン（src/icons があれば。tools/build_icons.py）。icons/relic/ は聖遺物のアイコン（tools/build_relic_icons.py）
 #   og.png               X などにURLを貼ったときの画像（src/og.png があれば）
 #   lab/index.html       聖遺物ラボ：キャラ（LAB_MODE='chars'）
 #   card/index.html      以前の /card/ からトップへの転送

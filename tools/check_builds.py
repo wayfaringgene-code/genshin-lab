@@ -55,7 +55,7 @@ def check(rows, chars, sets, fix):
     r['有効OP'] = stats(r.get('有効OP'), SUB_OK, '有効OP', n)
     for slot in ['砂', '杯', '冠']: r[slot] = stats(r.get(slot), MAIN_OK[slot], slot, n)
     out = []
-    for opt in split(r.get('使えるセット'), r'[/／]'):
+    for opt in split(r.get('使えるセット'), r'[/／・、]'):  # 候補の区切りは「／」。ほかの列にあわせて「・」「、」でもよい（--fix で「／」にそろう）
       parts = split(opt, r'[＋+]')
       if len(parts) > 2: errs.append(f'{n}行目 使えるセット：「{opt}」は3つ以上に分かれています（4セットは名前だけ、2＋2は「A＋B」）')
       for p in parts:

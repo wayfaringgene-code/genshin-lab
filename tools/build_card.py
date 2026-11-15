@@ -375,7 +375,7 @@ function cardAppInit(){
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.3。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.4。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
@@ -941,7 +941,7 @@ CSS_INV = r"""
 <style>
 /* ===== 手持ちの聖遺物・育成候補（v2.3 試作） ===== */
 .ia-list{display:grid; gap:8px; margin-top:10px}
-.ia{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--inset)}
+.ia{display:grid; grid-template-columns:52px minmax(0,1fr) auto; gap:6px 14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--inset)}
 .ia.cur{border-color:rgba(255,255,255,.22)}
 .ia{--ok:#7fd6a4; --okb:rgba(127,214,164,.55); --ng:#ff9b8a}
 .ia-h{font-size:13px; color:var(--ink2); display:flex; flex-wrap:wrap; gap:2px 10px; align-items:baseline}
@@ -962,10 +962,12 @@ CSS_INV = r"""
 .ia-sub.on{color:var(--ink)} .ia-sub.on i{background:var(--ink); box-shadow:none; opacity:1}
 .ia-sub.off{opacity:.8} .ia-sub small{font-size:10.5px; color:var(--muted); border:1px dashed rgba(255,255,255,.25); border-radius:4px; padding:0 4px}
 .ia.go{border-color:var(--okb)}
-.ia-r{grid-column:2; grid-row:1 / span 2; text-align:right; font-size:12px; color:var(--muted); align-self:center; font-variant-numeric:tabular-nums}
+.ia-r{grid-column:3; grid-row:1 / span 2; text-align:right; font-size:12px; color:var(--muted); align-self:center; font-variant-numeric:tabular-nums}
 .ia-r b{display:block; font-size:20px; color:var(--ink); line-height:1.2}
 .ia-r .tier{font-weight:700}
 .ia-r b.ok{color:var(--ok)}
+.ia-ic{grid-column:1; grid-row:1 / span 2; width:52px; height:52px; border-radius:8px; align-self:start; background:linear-gradient(160deg,#6b4a3a,#b8763a 70%,#d29a52); box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.ia-h,.ia-subs{grid-column:2}
 .ia-who{grid-column:1 / -1; font-size:12px; color:var(--muted)}
 .cico{display:inline-block; width:22px; height:22px; border-radius:50%; flex:none; background:#1c2140 50% 20%/165% no-repeat; box-shadow:0 0 0 1px rgba(255,255,255,.18); vertical-align:middle}
 .cico.s{width:18px; height:18px} .cico.l{width:34px; height:34px}
@@ -1016,7 +1018,7 @@ CSS_INV = r"""
 @media (max-width:560px){ .cnav{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%} .cnav::-webkit-scrollbar{display:none} .cnav button{white-space:nowrap; flex:none; padding:6px 9px; font-size:12.5px} }
 .inv-sum{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink2)}
 .inv-sum b{color:var(--ink); font-size:16px; font-variant-numeric:tabular-nums}
-@media (max-width:560px){ .ia-r .cap,.ia-r .big{justify-content:flex-start} .ia-r{position:relative} .qwrap{position:static} .itip{left:0; right:0; width:auto; top:calc(100% + 6px)} .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:minmax(0,1fr)} .ia-r{grid-column:1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
+@media (max-width:560px){ .ia-r .cap,.ia-r .big{justify-content:flex-start} .ia-r{position:relative} .qwrap{position:static} .itip{left:0; right:0; width:auto; top:calc(100% + 6px)} .ia-subs{grid-template-columns:repeat(2,minmax(0,max-content)); column-gap:18px} .ia{grid-template-columns:44px minmax(0,1fr)} .ia-ic{width:44px; height:44px; grid-row:1} .ia-subs{grid-column:1 / -1} .ia-r{grid-column:1 / -1; grid-row:auto; text-align:left} .ia-r b{display:inline; margin-right:8px} .ia-r .by{display:inline-flex; margin:0 0 0 10px; vertical-align:middle} }
 </style>
 """
 
@@ -1026,7 +1028,10 @@ function fmtMonths(d){ if(!isFinite(d)) return 'never'; const m=Math.max(0,d)/30
 function moLabels(){ const o={}; for(const d of [7,30,90,365,1095,3650]) o[d]=fmtMonths(d).replace('\u2009',' '); return o; }
 function moTicks(T){ return T.filter(t=>t[0]>=7).map(([d])=>[d,fmtMonths(d).replace('\u2009MONTHS',' MO')]); }
 /* ================= 手持ちの聖遺物・育成候補（v2.3 試作） ================= */
-var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{}, ICONS=/*__ICONS__*/{};
+var GOOD_NAMES=/*__GOOD_NAMES__*/{}, BUILDS=/*__BUILDS__*/{}, ICONS=/*__ICONS__*/{}, RELICS=/*__RELICS__*/{};
+// 聖遺物のアイコン（src/icons/relic、tools/build_relic_icons.py）。Enka の部位の番号：1＝杯・2＝羽・3＝冠・4＝花・5＝砂
+const RELIC_PART={goblet:1,plume:2,circlet:3,flower:4,sands:5};
+function relicIcon(a){ const id=RELICS[a.set], n=RELIC_PART[a.slot]; return id&&n?`<img class="ia-ic" src="icons/relic/${id}_${n}.webp" alt="" loading="lazy" decoding="async">`:`<span class="ia-ic"></span>`; }
 function charIcon(name,sz){ const f=ICONS[name]; return f?`<i class="cico${sz?' '+sz:''}" style="background-image:url(icons/${f})" aria-hidden="true"></i>`:`<i class="cico ini${sz?' '+sz:''}" aria-hidden="true">${esc(String(name||'？').slice(0,1))}</i>`; }
 var INV=null, INV_IDX=null, INV_VIEW=null; const PF_MEMO=new Map();
 const GOOD_STAT={hp:'HP',atk:'ATK',def:'DEF',hp_:'HP%',atk_:'ATK%',def_:'DEF%',enerRech_:'ER',eleMas:'EM',critRate_:'CR',critDMG_:'CD',heal_:'HEAL',physical_dmg_:'PHYS',pyro_dmg_:'DMG_炎',hydro_dmg_:'DMG_水',cryo_dmg_:'DMG_氷',electro_dmg_:'DMG_雷',anemo_dmg_:'DMG_風',geo_dmg_:'DMG_岩',dendro_dmg_:'DMG_草'};
@@ -1188,7 +1193,7 @@ function featBest(p,effs){ let best=null; for(const e of effs){ const f=pieceFea
 function invArtHTML(a,eff,right,who,cls,feat){ const E=new Set(eff||[]), p=a.p, est=estOf(p), det={}; if(est.ok) for(const d of est.det) det[d.s]=d;
   const subs=p.subs.filter(x=>x.s).map(x=>{ let n=0,u=0; if(x.off){ const m=matches(x.s,x.v), q=m&&m[1]; if(q&&q.cnt){ let e=0,c=0; for(const [uu,cc] of q.rv){ e+=uu*cc; c+=cc; } n=1; u=e/c; } } else if(det[x.s]){ n=det[x.s].n; u=det[x.s].u; }
     return `<span class="ia-sub${E.has(x.s)?' on':''}${x.off?' off':''}"${E.has(x.s)?' title="有効OP"':''}><span class="tx"><i></i>${INV_GAME[x.s]||x.s}<span class="v">+${esc(x.v)}${invPct(x.s)?'%':''}</span>${x.off?'<small>+4で付く</small>':''}</span>${rollBar(n,u)}</span>`; }).join('');
-  return `<div class="ia${cls?' '+cls:''}"><div class="ia-h">${(()=>{ const fb=feat===undefined?featBadges(pieceFeat(p,eff)):featBadges(feat); return fb?`<span class="ia-fb">${fb}</span>`:''; })()}<b>${esc(a.set||'セット不明')}</b><span>${SLOT_JP[a.slot]||a.slot}・${esc(MAIN_SHORT(p.main))}</span><span class="lv">+${p.lv==null?20:p.lv}</span>${a.lk?'<span title="ロック中">🔒</span>':''}</div>
+  return `<div class="ia${cls?' '+cls:''}">${relicIcon(a)}<div class="ia-h">${(()=>{ const fb=feat===undefined?featBadges(pieceFeat(p,eff)):featBadges(feat); return fb?`<span class="ia-fb">${fb}</span>`:''; })()}<b>${esc(a.set||'セット不明')}</b><span>${SLOT_JP[a.slot]||a.slot}・${esc(MAIN_SHORT(p.main))}</span><span class="lv">+${p.lv==null?20:p.lv}</span>${a.lk?'<span title="ロック中">🔒</span>':''}</div>
     <div class="ia-subs">${subs}</div>${right?`<div class="ia-r">${right}</div>`:''}${who?`<div class="ia-who">${who}</div>`:''}</div>`; }
 /* ---- 育成候補（キャラ一覧の行を押したとき） ---- */
 var CAND={id:null,slot:'flower',p41:null,eq:true,n:20};
@@ -1304,6 +1309,9 @@ for _, _r in _rows:
 _ip = os.path.join(_root, 'src', 'icons', 'icons.json'); _icons = open(_ip, encoding='utf-8').read() if os.path.exists(_ip) else '{}'; _json.loads(_icons)
 assert s.count('/*__ICONS__*/{}') == 1
 s = s.replace('/*__ICONS__*/{}', _icons.strip())
+_rp = os.path.join(_root, 'src', 'icons', 'relic', 'relic.json'); _relics = open(_rp, encoding='utf-8').read() if os.path.exists(_rp) else '{}'; _json.loads(_relics)
+assert s.count('/*__RELICS__*/{}') == 1
+s = s.replace('/*__RELICS__*/{}', _relics.strip())  # 聖遺物のアイコン（セット名 → Enka のセットの番号）
 assert s.count('/*__GOOD_NAMES__*/{}') == 1 and s.count('/*__BUILDS__*/{}') == 1
 s = s.replace('/*__GOOD_NAMES__*/{}', _json.dumps(_gn, ensure_ascii=False)).replace('/*__BUILDS__*/{}', _json.dumps(_builds, ensure_ascii=False))
 open(dst, 'w', encoding='utf-8').write(s)
