@@ -910,7 +910,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',fl:2,up:'br',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',fl:2,up:'br',gs:'bold',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -959,13 +959,14 @@ function cc2Proto(){ if($('cc2Proto')) return;
     if(CARD_IMG[cc.id]&&!(cc.id in CARD_FIT2)&&!CARD_FITTING['2'+cc.id]){ CARD_FITTING['2'+cc.id]=1; fitCardArt2(CARD_IMG[cc.id]).then(u=>{ delete CARD_FITTING['2'+cc.id]; CARD_FIT2[cc.id]=u||''; if($('cc2Proto')) draw(); }); }
     if(CARD_IMG[cc.id]&&!(CARD_IMG[cc.id] in CC2_BB)){ CC2_BB[CARD_IMG[cc.id]]=null; cc2BBox(CARD_IMG[cc.id]).then(b=>{ CC2_BB[CARD_IMG[cc.id]]=b; if($('cc2Proto')) draw(); }); }
     const aid=cc2Aid(cc), adj=cc2AdjOf(cc);
-    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl,up:CC2.up}; window.CC2_ADJ=adj; window.CC2_FIT2=CARD_FIT2[cc.id]||''; window.CC2_WHOLE=CARD_IMG[cc.id]||''; window.CC2_BB=CC2_BB[CARD_IMG[cc.id]]||null; return constellationCardSVG(cc,st,'v2'); };
+    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl,up:CC2.up,gs:CC2.gs}; window.CC2_ADJ=adj; window.CC2_FIT2=CARD_FIT2[cc.id]||''; window.CC2_WHOLE=CARD_IMG[cc.id]||''; window.CC2_BB=CC2_BB[CARD_IMG[cc.id]]||null; return constellationCardSVG(cc,st,'v2'); };
     box.innerHTML=`<div class="cc2-bar"><div class="row"><b>カードのデザインの見直し（試作）</b><span class="note">保存はしません</span><button class="btn" type="button" data-x style="margin-left:auto">閉じる</button></div>
       <div class="row">${[...CC2_VS,['NOW','今のカード'],['all','4案を並べる'],['SHEET','バッジ一覧']].map(([k,t])=>B('v',k,t,CC2.v===k)).join('')}</div>
       <div class="row">バッジ ${CC2_BS.map(([k,t])=>B('b',k,t,CC2.b===k)).join('')}　余白 ${B('tg',0,'標準',!CC2.tight)}${B('tg',1,'詰める',!!CC2.tight)}</div>
       <div class="row">G の立ち絵 ${B('fl',0,'枠',CC2.fl===0)}${B('fl',1,'枠なし',CC2.fl===1)}${B('fl',2,'丸ごと（横長）',CC2.fl===2)}　分析の表 ${[['br','右下へ全部（新）'],['left','左（今のまま）']].map(([k,t])=>B('up',k,t,CC2.up===k)).join('')}　${B('adjOn',CC2.adjOn?0:1,'立ち絵の位置合わせ',!!CC2.adjOn)}</div>
       ${CC2.adjOn?`<div class="row" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span>${esc(cc.name||'')}（${aid||'—'}）：カードの立ち絵を指でドラッグして位置、スライダーで大きさ</span><label class="row" style="gap:6px">大きさ<input type="range" data-adjs min="60" max="250" step="1" value="${Math.round(adj.s*100)}" style="width:160px"><span data-adjv>${Math.round(adj.s*100)}%</span></label><button class="btn" type="button" data-adjreset>この人を戻す</button><button class="btn" type="button" data-adjcopy>値をまとめてコピー（${Object.keys(CC2.adj).length}人）</button><span class="note" data-adjmsg></span></div>`:''}
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
+      <div class="row">グラフ本体 ${[['bold','華やか'],['mid','中間'],['calm','控えめ（前の形）']].map(([k,t])=>B('gs',k,t,CC2.gs===k)).join('')}</div>
       <div class="row">横軸 ${[['band','段ごとに等幅'],['log','対数'],['lin','線形']].map(([k,t])=>B('xs',k,t,CC2.xs===k)).join('')}　立ち絵 ${[['none','そのまま'],['fade','溶かす'],['glass','すりガラス'],['side','右へずらす']].map(([k,t])=>B('pz',k,t,CC2.pz===k)).join('')}</div>
       <div class="row"><select data-ci aria-label="キャラ">${CC2.list.map((x,i)=>`<option value="${i}"${i===CC2.ci?' selected':''}>${esc(x.l)}</option>`).join('')}</select></div></div>
       <div class="cc2-cards">${vs.map(v=>`<figure>${CC2.v==='all'?`<figcaption>${(CC2_VS.find(x=>x[0]===v)||[])[1]||v}</figcaption>`:''}${svg(v)}</figure>`).join('')}</div>`;
@@ -987,7 +988,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       const rs=box.querySelector('[data-adjs]'); if(rs){ rs.oninput=()=>{ adj.s=+rs.value/100; box.querySelector('[data-adjv]').textContent=rs.value+'%'; place(); }; rs.onchange=()=>{ save(); draw(); }; }
       const rb=box.querySelector('[data-adjreset]'); if(rb) rb.onclick=()=>{ delete CC2.adj[aid]; try{ localStorage.setItem('lab:cc2Adj',JSON.stringify(CC2.adj)); }catch(e){} draw(); };
       const cb=box.querySelector('[data-adjcopy]'); if(cb) cb.onclick=async()=>{ const out={}; for(const [a,v] of Object.entries(CC2.adj)) out[a]=Object.assign({name:(PORTRAITS[a]||{}).name||''},v); const t=JSON.stringify(out); let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){} box.querySelector('[data-adjmsg]').textContent=ok?'コピーしました。Claude に貼って渡してください':'コピーできませんでした：'+t; }; }
-    ['ov','xs','pz','up'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
+    ['ov','xs','pz','up','gs'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
     box.querySelector('[data-ci]').onchange=e=>{ CC2.ci=+e.target.value; draw(); };
     box.querySelector('[data-x]').onclick=()=>box.remove(); };
   window.cc2Debug=()=>CC2.list.map(({c,l})=>{ const st=charStats(c); return l+'  全体 '+fmtAge(st.age)+' '+tierOf(st.age)[1]+' ｜ '+SLOTS.map(s=>fmtAge(st.slots[s].age)+' '+tierOf(st.slots[s].age)[1]).join(' ／ '); }); // 確認用
@@ -1599,10 +1600,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       sl.forEach(a=>{ acc=acc.map((v,i)=>v+a[i]); cum.push(acc); });
       const PL=arr=>arr.map((r,i)=>`${f1(GX0+fs[i]*(GX1-GX0))},${f1(GYp(r))}`);
       // 目盛り：段の境目（縦の細線、★5+より先は点線）、上限（横の点線）、RVの目盛り。G は文字を大きく、段ごとの淡い縞・曲線の下の金の光・読み取りの札で「目を引く」形に（色はカードの枠と同じ金だけ）
-      const BG=G3, FA=BG?9.5:7.5, FLb=BG?10.5:8, FB=BG?11.5:9, FE=BG?9:7, ACC='#e9d39a', py0=age>0?GYp(st.tot):null;
+      const BG=G3, GS=BG?((window.CC2_OPT||{}).gs||'bold'):'calm', /* グラフ本体の見た目（G）：bold＝華やか／mid＝中間／calm＝控えめ（前の形）。文字・読み取りの札・あなたの点は変えない */ FA=BG?9.5:7.5, FLb=BG?10.5:8, FB=BG?11.5:9, FE=BG?9:7, ACC='#e9d39a', py0=age>0?GYp(st.tot):null;
       const BX=[...Array(EN+1)].map((_,i)=>GX0+XF(EB[i])*(GX1-GX0)); BX[0]=GX0;
       if(BG){ g+=`<defs><linearGradient id="c2Area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ACC}" stop-opacity=".26"/><stop offset="1" stop-color="${ACC}" stop-opacity="0"/></linearGradient><linearGradient id="c2Curve" gradientUnits="userSpaceOnUse" x1="${GX0}" x2="${GX1}" y1="0" y2="0"><stop offset="0" stop-color="#cfd4e6"/><stop offset="1" stop-color="#f6e2a8"/></linearGradient></defs>`;
-        for(let k=0;k<EN;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
+        if(GS==='bold') for(let k=0;k<EN;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
       for(let i=1;i<EN;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
       const nearY=y=>BG&&py0!=null&&Math.abs(y-py0)<13;
       const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=(BG?4:5))||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||GYp(r)-GY0<12?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
@@ -1620,7 +1621,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       if(LV==='E'||G3){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
           const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-10,(yt+yb)/2,Math.min(BG?14:12,yb-yt-2),'#cfc6ae'); }); }
       else g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="${CREAM}" fill-opacity=".08"/>`;
-      if(BG) g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="url(#c2Area)"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${ACC}" stroke-opacity=".35" stroke-width="6" stroke-linejoin="round" filter="url(#ccSoft)"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="2.4" stroke-linejoin="round"/>`;
+      if(BG&&GS==='bold') g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="url(#c2Area)"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${ACC}" stroke-opacity=".35" stroke-width="6" stroke-linejoin="round" filter="url(#ccSoft)"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="2.4" stroke-linejoin="round"/>`;
+      else if(BG&&GS==='mid') g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="url(#c2Area)" opacity=".4"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="1.8" stroke-linejoin="round"/>`;
       else g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
       // 原神のリリースから毎日回った線
       { const x=GXp(REL), lf=x+(BG?190:165)>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="${BG?9.5:8}" fill="${RELC}">${REL_T}</text>`; }
