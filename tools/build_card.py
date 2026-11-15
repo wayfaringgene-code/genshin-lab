@@ -976,6 +976,9 @@ CSS_INV = r"""
 .ia-r .scl{display:block; margin-top:3px; color:var(--ink2); font-variant-numeric:tabular-nums}
 .ia-r .cap{display:flex; align-items:center; justify-content:flex-end; gap:0; font-size:11px; letter-spacing:.08em; color:var(--muted); margin-bottom:2px}
 .ia-r .big{display:flex; align-items:center; justify-content:flex-end; gap:10px}
+.rkw.est .rk{background:color-mix(in srgb,var(--rc) 12%,transparent); color:var(--rc); box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--rc) 70%,transparent)}
+.ia-r .big.est b{opacity:.68; font-weight:500}
+.ia-r .prk{display:block; margin-top:2px; font-size:12px; color:var(--ink2)} .ia-r .prk b{display:inline; font-size:12px; color:var(--ink); font-weight:700}
 .rkw{display:inline-flex; flex:none} .rkw.glow{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rc) 55%,transparent))}
 .rk{display:inline-flex; align-items:center; height:22px; padding:0 13px 0 12px; font-size:12.5px; font-weight:800; letter-spacing:.08em; color:#0b0e22; background:var(--rc); background:linear-gradient(120deg,color-mix(in srgb,var(--rc) 70%,#fff) 0%,var(--rc) 45%,color-mix(in srgb,var(--rc) 72%,#000) 100%); clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%)}
 .qwrap{position:relative; display:inline-block; margin-left:6px; vertical-align:middle}
@@ -1124,7 +1127,7 @@ function invIndex(){ const inv=invLoad(); if(!inv) return null; const sig=(dmgBe
       const M=model(a.slot,[a.p.main],c.eff), days=ageOf(d=>M.mean(d),ex*10);
       let mxU=0, pMx=0; for(const [v,q] of f.dist) if(v>mxU){ mxU=v; pMx=q; } const daysMax=ageOf(d=>M.mean(d),mxU*10), sr=scoreRange(c,a.p,f);
       const dm=own?null:dmgCompare(c,a,f);
-      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),fs:fs&&fs.slot===a.slot?fs:null,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr}; }
+      us.push({c,own,now,pb:own?null:pb,dm,ex:ex*10,rvMax:mxU*10,sw:own?null:setSwap(c,a),fs:fs&&fs.slot===a.slot?fs:null,days,daysMax,pMx,sr,scNow:st.slots[a.slot].sc,slotAge:st.slots[a.slot].age,cardAge:st.age,cardNew:own?st.age:ageOf(st.meanTot,Math.max(0,st.tot-(now||0)+ex*10))}); if(pot==null||days>pot.days) pot={days,ex:ex*10,c,sr,f,M}; }
     const ord=u=>u.own?2:u.sw&&u.sw.alt?-1+u.pb/10:u.pb; us.sort((x,y)=>ord(y)-ord(x)); info.set(a,{us,pot,lv}); }
   INV_IDX={sig,info}; return INV_IDX; }
 // いまのセットの状態と、この1個に替えたとき：
@@ -1187,9 +1190,11 @@ function scoreRange(c,p,f){ const t=scoreType(c), W=s=>s==='CR'?2:s==='CD'?1:(t!
 /* ---- キャラの札の吹き出し：この1個を+20まで上げて付けたら、部位とカード全体の秘境レベルが平均でどうなるか ---- */
 // 右端の数字の「?」：何を表すかの説明（マウスを載せる・押す）
 // ランクのバッジ：ランクの色の平行四辺形（★5・★5+ はその色でほのかに光る）
-function rankBadge(t){ const i=TIERS.indexOf(t); return `<span class="rkw${i>=4?' glow':''}" style="--rc:${t[2]}"><span class="rk">${esc(t[1])}</span></span>`; }
+function rankBadge(t,est){ const i=TIERS.indexOf(t); return `<span class="rkw${i>=4&&!est?' glow':''}${est?' est':''}" style="--rc:${t[2]}"${est?' title="+20まで上げたときの見込み"':''}><span class="rk">${esc(t[1])}</span></span>`; }
+// +20未満の1個：表示しているランク以上になる確率（+20での有効RVの分布を、ひとつずつ秘境の期間に直して数える）
+function potRankP(p,t){ if(p.pr!=null) return p.pr; const M=p.M; let q=0; for(const [u,w] of p.f.dist) if(ageOf(d=>M.mean(d),u*10)>=t[0]) q+=w; return p.pr=q; }
 function invQm(x,p){ const nm=esc(p.c.name), all=x.us.map(u=>esc(u.c.name)).join('・'), lv=x.lv;
-  return `<span class="qwrap"><button class="qm" type="button" aria-label="この数字の説明">?</button><span class="itip" role="tooltip"><b>素質</b>：${lv<20?'この1個を+20まで上げたら、平均で':'この1個（+20）は、いま'}秘境何か月分の1個になるか。秘境だけで同じ有効RVの1個をそろえるのに、平均的な人がかかる期間です。<br>${x.us.length>1?`このセットを使うキャラ（${all}）の有効OPでそれぞれ測り、いちばん高く出た<b>${nm}</b>の値です。`:`<b>${nm}</b>の有効OPで測った値です。`}★はカードと同じランクです。<br><b>スコア</b>：会心率×2＋会心ダメージ＋型の1項目（${nm}の型）。${lv<20?'+20まで上げたときの平均です。':'いまの値です。'}</span></span>`; }
+  return `<span class="qwrap"><button class="qm" type="button" aria-label="この数字の説明">?</button><span class="itip" role="tooltip"><b>素質</b>：${lv<20?'この1個を+20まで上げたら、平均で':'この1個（+20）は、いま'}秘境何か月分の1個になるか。秘境だけで同じ有効RVの1個をそろえるのに、平均的な人がかかる期間です。${lv<20?'（+20での有効RVの平均を期間に直した値。だいたい「半々で上か下か」の真ん中です）。強化の当たり外れで大きく振れるので、ランクのバッジは透けた色にし、そのランク以上になる確率を添えています。':''}<br>${x.us.length>1?`このセットを使うキャラ（${all}）の有効OPでそれぞれ測り、いちばん高く出た<b>${nm}</b>の値です。`:`<b>${nm}</b>の有効OPで測った値です。`}★はカードと同じランクです。<br><b>スコア</b>：会心率×2＋会心ダメージ＋型の1項目（${nm}の型）。${lv<20?'+20まで上げたときの平均です。':'いまの値です。'}</span></span>`; }
 const dmgPct=x=>(x>=0?'+':'')+(x*100).toFixed(1)+'%';
 const dmgNote=d=>`<span class="pb">ダメージ＝${esc(d.skill)}（${d.ben?'ベネットのバフあり':'バフなし'}・試作）が何%変わるか。上がる確率 ${pctTxt(d.pUp)}</span>`;
 const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*100).toFixed(1)+'%':'約1/'+Math.round(1/p).toLocaleString();
@@ -1305,7 +1310,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label title="ダメージの見積もりは、いまはフリンズ（雷霆のシンフォニー）だけの試作です"><input type="checkbox" id="invBen" ${dmgBennett()?'checked':''}>ダメージの見積もりにベネットのバフを入れる（試作・フリンズのみ）</label></div>
     <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
-    const right=p?`<span class="cap">${x.lv<20?'+20の見込み':'いまの実力'}${invQm(x,p)}</span><span class="big">${t?rankBadge(t):''}<b title="+20で平均の有効RV ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span><span class="scl">スコア ${(x.lv<20?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
+    const est=x.lv<20, right=p?`<span class="cap">${est?'+20で平均的に伸びたら':'いまの実力'}${invQm(x,p)}</span><span class="big${est?' est':''}">${t?rankBadge(t,est):''}<b title="${est?'+20で平均の有効RV':'有効RV'} ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span>${est&&t?`<span class="prk">${esc(t[1])}${TIERS.indexOf(t)<TIERS.length-1?'以上':''}になる確率 <b>${pctTxt(potRankP(p,t))}</b></span>`:''}<span class="scl">スコア ${est?'平均 ':''}${(est?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map(u=>{ const st=u.own?['own',u.fs?'装備中（自由枠）':'装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`${u.fs?'自由枠 ':''}更新 <b>${pctTxt(u.pb)}</b>`];
       return `<button class="tag2 cc ${st[0]}" data-cand="${u.c.id}" data-cslot="${a.slot}" aria-label="${esc(u.c.name)}の育成候補を開く">${charIcon(u.c.name)}<span class="nm">${esc(u.c.name)}</span><span class="st">${st[1]}</span>${invTip(u,a)}</button>`; }).join(''):`<span class="tag2 ex">使うキャラなし（餌の候補）</span>`);
     return invArtHTML(a,p?p.c.eff:null,right,who,x.us.some(u=>!u.own&&!(u.sw&&u.sw.alt)&&(u.now==null||u.pb>=0.5))?'go':'',x.us.length?featBest(a.p,x.us.map(u=>u.c.eff||[])):{w:pieceFeat(a.p,[]).w,k:null,avg:null}); }).join('')+`</div>`;
