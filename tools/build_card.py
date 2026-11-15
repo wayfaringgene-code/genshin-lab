@@ -448,7 +448,7 @@ function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
       const subs=(f.reliquarySubstats||[]).map(q=>{ const s=ENKA_PROP[q.appendPropId], v=+q.statValue; return {s,v:FLAT.has(s)?String(Math.round(v)):v.toFixed(1)}; }).filter(q=>q.s);
       if(subs.length<3||subs.length>4){ notes.odd++; continue; }
       if(subs.length===3) subs.push({s:'',v:'',off:true}); // +0の3OP：4つ目は Enka には出てこない（種類も分からない）
-      const p={main,subs}; if(lv<20){ p.lv=lv; notes.partial++; } if(!bad) p.rolls=rolls; pieces[slot]=p;
+      const p={main,subs}; if(f.setId) p.setId=String(f.setId); if(lv<20){ p.lv=lv; notes.partial++; } if(!bad) p.rolls=rolls; pieces[slot]=p;
       if(f.setId) cnt[f.setId]=(cnt[f.setId]||0)+1; }
     if(!Object.keys(pieces).length) continue;
     const nm=ENKA.avatar[String(av.avatarId)]; if(!nm) notes.unknown++;
@@ -909,6 +909,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    右＝部位の★の札が主役の5行（値は白系で裏付け、棒は5行で縮尺をそろえる、サブOPは枠なしの小さな文字）
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
+window.CC2_ELEM=/*__ELEM_ICONS__*/{};
 const CC2={v:'G',ci:0,b:'p',tight:0,ov:'pt',xs:'band',pz:'none',fl:2,up:'br',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
@@ -1457,7 +1458,8 @@ s = s.replace('/*__GOOD_NAMES__*/{}', _json.dumps(_gn, ensure_ascii=False)).repl
 #     決まり：①ランクの色は全体の★と部位の★の札だけ ②★の表記は「★5」 ③1か所に主役は1つ ④物差しには上限（百年級・有史以来） ⑤有効OPの色はサブOPの文字だけ
 rep("mode=mode||'tick';", "const V2=mode==='v2'; mode=V2?'tick':(mode||'tick');")
 rep("  // 星の位置\n", "  if(!V2){\n  // 星の位置\n")
-rep("  // キャラ名は左上（星図の外側）", "  }\n  // キャラ名は左上（星図の外側）")
+rep("  // キャラ名は左上（星図の外側）", "  }\n  if(!V2){\n  // キャラ名は左上（星図の外側）")
+rep("  const rx=676, RE=W-56;", "  }\n  const rx=676, RE=W-56;")
 rep("  // 右上の見出し（CC_HDR）", "  if(!V2){\n  // 右上の見出し（CC_HDR）")
 rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     const LV=window.CC2_LEFT||'A', RNK=d=>d>0?tierOf(d):null, MOP=d=>{ const m=d/30.4; return m<10?m.toFixed(1):Math.round(m).toLocaleString('en-US'); };
@@ -1513,7 +1515,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     if(BARS) for(let k=0;k<EN;k++) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'});
     SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), pim=c.pimg&&c.pimg[s], y1=Y+(BRH?25:33);
       g+=LN(rx,Y+4,RE,Y+4,'#c9b98f',.12,1);
-      g+=`<g transform="translate(${rx+16},${y1-5})">${pim?`<image href="${pim}" x="-15" y="-15" width="30" height="30" preserveAspectRatio="xMidYMid slice" clip-path="url(#ccP${k})"/>`:slotIcon(s,0,0,18,'#8a93a6')}<circle r="15" fill="none" stroke="#c9b98f" stroke-opacity=".4" stroke-width="1"/></g>`;
+      const rid=typeof RELICS!=='undefined'&&eq?(p.setId||RELICS[(String(c.set||'').split('＋').map(z=>/^(.+?)4$/.exec(z.trim())).find(Boolean)||[])[1]]):null, rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
+      g+=`<g transform="translate(${rx+16},${y1-5})">${pim?`<image href="${pim}" x="-15" y="-15" width="30" height="30" preserveAspectRatio="xMidYMid slice" clip-path="url(#ccP${k})"/>`:rimg?`<image href="${rimg}" x="-14" y="-14" width="28" height="28" preserveAspectRatio="xMidYMid meet"/>`:slotIcon(s,0,0,18,'#8a93a6')}<circle r="15" fill="none" stroke="#c9b98f" stroke-opacity=".4" stroke-width="1"/></g>`;
       g+=`<text x="${SX}" y="${y1}" font-family='${sans}' font-size="11" fill="#9aa6bb">${SLOT_JP[s]}<tspan dx="8" font-size="15" font-weight="700" fill="${eq?'#e6dfcf':'#ff9b8a'}">${eq?esc(MAIN_SHORT(p.main)):'未装備'}</tspan>${eq&&p.lv!=null&&+p.lv<20?`<tspan dx="8" font-family='${mono}' font-size="12" font-weight="700" fill="#e8a15a">+${+p.lv}</tspan>`:''}${UPM==='row'&&eq?`<tspan dx="14" font-size="10" fill="#8a93a6">1か月で更新 <tspan font-family='${mono}' font-size="11.5" font-weight="${PS[k]===PSB&&PSB>0?700:400}" fill="${PS[k]===PSB&&PSB>0?'#f3ead6':'#cfd4e6'}">${FPc(PS[k])}</tspan></tspan>`:''}</text>`;
       const b=BADGE(RE,y1-5,25,d); g+=b.s;
       g+=`<text x="${RE-(b.w?b.w+10:0)}" y="${y1}" text-anchor="end" font-family='${mono}' font-size="14" font-weight="600" fill="#d8d2c2">${d>0?UHT(fmtAge(d),14,null):'—'}</text>`;
@@ -1637,7 +1640,20 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const xr=HX(REL); g+=LN(xr,HY-6,xr,HY+5,RELC,.85,1.2)+`<text x="${xr.toFixed(1)}" y="${HY+29}" text-anchor="middle" font-family='${sans}' font-size="8.5" fill="${RELC}">${REL_T}</text>`;
       g+=`</g>`;
       if(age>0){ const x=HX(age), o0=OVR(0,0), x0=Math.max(44,Math.min(626-o0.w,x-o0.w/2)), yc=HY-(MYTH(age)?62:40); g+=LN(x,HY,x,yc+20,'#fff',.5,1)+MARK(x,HY)+OVR(x0,yc).s; } }
+    // ---- 左上：名前・元素（アイコン）・セット・有効OP。色を足さない（有効OPは枠なしの淡い金の文字＝サブOPの有効OPと同じ色） ----
+    { const big=[...nm].length>6, fsN=big?32:40, EI=(window.CC2_ELEM||{})[el];
+      g+=`<text x="44" y="78" font-family='${disp}' font-size="${fsN}" font-weight="800" fill="#f3ead6" paint-order="stroke" stroke="#05060d" stroke-width="4" stroke-opacity=".6">${esc(nm)}</text>`;
+      g+=(EI?`<image href="${EI}" x="44" y="88" width="20" height="20"/>`:'')+`<text x="${EI?70:46}" y="103" font-family='${sans}' font-size="13" fill="#9aa6bb" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${c.set?esc(setKeyOf(c.set)):(EI?'':'元素未詳')}</text>`;
+      const nmW=[...nm].reduce((a,c2)=>a+(/[ -~]/.test(c2)?.55:1),0)*fsN, x0=44+nmW+22, EJ={'HP%':'HP%','ATK%':'攻撃力%','DEF%':'防御力%','ER':'元素チャージ','EM':'元素熟知','CR':'会心率','CD':'会心ダメージ'}, tw=t=>[...t].reduce((a,c2)=>a+(/[ -~]/.test(c2)?8.6:13.4),0);
+      let ex=x0+52, ey=68; g+=`<text x="${x0}" y="${ey}" font-family='${sans}' font-size="11" fill="#8a93a6" letter-spacing=".12em" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">有効OP</text>`;
+      const items=(c.effGuess?[['推定','#ffb4a6']]:[]).concat((c.eff||[]).map(k=>[EJ[k]||k,'#d9c48e']));
+      items.forEach(([t,col],i)=>{ const w=tw(t); if(ex+w>630&&ex>x0+60){ ex=x0+52; ey+=20; } g+=`<text x="${ex}" y="${ey}" font-family='${sans}' font-size="13" font-weight="700" fill="${col}" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${t}</text>`; if(i<items.length-1) g+=`<text x="${(ex+w+9).toFixed(1)}" y="${ey}" text-anchor="middle" font-family='${sans}' font-size="12" fill="#6f7a8e">・</text>`; ex+=w+(i<items.length-1?18:0); }); }
   }
 """ + "  // 下の一文：秘境レベルの定義")
+import base64 as _b64
+_ed = os.path.join(_root, 'src', 'icons', 'element'); _EN = {'炎': 'pyro', '水': 'hydro', '風': 'anemo', '雷': 'electro', '草': 'dendro', '氷': 'cryo', '岩': 'geo'}
+_elem = {k: 'data:image/webp;base64,' + _b64.b64encode(open(os.path.join(_ed, v + '.webp'), 'rb').read()).decode() for k, v in _EN.items() if os.path.exists(os.path.join(_ed, v + '.webp'))}
+assert s.count('/*__ELEM_ICONS__*/{}') == 1
+s = s.replace('/*__ELEM_ICONS__*/{}', _json.dumps(_elem))  # 元素アイコン（カードの左上。保存する画像にも写るよう埋め込む）
 open(dst, 'w', encoding='utf-8').write(s)
 print('wrote', dst, len(s))
