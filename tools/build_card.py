@@ -1492,7 +1492,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const fs=h*.58, w=W0(fs,h*.95), x0=at(w), tx=TXT(x0+w/2,fs,BS==='f'?fill:DK);
       if(BS==='f'){ const c=h*.22, y0=yc-h/2, y1=yc+h/2, oct=e=>[[x0+c+e,y0+e],[x0+w-c-e,y0+e],[x0+w-e,y0+c+e],[x0+w-e,y1-c-e],[x0+w-c-e,y1-e],[x0+c+e,y1-e],[x0+e,y1-c-e],[x0+e,y0+c+e]];
         return {w, s:POLY(oct(0),DK,` fill-opacity=".6" stroke="${fill}" stroke-width="1.4"${gl}`)+POLY(oct(3),'none',` stroke="${fill}" stroke-opacity=".45" stroke-width=".7"`)+tx}; }
-      if(BS==='card'){ const fsC=h*.56, w=Math.round(h*2.45), x0=at(w), y0=yc-h/2, r=Math.max(2,h*.13), th=Math.max(1.4,h*.07), mt=ML?'url(#ccPrism)':`url(#c2Mt${k})`, sd=ML?'#6b5a8c':`url(#c2MtSide${k})`; /* 長方形のカード：金属の斜めのグラデーション＋光沢の帯、上の縁に明るい線、下に側面をのぞかせて厚みを。横幅はすべてのランクで同じ */
+      if(BS==='card'){ const fsC=h*.56, w=Math.round(h*2.45), x0=at(w), y0=yc-h/2, r=Math.max(2,h*.13), th=Math.max(.9,h*.045), mt=ML?'url(#ccPrism)':`url(#c2Mt${k})`, sd=ML?'#6b5a8c':`url(#c2MtSide${k})`; /* 長方形のカード：金属の斜めのグラデーション＋光沢の帯、上の縁に明るい線、下に側面をのぞかせて厚みを。横幅はすべてのランクで同じ */
         return {w, s:`<g${gl}><rect x="${x0}" y="${f1(y0+th)}" width="${w}" height="${h}" rx="${f1(r)}" fill="${sd}"/><rect x="${x0}" y="${f1(y0)}" width="${w}" height="${h}" rx="${f1(r)}" fill="${mt}"/><rect x="${x0}" y="${f1(y0)}" width="${w}" height="${h}" rx="${f1(r)}" fill="url(#c2MtSheen)"/><rect x="${f1(x0+.6)}" y="${f1(y0+.6)}" width="${f1(w-1.2)}" height="${f1(h-1.2)}" rx="${f1(r-.5)}" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width=".8"/><line x1="${f1(x0+r)}" x2="${f1(x0+w-r)}" y1="${f1(y0+.9)}" y2="${f1(y0+.9)}" stroke="#fff" stroke-opacity=".6" stroke-width=".8"/></g>`+TXT(x0+w/2,fsC,'#0b0e22',' letter-spacing=".02em"')}; }
       const sk=h*.3; return {w, s:`<g${gl}>${POLY([[x0+sk,yc-h/2],[x0+w,yc-h/2],[x0+w-sk,yc+h/2],[x0,yc+h/2]],fill)}</g>${tx}`}; };
     if(LV==='SHEET'){ // バッジ一覧（12通り × ランク）。カードの代わりにこの絵を返す
@@ -1525,7 +1525,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const rid=typeof RELICS!=='undefined'&&eq?(p.setId||(p.set&&RELICS[p.set])||null):null, /* 部位ごとのセットが分かるときだけ絵を出す（4セットの名前からの推測はしない：自由枠の1個まで4セットに見えてしまうため） */ rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
       g+=`<g transform="translate(${rx+16},${y1-5})">${pim?`<image href="${pim}" x="-15" y="-15" width="30" height="30" preserveAspectRatio="xMidYMid slice" clip-path="url(#ccP${k})"/>`:rimg?`<image href="${rimg}" x="-19" y="-19" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>`:slotIcon(s,0,0,18,'#8a93a6')}${rimg&&!pim?'':`<circle r="15" fill="none" stroke="#c9b98f" stroke-opacity=".4" stroke-width="1"/>`}</g>`;
       g+=`<text x="${SX}" y="${y1}" font-family='${sans}' font-size="11" fill="#9aa6bb">${SLOT_JP[s]}<tspan dx="8" font-size="15" font-weight="700" fill="${eq?'#e6dfcf':'#ff9b8a'}">${eq?esc(MAIN_SHORT(p.main)):'未装備'}</tspan>${eq&&p.lv!=null&&+p.lv<20?`<tspan dx="8" font-family='${mono}' font-size="12" font-weight="700" fill="#e8a15a">+${+p.lv}</tspan>`:''}${UPM==='row'&&eq?`<tspan dx="14" font-size="10" fill="#8a93a6">1か月で更新 <tspan font-family='${mono}' font-size="11.5" font-weight="${PS[k]===PSB&&PSB>0?700:400}" fill="${PS[k]===PSB&&PSB>0?'#f3ead6':'#cfd4e6'}">${FPc(PS[k])}</tspan></tspan>`:''}</text>`;
-      const b=BADGE(RE,y1-5,25,d); g+=b.s;
+      const BH0=22, b=BADGE(RE,y1-5,BH0,d); g+=b.s; /* バッジの大きさ：全体と5部位で同じ */
       { // 部位の秘境レベル（MONTHS）。window.CC2_OPT.mv：plain＝そのまま／type＝見出しの MONTHS と同じ字面に／next＝いちばん短い部位（次の狙い）に金の下線と札／both＝両方
         const MV=(window.CC2_OPT||{}).mv||'plain', TY=MV==='type'||MV==='both', NX=(MV==='next'||MV==='both')&&d>0&&d===NEXTD, fsV=TY?16.5:14, vx=RE-(b.w?b.w+10:0), vt=d>0?fmtAge(d):'—';
         g+=`<text x="${vx}" y="${y1}" text-anchor="end" font-family='${mono}' font-size="${fsV}" font-weight="${TY?700:600}" fill="${NX?'#f6e2a8':TY?'#f3ead6':'#d8d2c2'}">${d>0?UHT(vt,fsV,null):'—'}</text>`;
@@ -1562,7 +1562,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     const REL_T=`原神のリリースから毎日回ると <tspan font-family='${mono}' font-weight="700" fill="${RELC}">${UHT(fmtAge(REL),8.5,null)}</tspan>`;
     g+=`<defs><filter id="c2Blur" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="9"/></filter></defs>`;
     // 全体のかたまり：★の札＋値（MONTHS）。x0＝左端、yc＝札の中心。下に激レアの呼び名
-    const OVR=(x0,yc,noML)=>{ const b=BADGE(x0,yc,42,age,{left:1}), txt=fmtAge(st.age), nx=x0+(b.w?b.w+14:0), nw=UTW(txt,34*.58,34)*.97, ML=MYTH(age), W2=nx-x0+nw;
+    const OVR=(x0,yc,noML)=>{ const b=BADGE(x0,yc,22,age,{left:1}), txt=fmtAge(st.age), nx=x0+(b.w?b.w+12:0), nw=UTW(txt,34*.58,34)*.97, ML=MYTH(age), W2=nx-x0+nw;
       return {w:W2, s:`<rect x="${x0-14}" y="${yc-34}" width="${W2+28}" height="${ML?84:68}" rx="16" fill="#05060d" opacity=".72" filter="url(#c2Blur)"/>`+b.s+`<text x="${nx}" y="${(yc+12).toFixed(1)}" font-family='${mono}' font-size="34" font-weight="600" fill="#f3ead6" paint-order="stroke" stroke="#05060d" stroke-width="3" stroke-opacity=".6">${UHT(txt,34,null)}</text>`+(ML&&!noML?MTX(x0,yc+40,ML,'start'):'')}; };
     if(LV==='E'||LV==='F'||LV==='G'){ // 2次元のグラフ（G は立ち絵を左上・分析を右隣・グラフを左下に横長）：横＝秘境を回った期間、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
       // 切り替え（window.CC2_OPT）：ov＝全体の★と値の置き場（pt 点のそば／hdr 右上／ttl グラフの見出し／axis 横軸の読み）、xs＝横軸（band 段ごとに等幅／log 対数／lin 線形）、pz＝立ち絵との重なり（none／fade 溶かす／glass すりガラスの板／side 立ち絵を右へ）
