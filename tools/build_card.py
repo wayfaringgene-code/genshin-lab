@@ -1514,7 +1514,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     g+=`<text x="${RE}" y="58" text-anchor="end" font-family='${sans}' font-size="12" fill="#9aa6bb">${UPM==='row'?`1か月で更新 <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${FPc(PA)}</tspan>　`:''}有効RV <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${Math.round(st.tot)}%</tspan>　スコア <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${st.score.toFixed(1)}</tspan></text>`;
     // ---- 右：5部位の行（2秒目＝部位の★の札、3秒目＝値と棒、最後＝サブOP） ----
     const SUBN={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}, effS=new Set(c.eff), BARS=true, RT=(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)||LV==='G'?132:96, RH=(H-50-RT-(UPM==='strip'?40:0)-BRH)/5, SX=rx+44, bx0=SX, bx1=RE, BX=d=>bx0+ES(d)*(bx1-bx0), bw=(bx1-bx0)/EN;
-    if(BARS) for(let k=0;k<EN;k++) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'});
+    { const top=[st.age,...SLOTS.map(s=>st.slots[s].age)].filter(d=>d>0).reduce((m,d)=>{ let k0=0; for(let i=0;i<EN;i++) if(d>=EB[i]) k0=i; return Math.max(m,k0); },0); /* 百年級・有史以来は隠し要素：届いた部位か全体があるときだけ段の名前を出す（棒の点線の延長は残す） */
+      if(BARS) for(let k=0;k<EN;k++) if(k<TIERS.length||k<=top) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'}); }
     SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), pim=c.pimg&&c.pimg[s], y1=Y+(BRH?25:33);
       g+=LN(rx,Y+4,RE,Y+4,'#c9b98f',.12,1);
       const rid=typeof RELICS!=='undefined'&&eq?(p.setId||(p.set&&RELICS[p.set])||null):null, /* 部位ごとのセットが分かるときだけ絵を出す（4セットの名前からの推測はしない：自由枠の1個まで4セットに見えてしまうため） */ rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
@@ -1561,7 +1562,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const O=window.CC2_OPT||{}, G3=LV==='G', OV=G3?'hdr':(O.ov||'pt'), XS=O.xs||'band', PZ=G3?'grid':(O.pz||'none'), WH=G3&&O.fl===2, f1=v=>(+v).toFixed(1);
       const GX0=PZ==='side'?62:G3?76:70, GX1=PZ==='side'?372:G3?(WH&&UPM!=='br'?398:616):606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?(WH?408:436):318, GY1=OV==='axis'?552:G3?572:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
       const ESI=f=>{ const x=Math.min(EN-1e-9,Math.max(0,f*EN)), k=Math.floor(x), lo=Math.log(Math.max(1,EB[k])), hi=Math.log(EB[k+1]); return Math.exp(lo+(x-k)*(hi-lo)); };
-      const kA0=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():0, ENg=G3?Math.max(TIERS.length,kA0+1):EN; /* G：百年級・有史以来は隠し要素。その段に届いたキャラのときだけ横軸を伸ばす */
+      const kA0=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():0, ENg=EN, HID=k=>G3&&k>=TIERS.length&&k>kA0; /* G：グラフ本体はいつも上限まで描く（形を変えない）。百年級・有史以来は隠し要素なので、その段に届いたキャラのときだけ文字（段の名前・境目の数字）を出す */
       const LMX=Math.log(EB[ENg]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
       const XF=XS==='log'?(d=>d>0?Math.min(1,Math.log(Math.max(1,d))/LMX):0):XS==='lin'?(d=>Math.min(1,Math.max(0,d)/DMX)):(d=>Math.min(1,ES(d)*EN/ENg)), XI=XS==='log'?(f=>Math.exp(f*LMX)):XS==='lin'?(f=>Math.max(1e-3,f*DMX)):(f=>ESI(f*ENg/EN)), GXp=d=>GX0+XF(d)*(GX1-GX0);
       // 立ち絵との重なり
@@ -1614,8 +1615,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, xc=BG&&px!=null?{w:UTW(fmtAge(age),10.5*.6,10.5)+18}:null, xcL=xc?Math.max(GX0-30,Math.min(GX1+24-xc.w,px-xc.w/2)):null,
         hideX=x=>axL!=null&&x>axL-14&&x<axL+o0.w+14, hideXE=x=>hideX(x)||(xcL!=null&&x>xcL-16&&x<xcL+xc.w+16); // 横軸の札は目盛りの数字の行に置くので、★の段の名前は消さず、数字だけ消す
       const kAge=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():-1; // あなたの点が入っている段（G では札と同じ金で着色）
-      for(let k=0;k<ENg;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:BG&&k===kAge?ACC:'#9aa6bb'}); }
-      { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
+      for(let k=0;k<ENg;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)&&!HID(k)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:BG&&k===kAge?ACC:'#9aa6bb'}); }
+      { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(HID(i)||x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
       if(XS==='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
       g+=TX(GX1,GY1+(BG?53:36),'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
       // 曲線
@@ -1641,10 +1642,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
             const WW=170, WH2=92, right=px<GX0+14+WW+24, wx=right?GX1-WW-28:GX0+14, wy=right?GY1-WH2-14:GY0+22, ix0=wx+38, ix1=wx+WW-12, iy0=wy+38, iy1=wy+WH2-12; /* 帯が左上の窓の下に来るなら右下へ */
             const yTop=Math.max(st.tot+Math.max(gain,ymax*.02),st.tot+1), IX=d=>ix0+(Math.log(Math.max(1,d))-Math.log(Math.max(1,age)))/Math.max(1e-9,Math.log(age+FW)-Math.log(Math.max(1,age)))*(ix1-ix0), IY=r=>iy1-(r-st.tot)/(yTop-st.tot)*(iy1-iy0);
             const M=24, seg=[...Array(M+1)].map((_,k)=>{ const d=Math.max(1,age)*Math.pow((age+FW)/Math.max(1,age),k/M); return [IX(d),IY(st.meanTot(d))]; });
-            { // 帯から窓へ、淡い金の光の筋（ルーペで覗いた形）。帯の上端（あなたの点と到達点）と下端から、窓の近い辺へ
-              const near=right?[[wx,wy],[wx,wy+WH2]]:[[wx+WW,wy],[wx+WW,wy+WH2]], bx0=px, bx1=x2, top=Math.min(py,y2)-4, bot=Math.max(py,y2)+4;
-              g+=`<defs><linearGradient id="c2Beam" gradientUnits="userSpaceOnUse" x1="${f1((bx0+bx1)/2)}" y1="${f1((top+bot)/2)}" x2="${f1(near[0][0])}" y2="${f1((near[0][1]+near[1][1])/2)}"><stop offset="0" stop-color="${ACC}" stop-opacity=".28"/><stop offset="1" stop-color="${ACC}" stop-opacity=".06"/></linearGradient></defs>`;
-              const P1=right?[bx1,top]:[bx0,top], P2=right?[bx1,bot]:[bx0,bot]; g+=`<polygon points="${f1(P1[0])},${f1(P1[1])} ${f1(near[0][0])},${f1(near[0][1])} ${f1(near[1][0])},${f1(near[1][1])} ${f1(P2[0])},${f1(P2[1])}" fill="url(#c2Beam)"/>`; }
+            { // 拡大の囲み：グラフの上で拡大している範囲（あなたの点〜到達点）を金の四角で囲み、四角の角と窓の角を金の線で結ぶ（窓は四角の中身の拡大）
+              const sx0=px, sx1=Math.max(px+4,x2), sy0=Math.min(py-3,y2-3), sy1=py+3, wc=right?[[wx,wy],[wx,wy+WH2]]:[[wx+WW,wy],[wx+WW,wy+WH2]], sc=right?[[sx1,sy0],[sx1,sy1]]:[[sx0,sy0],[sx0,sy1]];
+              g+=LN(sc[0][0],sc[0][1],wc[0][0],wc[0][1],ACC,.6,1)+LN(sc[1][0],sc[1][1],wc[1][0],wc[1][1],ACC,.6,1);
+              g+=`<rect x="${f1(sx0)}" y="${f1(sy0)}" width="${f1(sx1-sx0)}" height="${f1(sy1-sy0)}" rx="2" fill="${ACC}" fill-opacity=".12" stroke="${ACC}" stroke-width="1.3" filter="url(#c2GainGl)"/>`; }
             g+=`<rect x="${wx}" y="${wy}" width="${WW}" height="${WH2}" rx="6" fill="#0b0e22" fill-opacity=".92" stroke="${ACC}" stroke-opacity=".5" stroke-width="1"/>`;
             g+=`<text x="${wx+8}" y="${wy+14}" font-family='${sans}' font-size="8.5" font-weight="800" letter-spacing=".2em" fill="${ACC}">${lab}</text>`;
             g+=LN(ix0,iy1,ix1,iy1,'#fff',.25,1)+LN(ix0,iy0,ix1,iy0,'#fff',.12,1,' stroke-dasharray="2 2"')+LN(ix0,iy0,ix0,iy1,'#fff',.2,1);
