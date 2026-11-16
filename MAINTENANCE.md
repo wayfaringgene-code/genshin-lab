@@ -4,6 +4,7 @@
 最終更新：2026-11-16（命ノ星座カード v2.9）
 
 > Claude に頼むときは「`wayfaringgene-code/genshin-lab` の `MAINTENANCE.md` を読んでから」と伝えると早い。
+> 次のスレッドの本題は `docs/ROADMAP.md` の **2.10 アプリ内の表現とデザインの統一**（2026-11-16 時点）。
 
 ---
 
