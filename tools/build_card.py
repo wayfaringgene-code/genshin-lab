@@ -1578,7 +1578,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     if(LV==='E'||LV==='F'||LV==='G'){ // 2次元のグラフ（G は立ち絵を左上・分析を右隣・グラフを左下に横長）：横＝秘境を回った期間、縦＝有効RV。平均的な人の手持ちの最高が伸びていく曲線（E は5部位を積み上げ、F は全体だけ）
       // 切り替え（window.CC2_OPT）：ov＝全体の★と値の置き場（pt 点のそば／hdr 右上／ttl グラフの見出し／axis 横軸の読み）、xs＝横軸（band 段ごとに等幅／log 対数／lin 線形）、pz＝立ち絵との重なり（none／fade 溶かす／glass すりガラスの板／side 立ち絵を右へ）
       const O=window.CC2_OPT||{}, G3=LV==='G', OV=G3?'hdr':(O.ov||'pt'), XS=O.xs||'band', PZ=G3?'grid':(O.pz||'none'), WH=G3&&O.fl===2, f1=v=>(+v).toFixed(1);
-      const GX0=PZ==='side'?62:G3?76:70, GX1=PZ==='side'?372:G3?(WH&&UPM!=='br'?398:616):606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?(WH?408:436):318, GY1=OV==='axis'?552:G3?572:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
+      const GX0=PZ==='side'?62:G3?62:70, GX1=PZ==='side'?372:G3?(WH&&UPM!=='br'?398:616):606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?(WH?422:436):318, GY1=OV==='axis'?552:G3?587:578, /* G：グラフを左下へ（縦軸の数字の分だけ左を空け、MONTHS の2行と札が下の一文に重ならない所まで下げる） */ ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
       const ESI=f=>{ const x=Math.min(EN-1e-9,Math.max(0,f*EN)), k=Math.floor(x), lo=Math.log(Math.max(1,EB[k])), hi=Math.log(EB[k+1]); return Math.exp(lo+(x-k)*(hi-lo)); };
       const kA0=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():0, ENg=EN, HID=k=>G3&&k>=TIERS.length&&k>kA0; /* G：グラフ本体はいつも上限まで描く（形を変えない）。百年級・有史以来は隠し要素なので、その段に届いたキャラのときだけ文字（段の名前・境目の数字）を出す */
       const LMX=Math.log(EB[ENg]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
