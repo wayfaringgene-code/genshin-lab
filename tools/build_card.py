@@ -375,7 +375,7 @@ function cardAppInit(){
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
     <div class="panel" style="margin-top:14px" id="cMoveHost"><h2>データの引っ越し</h2></div>
-    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.8。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
+    <div class="panel" style="margin-top:14px"><h2>このアプリについて</h2><p class="note">命ノ星座カード v2.9。計算は聖遺物厳選ラボと共通です。原神のキャラクター名・画像などの権利は HoYoverse に帰属します。UIDからの取り込みには Enka.Network のデータを、動画からの取り込みには聖遺物ビデオスキャナー（読み取りエンジン：Tesseract.js）を使っています。キャラのデータはこの端末（このブラウザ）に保存され、ラボ本体や別の端末とのやりとりは「データの引っ越し」のJSONで行います（ラボ本体で書き出したものもそのまま読めます）。HoYoverseとは関係のない非公式のファンツールです。</p></div>`;
   const mh=$('cMoveHost'); [...(det||mv).childNodes].forEach(n=>mh.appendChild(n)); mv.remove();
   { const cb=$('cRevealOn'); cb.checked=!store.get('revealOff',0); cb.addEventListener('change',()=>store.set('revealOff',cb.checked?0:1)); }
   // ドラッグで取り込み（どのページでも）
@@ -657,7 +657,7 @@ function rvCanvas(w,h){ const c=document.createElement('canvas'); c.width=Math.c
 /* ---- カードを1枚の画像にする（保存のときと同じ作り方：書体を埋め込んだSVG → キャンバス）。毎コマSVGを描くと重いので、先に絵にしておく ---- */
 async function rvCardImg(c,W,H){ W=W||1960; H=H||1102; applyBundled(c); if(CARD_IMG[c.id]&&!(c.id in CARD_FIT)){ const u=await fitCardArt(CARD_IMG[c.id],CARD_ZOOM[c.id]); CARD_FIT[c.id]=u||''; }
   const NS='http://www.w3.org/2000/svg', box=document.createElement('div'); box.innerHTML=cardSVG(c,charStats(c),'SK'); const el=box.querySelector('svg'); if(!el) return null;
-  el.setAttribute('xmlns',NS); el.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink'); el.setAttribute('width',W); el.setAttribute('height',H); el.removeAttribute('style');
+  el.setAttribute('xmlns',NS); el.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink'); el.setAttribute('width',W); el.setAttribute('height',H); el.removeAttribute('style'); await svgInlineImages(el);
   try{ const css=await cardFontCSS([...new Set([...el.textContent].map(ch=>ch.codePointAt(0)))]); const st=document.createElementNS(NS,'style'); st.textContent=css; el.insertBefore(st,el.firstChild); }catch(e){}
   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(el)],{type:'image/svg+xml'}));
   try{ const im=new Image(); await new Promise((res,rej)=>{ im.onload=res; im.onerror=rej; im.src=url; }); try{ await im.decode(); }catch(e){} await new Promise(r=>setTimeout(r,200));
@@ -910,7 +910,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'band',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'both',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -944,6 +944,19 @@ function cc2BBox(src){ return new Promise(res=>{ const im=new Image(); im.onload
   if(xs.length<50) return res(null); xs.sort((p,q)=>p-q); ys.sort((p,q)=>p-q); const q=(v,f)=>v[Math.min(v.length-1,Math.floor(v.length*f))];
   res({x0:q(xs,.005)/w,x1:(q(xs,.995)+1)/w,y0:q(ys,.005)/h,y1:(q(ys,.995)+1)/h,ar:im.width/im.height}); }catch(e){ res(null); } }; im.onerror=()=>res(null); im.src=src; }); }
 const CC2_BB={};
+/* ---- 本番のカード（v2.9）：カードのデザインの見直し（ROADMAP 2.9）で選んだ組み合わせ ----
+   立ち絵＋分析＋グラフ（G）・立ち絵は丸ごと（横長）・分析の表は右下へ全部・バッジはカード（金属）・グラフ本体は中間・これからの帯は1年・部位の MONTHS は見出しと同じ字面・横軸は対数
+   立ち絵の描かれている範囲（bb）は、同梱の立ち絵は組み立てのときに測っておいたもの（PORTRAITS[id].bb）、選んだ立ち絵はここで測る（測り終えたら描き直す）。
+   立ち絵の位置合わせ：同梱の立ち絵ごとの c2（portraits.json）に、カードのページで動かした位置（CARD_POS）と大きさ（CARD_ZOOM）を重ねる */
+const CARD_V2_OPT={ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type'};
+function cardV2(c,st){ const src=CARD_IMG[c.id]||'', aid=cc2Aid(c), pj=(aid&&PORTRAITS[aid])||{}, base=pj.c2||{x:0,y:0,s:1}, z=(CARD_ZOOM[c.id]||100)/100, pos=CARD_POS[c.id]||{dx:0,dy:0};
+  let bb=null; if(src){ const own=pj.file&&src==='portraits/'+pj.file&&Array.isArray(pj.bb); if(own){ const b=pj.bb; bb={x0:b[0],y0:b[1],x1:b[2],y1:b[3],ar:b[4]}; } else if(src in CC2_BB) bb=CC2_BB[src]; else { CC2_BB[src]=null; cc2BBox(src).then(b=>{ CC2_BB[src]=b; if(b) cardV2Redraw(); }); } }
+  window.CC2_LEFT='G'; window.CC2_BADGE='card'; window.CC2_TIGHT=0; window.CC2_OPT=CARD_V2_OPT; window.CC2_ADJ={x:base.x||0,y:base.y||0,s:(base.s||1)*z}; window.CC2_POS=pos; window.CC2_FIT2=''; window.CC2_WHOLE=src; window.CC2_BB=bb;
+  return constellationCardSVG(c,st,'v2'); }
+function cardV2Redraw(){ try{ if(CARD_PAGE==='home'&&typeof homeRender==='function') homeRender(); else renderChars(); }catch(e){} }
+// 保存する画像・演出の絵：外の画像（立ち絵 portraits/…、聖遺物のアイコン icons/…）を data URL にして埋め込む（SVG を画像として描くと、外の画像は読まれない）
+async function svgInlineImages(el){ const memo={}, ims=[...el.querySelectorAll('image')].filter(im=>{ const h=im.getAttribute('href')||''; return h&&!h.startsWith('data:'); });
+  await Promise.all(ims.map(async im=>{ const h=im.getAttribute('href'); try{ if(!memo[h]) memo[h]=fetch(h).then(r=>r.ok?r.blob():null).then(b=>b?new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=()=>res(null); fr.readAsDataURL(b); }):null); const d=await memo[h]; if(d) im.setAttribute('href',d); }catch(e){} })); }
 const cc2Aid=c=>((/^(?:uid|enka|sample)-(\d+)$/.exec(c.id||''))||[])[1]||name2aid(c.name)||'';
 const cc2AdjOf=c=>{ const a=cc2Aid(c); return CC2.adj[a]||(PORTRAITS[a]&&PORTRAITS[a].c2)||{x:0,y:0,s:1}; };
 function cc2Proto(){ if($('cc2Proto')) return;
@@ -1426,6 +1439,24 @@ s = s.replace('__ENKA_TABLES__', _t)
 _pp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src', 'portraits', 'portraits.json')
 _pj = open(_pp, encoding='utf-8').read() if os.path.exists(_pp) else '{}'
 _json.loads(_pj)
+# 同梱の立ち絵の描かれている範囲（不透明な部分の外接、割合）を測って bb に入れる（カードの「丸ごと」の立ち絵の大きさと位置に使う。v2.9）
+try:
+    from PIL import Image as _Im
+    _pd = _json.loads(_pj)
+    for _k, _v in _pd.items():
+        _f = os.path.join(os.path.dirname(_pp), _v.get('file', ''))
+        if _v.get('bb') or not _v.get('file') or not os.path.exists(_f): continue  # 測ってあるもの（portraits.json の bb）はそのまま
+        _im = _Im.open(_f).convert('RGBA'); _W, _H = _im.size; _sm = _im.copy(); _sm.thumbnail((400, 400))
+        _a = _sm.getchannel('A'); _w, _h = _sm.size; _px = _a.load(); _xs = []; _ys = []
+        for _y in range(_h):
+            for _x in range(_w):
+                if _px[_x, _y] >= 60: _xs.append(_x); _ys.append(_y)
+        if len(_xs) < 50: continue
+        _xs.sort(); _ys.sort(); _q = lambda v, f: v[min(len(v) - 1, int(len(v) * f))]
+        _v['bb'] = [round(_q(_xs, .005) / _w, 4), round(_q(_ys, .005) / _h, 4), round((_q(_xs, .995) + 1) / _w, 4), round((_q(_ys, .995) + 1) / _h, 4), round(_W / _H, 4)]
+    _pj = _json.dumps(_pd, ensure_ascii=False)
+except ImportError:
+    pass  # Pillow がない環境では測らない（カードの側で測る）
 assert s.count('__PORTRAITS__') == 1
 s = s.replace('__PORTRAITS__', _pj)
 _sb = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'set_bonus.json'), encoding='utf-8').read(); _json.loads(_sb)
@@ -1596,8 +1627,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       let G0=-1;
       if(G3){ // 立ち絵は左上の枠に収める。右隣に分析（次の★まで／1か月で更新できる見込み／有効OPごとの伸び）
         if(WH){ // 丸ごと：同梱の立ち絵（1600×800、背景は透明で端は絵そのものがぼけている）を切り出さずに、名前の下の横長の場所（622×311 ≒ 2:1）へそのまま。分析の表はグラフの横へ
-          const AJ=window.CC2_ADJ||{x:0,y:0,s:1}, BW=622, BH=370, BX0=24, BY0=96, bb=window.CC2_BB||{x0:0,y0:0,x1:1,y1:1,ar:2}, IA=bb.ar||2, k0=Math.min(BH/(bb.y1-bb.y0),1.3*BW/((bb.x1-bb.x0)*IA)), IH=k0*AJ.s, IW=IH*IA, PW=IW, PH=IH, PX=BX0+BW/2-((bb.x0+bb.x1)/2)*IW+AJ.x*BW, PY=BY0+BH/2-((bb.y0+bb.y1)/2)*IH+AJ.y*BH, src=window.CC2_WHOLE; /* 絵の中の描かれている範囲（bb、割合）が場所（622×370：名前の下から、下のグラフと表に少しかぶるところまで）の高さいっぱいになるよう拡大（横に広い絵は横がはみ出し、端で溶かす。拡大は横幅の1.3倍まで）。端は少し溶かす */
-          const tag=src?`<image id="ccArtImg" href="${src}" x="${f1(PX)}" y="${f1(PY)}" width="${f1(PW)}" height="${f1(PH)}" preserveAspectRatio="none" filter="url(#c2ArtW)" opacity=".95" clip-path="url(#c2Card)" mask="url(#c2WM)"/>`:'';
+          const AJ=window.CC2_ADJ||{x:0,y:0,s:1}, BW=622, BH=370, BX0=24, BY0=96, bb=window.CC2_BB||{x0:0,y0:0,x1:1,y1:1,ar:2}, IA=bb.ar||2, k0=Math.min(BH/(bb.y1-bb.y0),1.3*BW/((bb.x1-bb.x0)*IA)), IH=k0*AJ.s, IW=IH*IA, PW=IW, PH=IH, PO=window.CC2_POS||{dx:0,dy:0}, PX0=BX0+BW/2-((bb.x0+bb.x1)/2)*IW+AJ.x*BW, PY0=BY0+BH/2-((bb.y0+bb.y1)/2)*IH+AJ.y*BH, PX=PX0+(PO.dx||0), PY=PY0+(PO.dy||0), src=window.CC2_WHOLE; /* 絵の中の描かれている範囲（bb、割合）が場所（622×370：名前の下から、下のグラフと表に少しかぶるところまで）の高さいっぱいになるよう拡大（横に広い絵は横がはみ出し、端で溶かす。拡大は横幅の1.3倍まで）。端は少し溶かす */
+          const tag=src?`<image id="ccArtImg" data-bx="${f1(PX0)}" data-by="${f1(PY0)}" href="${src}" x="${f1(PX)}" y="${f1(PY)}" width="${f1(PW)}" height="${f1(PH)}" preserveAspectRatio="none" filter="url(#c2ArtW)" opacity=".95" clip-path="url(#c2Card)" mask="url(#c2WM)"/>`:'';
           g=g.replace(/<image id="ccArtImg"[^>]*\/>/,tag).replace(/<image href="[^"]*" x="[-\d.]+" y="[-\d.]+" width="860" height="430"[^>]*\/>/,tag).replace(`<rect width="${W}" height="${H}" fill="url(#ccVig)"/>`,'').replace(`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#ccFadeR)"/>`,'');
           const VX0=Math.max(PX,22), VX1=Math.min(PX+PW,648), VY0=Math.max(PY,86), VY1=PY+PH, ex=Math.min(.45,58/Math.max(1,VX1-VX0)), ey=Math.min(.45,62/Math.max(1,VY1-VY0)), /* 溶かしは「見えている範囲」の端に（大きな絵が場所からはみ出しても、場所の境目で四角く切れないように）。上は名前と有効OPの札の下（86）から */ GR=(id,x1,y1,x2,y2,e)=>`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}"><stop offset="0" stop-color="#000"/><stop offset="${e.toFixed(4)}" stop-color="#fff"/><stop offset="${(1-e).toFixed(4)}" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>`;
           g+=`<defs><clipPath id="c2Card"><rect x="21" y="86" width="627" height="395"/></clipPath><filter id="c2ArtW" x="0" y="0" width="1" height="1"><feColorMatrix type="saturate" values=".82"/><feComponentTransfer><feFuncR type="linear" slope=".78"/><feFuncG type="linear" slope=".78"/><feFuncB type="linear" slope=".86"/></feComponentTransfer></filter>${GR('c2WX',VX0,0,VX1,0,ex)}${GR('c2WY',0,VY0,0,VY1,ey)}<mask id="c2WMy" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="url(#c2WY)"/></mask><mask id="c2WM" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><g mask="url(#c2WMy)"><rect width="${W}" height="${H}" fill="url(#c2WX)"/></g></mask><linearGradient id="c2Low" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060d" stop-opacity="0"/><stop offset=".16" stop-color="#05060d" stop-opacity=".74"/><stop offset="1" stop-color="#05060d" stop-opacity=".86"/></linearGradient><linearGradient id="c2LowX" gradientUnits="userSpaceOnUse" x1="21" x2="648" y1="0" y2="0"><stop offset=".9" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="c2LowM" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect x="21" y="0" width="627" height="${H}" fill="url(#c2LowX)"/></mask></defs><rect x="21" y="368" width="627" height="${H-21-368}" fill="url(#c2Low)" mask="url(#c2LowM)"/>`; } else {
@@ -1722,5 +1753,9 @@ _ed = os.path.join(_root, 'src', 'icons', 'element'); _EN = {'炎': 'pyro', '水
 _elem = {k: 'data:image/webp;base64,' + _b64.b64encode(open(os.path.join(_ed, v + '.webp'), 'rb').read()).decode() for k, v in _EN.items() if os.path.exists(os.path.join(_ed, v + '.webp'))}
 assert s.count('/*__ELEM_ICONS__*/{}') == 1
 s = s.replace('/*__ELEM_ICONS__*/{}', _json.dumps(_elem))  # 元素アイコン（カードの左上。保存する画像にも写るよう埋め込む）
+# --- 本番のカード（v2.9）：命ノ星座カードのアプリでは 'SK' を新しいカード（cardV2）で描く。保存する画像には外の画像を埋め込む ---
+rep("function cardSVG(c,st,v){ if(v==='SK'||v==='SKB') return", "function cardSVG(c,st,v){ if(CARD_APP&&v==='SK'&&typeof cardV2==='function') return cardV2(c,st); if(v==='SK'||v==='SKB') return")
+rep("clone.setAttribute('xmlns',NS); clone.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink'); clone.setAttribute('width',W); clone.setAttribute('height',H); clone.removeAttribute('style');",
+    "clone.setAttribute('xmlns',NS); clone.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink'); clone.setAttribute('width',W); clone.setAttribute('height',H); clone.removeAttribute('style'); if(typeof svgInlineImages==='function') await svgInlineImages(clone);")
 open(dst, 'w', encoding='utf-8').write(s)
 print('wrote', dst, len(s))
