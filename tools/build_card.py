@@ -1561,8 +1561,9 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const O=window.CC2_OPT||{}, G3=LV==='G', OV=G3?'hdr':(O.ov||'pt'), XS=O.xs||'band', PZ=G3?'grid':(O.pz||'none'), WH=G3&&O.fl===2, f1=v=>(+v).toFixed(1);
       const GX0=PZ==='side'?62:G3?76:70, GX1=PZ==='side'?372:G3?(WH&&UPM!=='br'?398:616):606, GY0=PZ==='side'?(OV==='ttl'?236:196):G3?(WH?408:436):318, GY1=OV==='axis'?552:G3?572:578, ymax=Math.max(st.ceil||0,st.tot||0,1), GYp=r=>GY1-Math.min(1,r/ymax)*(GY1-GY0);
       const ESI=f=>{ const x=Math.min(EN-1e-9,Math.max(0,f*EN)), k=Math.floor(x), lo=Math.log(Math.max(1,EB[k])), hi=Math.log(EB[k+1]); return Math.exp(lo+(x-k)*(hi-lo)); };
-      const LMX=Math.log(EB[EN]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
-      const XF=XS==='log'?(d=>d>0?Math.min(1,Math.log(Math.max(1,d))/LMX):0):XS==='lin'?(d=>Math.min(1,Math.max(0,d)/DMX)):ES, XI=XS==='log'?(f=>Math.exp(f*LMX)):XS==='lin'?(f=>Math.max(1e-3,f*DMX)):ESI, GXp=d=>GX0+XF(d)*(GX1-GX0);
+      const kA0=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():0, ENg=G3?Math.max(TIERS.length,kA0+1):EN; /* G：百年級・有史以来は隠し要素。その段に届いたキャラのときだけ横軸を伸ばす */
+      const LMX=Math.log(EB[ENg]), DMX=Math.max(REL,isFinite(age)?age:0,1095)*1.25;
+      const XF=XS==='log'?(d=>d>0?Math.min(1,Math.log(Math.max(1,d))/LMX):0):XS==='lin'?(d=>Math.min(1,Math.max(0,d)/DMX)):(d=>Math.min(1,ES(d)*EN/ENg)), XI=XS==='log'?(f=>Math.exp(f*LMX)):XS==='lin'?(f=>Math.max(1e-3,f*DMX)):(f=>ESI(f*ENg/EN)), GXp=d=>GX0+XF(d)*(GX1-GX0);
       // 立ち絵との重なり
       if(PZ==='side'){ g=g.replace(/(<image id="ccArtImg"[^>]*? x=")([-\d.]+)"/,(m,a,x)=>a+(+x+130)+'"').replace('<stop offset=".33" stop-color="#05060d" stop-opacity="0"/><stop offset=".56"','<stop offset=".45" stop-color="#05060d" stop-opacity="0"/><stop offset=".6"'); }
       if(PZ==='glass'){ const px0=GX0-52, py0=GY0-(OV==='ttl'?96:40), pw=GX1-px0+22, ph=GY1+(OV==='axis'?70:46)-py0, im=(g.match(/<image id="ccArtImg"[^>]*\/>/)||[''])[0];
@@ -1601,10 +1602,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const PL=arr=>arr.map((r,i)=>`${f1(GX0+fs[i]*(GX1-GX0))},${f1(GYp(r))}`);
       // 目盛り：段の境目（縦の細線、★5+より先は点線）、上限（横の点線）、RVの目盛り。G は文字を大きく、段ごとの淡い縞・曲線の下の金の光・読み取りの札で「目を引く」形に（色はカードの枠と同じ金だけ）
       const BG=G3, GS=BG?((window.CC2_OPT||{}).gs||'bold'):'calm', /* グラフ本体の見た目（G）：bold＝華やか／mid＝中間／calm＝控えめ（前の形）。文字・読み取りの札・あなたの点は変えない */ FA=BG?9.5:7.5, FLb=BG?10.5:8, FB=BG?11.5:9, FE=BG?9:7, ACC='#e9d39a', py0=age>0?GYp(st.tot):null;
-      const BX=[...Array(EN+1)].map((_,i)=>GX0+XF(EB[i])*(GX1-GX0)); BX[0]=GX0;
+      const BX=[...Array(ENg+1)].map((_,i)=>GX0+XF(EB[i])*(GX1-GX0)); BX[0]=GX0;
       if(BG){ g+=`<defs><linearGradient id="c2Area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ACC}" stop-opacity=".26"/><stop offset="1" stop-color="${ACC}" stop-opacity="0"/></linearGradient><linearGradient id="c2Curve" gradientUnits="userSpaceOnUse" x1="${GX0}" x2="${GX1}" y1="0" y2="0"><stop offset="0" stop-color="#cfd4e6"/><stop offset="1" stop-color="#f6e2a8"/></linearGradient></defs>`;
-        if(GS==='bold') for(let k=0;k<EN;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
-      for(let i=1;i<EN;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
+        if(GS==='bold') for(let k=0;k<ENg;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
+      for(let i=1;i<ENg;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
       const nearY=y=>BG&&py0!=null&&Math.abs(y-py0)<13;
       const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=(BG?4:5))||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||GYp(r)-GY0<12?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
       g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'});
@@ -1613,8 +1614,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, xc=BG&&px!=null?{w:UTW(fmtAge(age),10.5*.6,10.5)+18}:null, xcL=xc?Math.max(GX0-30,Math.min(GX1+24-xc.w,px-xc.w/2)):null,
         hideX=x=>axL!=null&&x>axL-14&&x<axL+o0.w+14, hideXE=x=>hideX(x)||(xcL!=null&&x>xcL-16&&x<xcL+xc.w+16); // 横軸の札は目盛りの数字の行に置くので、★の段の名前は消さず、数字だけ消す
       const kAge=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():-1; // あなたの点が入っている段（G では札と同じ金で着色）
-      for(let k=0;k<EN;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:BG&&k===kAge?ACC:'#9aa6bb'}); }
-      { let last=-99; for(let i=1;i<EN;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
+      for(let k=0;k<ENg;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:BG&&k===kAge?ACC:'#9aa6bb'}); }
+      { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
       if(XS==='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
       g+=TX(GX1,GY1+(BG?53:36),'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
       // 曲線
@@ -1625,7 +1626,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       else if(BG&&GS==='mid') g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="url(#c2Area)" opacity=".4"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="1.8" stroke-linejoin="round"/>`;
       else g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
       // 原神のリリースから毎日回った線
-      { const x=GXp(REL), lf=x+(BG?190:165)>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${BG?GY0+14:GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="${BG?9.5:8}" fill="${RELC}">${REL_T}</text>`; }
+      if(!(BG&&+((window.CC2_OPT||{}).fw||0)>0&&age>0&&isFinite(age))){ const x=GXp(REL), lf=x+(BG?190:165)>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${BG?GY0+14:GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="${BG?9.5:8}" fill="${RELC}">${REL_T}</text>`; }
       // あなた：有効RVの横線が曲線とぶつかる点 → 真下が秘境レベル。G は縦軸・横軸に読み取りの札
       if(age>0){ const py=py0; g+=LN(GX0,py,px,py,'#fff',BG?.7:.55,1,' stroke-dasharray="2 2.5"')+LN(px,py,px,OV==='axis'?GY1+8:BG?GY1+19:GY1,'#fff',BG?.7:.55,1,' stroke-dasharray="2 2.5"');
         const FW=BG?+((window.CC2_OPT||{}).fw||0):0; /* これからの帯（G）：あなたの点から FW 日先まで。対数の横軸では、同じ期間でも右へ行くほど帯が細くなり、帯の中の伸びも小さくなる＝潮時が見える */
@@ -1636,22 +1637,21 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           g+=`<rect x="${f1(px)}" y="${GY0}" width="${f1(Math.max(1.5,x2-px))}" height="${GY1-GY0}" fill="${ACC}" fill-opacity=".05"/>`+LN(x2,GY0,x2,GY1,ACC,.45,1);
           if(wedge.length>1) g+=`<polygon points="${f1(px)},${f1(py)} ${wedge.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')} ${f1(x2)},${f1(y2)} ${f1(x2)},${f1(py)}" fill="url(#c2Gain)"/>`;
           g+=`<circle cx="${f1(x2)}" cy="${f1(y2)}" r="3.4" fill="#fff6dc" stroke="${ACC}" stroke-width="1.2"/>`;
-          { // 標語は帯の下端（横軸のすぐ上）に、帯の幅いっぱいの括弧と一緒に：帯の範囲＝その期間、が形で分かる
-            const yb=GY1-8, tw=lab.length*7.6, cx=Math.max(GX0+tw/2+4,Math.min(GX1-tw/2-4,(px+x2)/2));
-            g+=LN(px,yb,x2,yb,ACC,.85,1.2)+LN(px,yb-4,px,yb+4,ACC,.85,1.2)+LN(x2,yb-4,x2,yb+4,ACC,.85,1.2)
-              +`<text${HAL()} x="${f1(cx)}" y="${yb-6}" text-anchor="middle" font-family='${sans}' font-size="9" font-weight="800" letter-spacing=".22em" fill="${ACC}">${lab}</text>`; }
           { // 拡大の窓：横はあなたの点〜その期間の先、縦はあなたの有効RV〜到達点。帯の部分だけを縦に引き伸ばして、伸び方と伸びの量（RV）を見せる。帯が左半分なら右下、右半分なら左上
-            const WW=150, WH2=78, right=x2<GX0+(GX1-GX0)*.55, wx=right?GX1-WW-28:GX0+14, wy=right?GY1-WH2-30:GY0+24, ix0=wx+38, ix1=wx+WW-10, iy0=wy+22, iy1=wy+WH2-12;
+            const WW=170, WH2=92, right=px<GX0+14+WW+24, wx=right?GX1-WW-28:GX0+14, wy=right?GY1-WH2-14:GY0+22, ix0=wx+38, ix1=wx+WW-12, iy0=wy+38, iy1=wy+WH2-12; /* 帯が左上の窓の下に来るなら右下へ */
             const yTop=Math.max(st.tot+Math.max(gain,ymax*.02),st.tot+1), IX=d=>ix0+(Math.log(Math.max(1,d))-Math.log(Math.max(1,age)))/Math.max(1e-9,Math.log(age+FW)-Math.log(Math.max(1,age)))*(ix1-ix0), IY=r=>iy1-(r-st.tot)/(yTop-st.tot)*(iy1-iy0);
             const M=24, seg=[...Array(M+1)].map((_,k)=>{ const d=Math.max(1,age)*Math.pow((age+FW)/Math.max(1,age),k/M); return [IX(d),IY(st.meanTot(d))]; });
-            g+=LN(px,py,right?wx:wx+WW,right?wy:wy+WH2,ACC,.35,.8,' stroke-dasharray="2 2"')+LN(x2,y2,right?wx+WW:wx+WW,right?wy:wy,ACC,.35,.8,' stroke-dasharray="2 2"');
+            { // 帯から窓へ、淡い金の光の筋（ルーペで覗いた形）。帯の上端（あなたの点と到達点）と下端から、窓の近い辺へ
+              const near=right?[[wx,wy],[wx,wy+WH2]]:[[wx+WW,wy],[wx+WW,wy+WH2]], bx0=px, bx1=x2, top=Math.min(py,y2)-4, bot=Math.max(py,y2)+4;
+              g+=`<defs><linearGradient id="c2Beam" gradientUnits="userSpaceOnUse" x1="${f1((bx0+bx1)/2)}" y1="${f1((top+bot)/2)}" x2="${f1(near[0][0])}" y2="${f1((near[0][1]+near[1][1])/2)}"><stop offset="0" stop-color="${ACC}" stop-opacity=".28"/><stop offset="1" stop-color="${ACC}" stop-opacity=".06"/></linearGradient></defs>`;
+              const P1=right?[bx1,top]:[bx0,top], P2=right?[bx1,bot]:[bx0,bot]; g+=`<polygon points="${f1(P1[0])},${f1(P1[1])} ${f1(near[0][0])},${f1(near[0][1])} ${f1(near[1][0])},${f1(near[1][1])} ${f1(P2[0])},${f1(P2[1])}" fill="url(#c2Beam)"/>`; }
             g+=`<rect x="${wx}" y="${wy}" width="${WW}" height="${WH2}" rx="6" fill="#0b0e22" fill-opacity=".92" stroke="${ACC}" stroke-opacity=".5" stroke-width="1"/>`;
-            g+=`<text x="${wx+8}" y="${wy+14}" font-family='${sans}' font-size="8.5" font-weight="700" letter-spacing=".12em" fill="#9aa6bb">拡大</text>`;
+            g+=`<text x="${wx+8}" y="${wy+14}" font-family='${sans}' font-size="8.5" font-weight="800" letter-spacing=".2em" fill="${ACC}">${lab}</text>`;
             g+=LN(ix0,iy1,ix1,iy1,'#fff',.25,1)+LN(ix0,iy0,ix1,iy0,'#fff',.12,1,' stroke-dasharray="2 2"')+LN(ix0,iy0,ix0,iy1,'#fff',.2,1);
             g+=`<polygon points="${f1(ix0)},${f1(iy1)} ${seg.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')} ${f1(ix1)},${f1(iy1)}" fill="${ACC}" fill-opacity=".18"/><polyline points="${seg.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="1.8"/>`;
             g+=`<circle cx="${f1(ix0)}" cy="${f1(iy1)}" r="3" fill="#fff"/><circle cx="${f1(ix1)}" cy="${f1(seg[M][1])}" r="2.8" fill="#fff6dc" stroke="${ACC}" stroke-width="1"/>`;
             g+=`<text x="${f1(ix0-4)}" y="${f1(iy1+3)}" text-anchor="end" font-family='${mono}' font-size="8" fill="#cfd4e6">${Math.round(st.tot).toLocaleString('en-US')}</text><text x="${f1(ix0-4)}" y="${f1(iy0+3)}" text-anchor="end" font-family='${mono}' font-size="8" fill="#cfd4e6">${Math.round(yTop).toLocaleString('en-US')}</text>`;
-            const gt=gain<.5?'≈ +0':'+'+Math.round(gain).toLocaleString('en-US'); g+=`<text x="${wx+WW-10}" y="${wy+15}" text-anchor="end" font-family='${mono}' font-size="13" font-weight="800" fill="#f3ead6">${gt}<tspan dx="3" font-family='${sans}' font-size="8.5" font-weight="700" fill="#9aa6bb">RV</tspan></text>`; }
+            const gt=gain<.5?'≈ +0':'+'+Math.round(gain).toLocaleString('en-US'); g+=`<text x="${wx+WW-12}" y="${wy+31}" text-anchor="end" font-family='${mono}' font-size="14" font-weight="800" fill="#f3ead6">${gt}<tspan dx="3" font-family='${sans}' font-size="8.5" font-weight="700" fill="#9aa6bb">RV</tspan></text>`; }
           }
         if(BG){ const CH=(x,y,w,t)=>`<rect x="${f1(x)}" y="${f1(y-9.5)}" width="${f1(w)}" height="19" rx="4" fill="#0b0e22" stroke="${ACC}" stroke-opacity=".75" stroke-width="1"/><text x="${f1(x+w/2)}" y="${f1(y+4)}" text-anchor="middle" font-family='${mono}' font-size="10.5" font-weight="700" fill="#f3ead6">${t}</text>`, yt=Math.round(st.tot).toLocaleString('en-US')+'%', yw=yt.length*6.6+14;
           g+=`<circle cx="${f1(px)}" cy="${f1(py)}" r="14" fill="${ACC}" opacity=".22" filter="url(#ccSoft)"/><circle cx="${f1(px)}" cy="${f1(py)}" r="8" fill="none" stroke="${ACC}" stroke-opacity=".8" stroke-width="1.2"/><circle cx="${f1(px)}" cy="${f1(py)}" r="4.2" fill="#fff"/>`+TX(FW>0?px-12:px+12,py-10,'あなた',{fs:10.5,fw:700,c:'#f3ead6',a:FW>0?'end':'start'});
