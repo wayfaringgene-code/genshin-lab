@@ -1640,8 +1640,19 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
             const yb=GY1-8, tw=lab.length*7.6, cx=Math.max(GX0+tw/2+4,Math.min(GX1-tw/2-4,(px+x2)/2));
             g+=LN(px,yb,x2,yb,ACC,.85,1.2)+LN(px,yb-4,px,yb+4,ACC,.85,1.2)+LN(x2,yb-4,x2,yb+4,ACC,.85,1.2)
               +`<text${HAL()} x="${f1(cx)}" y="${yb-6}" text-anchor="middle" font-family='${sans}' font-size="9" font-weight="800" letter-spacing=".22em" fill="${ACC}">${lab}</text>`; }
-          const gt=gain<.5?'≈ +0%':'+'+Math.round(gain).toLocaleString('en-US')+'%', gw=gt.length*9.6, rt=x2+6+gw>GX1-18, gx=rt?x2-8:x2+7, gy=Math.max(GY0+30,y2-7);
-          g+=`<text x="${f1(gx)}" y="${f1(gy)}"${rt?' text-anchor="end"':''} font-family='${mono}' font-size="${gain<.5?12:16}" font-weight="800" fill="${gain<.5?'#cdb980':'#fff2c4'}"${gain<.5?'':' filter="url(#c2GainGl)"'} paint-order="stroke" stroke="#05060d" stroke-width="2.4" stroke-opacity=".7">${gt}</text>`; }
+          { // 拡大の窓：横はあなたの点〜その期間の先、縦はあなたの有効RV〜到達点。帯の部分だけを縦に引き伸ばして、伸び方と伸びの量（RV）を見せる。帯が左半分なら右下、右半分なら左上
+            const WW=150, WH2=78, right=x2<GX0+(GX1-GX0)*.55, wx=right?GX1-WW-28:GX0+14, wy=right?GY1-WH2-30:GY0+24, ix0=wx+38, ix1=wx+WW-10, iy0=wy+22, iy1=wy+WH2-12;
+            const yTop=Math.max(st.tot+Math.max(gain,ymax*.02),st.tot+1), IX=d=>ix0+(Math.log(Math.max(1,d))-Math.log(Math.max(1,age)))/Math.max(1e-9,Math.log(age+FW)-Math.log(Math.max(1,age)))*(ix1-ix0), IY=r=>iy1-(r-st.tot)/(yTop-st.tot)*(iy1-iy0);
+            const M=24, seg=[...Array(M+1)].map((_,k)=>{ const d=Math.max(1,age)*Math.pow((age+FW)/Math.max(1,age),k/M); return [IX(d),IY(st.meanTot(d))]; });
+            g+=LN(px,py,right?wx:wx+WW,right?wy:wy+WH2,ACC,.35,.8,' stroke-dasharray="2 2"')+LN(x2,y2,right?wx+WW:wx+WW,right?wy:wy,ACC,.35,.8,' stroke-dasharray="2 2"');
+            g+=`<rect x="${wx}" y="${wy}" width="${WW}" height="${WH2}" rx="6" fill="#0b0e22" fill-opacity=".92" stroke="${ACC}" stroke-opacity=".5" stroke-width="1"/>`;
+            g+=`<text x="${wx+8}" y="${wy+14}" font-family='${sans}' font-size="8.5" font-weight="700" letter-spacing=".12em" fill="#9aa6bb">拡大</text>`;
+            g+=LN(ix0,iy1,ix1,iy1,'#fff',.25,1)+LN(ix0,iy0,ix1,iy0,'#fff',.12,1,' stroke-dasharray="2 2"')+LN(ix0,iy0,ix0,iy1,'#fff',.2,1);
+            g+=`<polygon points="${f1(ix0)},${f1(iy1)} ${seg.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')} ${f1(ix1)},${f1(iy1)}" fill="${ACC}" fill-opacity=".18"/><polyline points="${seg.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="1.8"/>`;
+            g+=`<circle cx="${f1(ix0)}" cy="${f1(iy1)}" r="3" fill="#fff"/><circle cx="${f1(ix1)}" cy="${f1(seg[M][1])}" r="2.8" fill="#fff6dc" stroke="${ACC}" stroke-width="1"/>`;
+            g+=`<text x="${f1(ix0-4)}" y="${f1(iy1+3)}" text-anchor="end" font-family='${mono}' font-size="8" fill="#cfd4e6">${Math.round(st.tot).toLocaleString('en-US')}</text><text x="${f1(ix0-4)}" y="${f1(iy0+3)}" text-anchor="end" font-family='${mono}' font-size="8" fill="#cfd4e6">${Math.round(yTop).toLocaleString('en-US')}</text>`;
+            const gt=gain<.5?'≈ +0':'+'+Math.round(gain).toLocaleString('en-US'); g+=`<text x="${wx+WW-10}" y="${wy+15}" text-anchor="end" font-family='${mono}' font-size="13" font-weight="800" fill="#f3ead6">${gt}<tspan dx="3" font-family='${sans}' font-size="8.5" font-weight="700" fill="#9aa6bb">RV</tspan></text>`; }
+          }
         if(BG){ const CH=(x,y,w,t)=>`<rect x="${f1(x)}" y="${f1(y-9.5)}" width="${f1(w)}" height="19" rx="4" fill="#0b0e22" stroke="${ACC}" stroke-opacity=".75" stroke-width="1"/><text x="${f1(x+w/2)}" y="${f1(y+4)}" text-anchor="middle" font-family='${mono}' font-size="10.5" font-weight="700" fill="#f3ead6">${t}</text>`, yt=Math.round(st.tot).toLocaleString('en-US')+'%', yw=yt.length*6.6+14;
           g+=`<circle cx="${f1(px)}" cy="${f1(py)}" r="14" fill="${ACC}" opacity=".22" filter="url(#ccSoft)"/><circle cx="${f1(px)}" cy="${f1(py)}" r="8" fill="none" stroke="${ACC}" stroke-opacity=".8" stroke-width="1.2"/><circle cx="${f1(px)}" cy="${f1(py)}" r="4.2" fill="#fff"/>`+TX(FW>0?px-12:px+12,py-10,'あなた',{fs:10.5,fw:700,c:'#f3ead6',a:FW>0?'end':'start'});
           g+=CH(GX0-4-yw,py,yw,yt)+CH(xcL,GY1+29,xc.w,UHT(fmtAge(age),10.5,null)); }
