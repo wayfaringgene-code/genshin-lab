@@ -1634,9 +1634,9 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
         hideX=x=>axL!=null&&x>axL-14&&x<axL+o0.w+14, hideXE=x=>hideX(x)||(xcL!=null&&x>xcL-16&&x<xcL+xc.w+16); // 横軸の札は目盛りの数字の行に置くので、★の段の名前は消さず、数字だけ消す
       const kAge=age>0?(()=>{ let k0=0; for(let i=0;i<EN;i++) if(age>=EB[i]) k0=i; return k0; })():-1; // あなたの点が入っている段（G では札と同じ金で着色）
       for(let k=0;k<ENg;k++){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b-a>16&&!hideX((a+b)/2)&&!HID(k)) g+=TX((a+b)/2,GY1+(BG?16:14),ELB[k],{a:'middle',fs:FB,fw:700,c:BG&&k===kAge?ACC:'#9aa6bb'}); }
-      { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
+      { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:BG?'#b4bccb':'#6f7a8e',m:1}); } }
       if(XS==='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
-      else if(BG&&XS!=='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),'∞',{a:'middle',fs:FE+2,c:'#6f7a8e'}); /* 右端は描画の端（理論値ではない）。本当の理論値は平均的な人がいつまでも追いつかない＝無限なので ∞ */
+      else if(BG&&XS!=='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),'∞',{a:'middle',fs:FE+2,c:'#b4bccb'}); /* 右端は描画の端（理論値ではない）。本当の理論値は平均的な人がいつまでも追いつかない＝無限なので ∞ */
       if(BG) g+=`<text x="${GX0}" y="${GY1+29}" text-anchor="middle" font-family='${sans}' font-size="8.5" font-weight="700" letter-spacing=".06em" fill="#9aa6bb">MONTHS</text>`; /* 目盛りの数字の行の左端（数字を読み始める所）に単位 */
       g+=TX(GX1,GY1+(BG?53:36),BG?'秘境を回った期間'+(XS==='log'?'（対数）':XS==='lin'?'（線形）':''):'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
       // 曲線
@@ -1659,7 +1659,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           if(wedge.length>1) g+=`<polygon points="${f1(px)},${f1(py)} ${wedge.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')} ${f1(x2)},${f1(y2)} ${f1(x2)},${f1(py)}" fill="url(#c2Gain)"/>`;
           g+=`<circle cx="${f1(x2)}" cy="${f1(y2)}" r="3.4" fill="#fff6dc" stroke="${ACC}" stroke-width="1.2"/>`;
           { // 拡大の窓：横はあなたの点〜その期間の先、縦はあなたの有効RV〜到達点。帯の部分だけを縦に引き伸ばして、伸び方と伸びの量（RV）を見せる。帯が左半分なら右下、右半分なら左上
-            const WW=170, WH2=92, right=px<GX0+14+WW+24, wx=right?GX1-WW-28:GX0+14, wy=right?GY1-WH2-14:GY0+22, ix0=wx+38, ix1=wx+WW-12, iy0=wy+38, iy1=wy+WH2-12; /* 帯が左上の窓の下に来るなら右下へ */
+            const WW=170, WH2=92, wR=GX1-WW-28, hit=px>wR-14&&px<wR+WW+14, right=!hit||px-WW-22<GX0, wx=hit?Math.max(GX0+8,px-WW-22):wR, wy=GY1-WH2-14, /* いつも下の段。右端が基本で、あなたの点の真下（MONTHS を読む破線）にかかるときだけ点の左へ */ ix0=wx+38, ix1=wx+WW-12, iy0=wy+38, iy1=wy+WH2-12; /* 帯が左上の窓の下に来るなら右下へ */
             const yTop=Math.max(st.tot+Math.max(gain,ymax*.02),st.tot+1), IX=d=>ix0+(Math.log(Math.max(1,d))-Math.log(Math.max(1,age)))/Math.max(1e-9,Math.log(age+FW)-Math.log(Math.max(1,age)))*(ix1-ix0), IY=r=>iy1-(r-st.tot)/(yTop-st.tot)*(iy1-iy0);
             const M=24, seg=[...Array(M+1)].map((_,k)=>{ const d=Math.max(1,age)*Math.pow((age+FW)/Math.max(1,age),k/M); return [IX(d),IY(st.meanTot(d))]; });
             { // 拡大の囲み：グラフの上で拡大している範囲（あなたの点〜到達点）を金の四角で囲み、四角の角と窓の角を金の線で結ぶ（窓は四角の中身の拡大）
