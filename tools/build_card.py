@@ -440,9 +440,9 @@ const ENKA_SLOT={EQUIP_BRACER:'flower',EQUIP_NECKLACE:'plume',EQUIP_SHOES:'sands
 function enkaParse(txt){ txt=String(txt||'').trim(); if(!txt) throw new Error('empty');
   try{ return JSON.parse(txt); }catch(e){ const a=txt.indexOf('{'), b=txt.lastIndexOf('}'); if(a>=0&&b>a) return JSON.parse(txt.slice(a,b+1)); throw e; } }
 function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
-  for(const av of (d&&d.avatarInfoList)||[]){ const pieces={}, cnt={};
+  for(const av of (d&&d.avatarInfoList)||[]){ const pieces={}, cnt={}, low={};
     for(const e of av.equipList||[]){ const f=e.flat||{}, r=e.reliquary; if(f.itemType!=='ITEM_RELIQUARY'||!r) continue;
-      if(f.rankLevel!==5){ notes.low++; continue; } const slot=ENKA_SLOT[f.equipType], main=ENKA_PROP[(f.reliquaryMainstat||{}).mainPropId]; if(!slot||!main){ notes.odd++; continue; }
+      const slot=ENKA_SLOT[f.equipType], main=ENKA_PROP[(f.reliquaryMainstat||{}).mainPropId]; if(f.rankLevel!==5){ notes.low++; if(f.rankLevel===4&&slot&&main){ low[slot]={main,r:4,lv:Math.max(0,(+r.level||1)-1)}; if(f.setId) low[slot].setId=String(f.setId); } continue; } if(!slot||!main){ notes.odd++; continue; }
       const lv=Math.max(0,Math.min(20,(+r.level||1)-1)), rolls={}; let bad=false;
       for(const id of r.appendPropIdList||[]){ const x=ENKA.affix[String(id)]; if(!x){ bad=true; continue; } (rolls[x[0]]=rolls[x[0]]||[]).push(x[1]); }
       const subs=(f.reliquarySubstats||[]).map(q=>{ const s=ENKA_PROP[q.appendPropId], v=+q.statValue; return {s,v:FLAT.has(s)?String(Math.round(v)):v.toFixed(1)}; }).filter(q=>q.s);
@@ -453,7 +453,7 @@ function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
     if(!Object.keys(pieces).length) continue;
     const nm=ENKA.avatar[String(av.avatarId)]; if(!nm) notes.unknown++;
     const set=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>=2).map(([k,n])=>(ENKA.set[k]||'セット'+k)+(n>=4?'4':'2')).join('＋');
-    out.push({id:'uid-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()}); }
+    out.push(Object.assign({id:'uid-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()},Object.keys(low).length?{low}:{})); } // low：★4の聖遺物（計算に入れず、カードで「★4」と表示するだけ）
   return {chars:out,notes}; }
 /* UIDで取得：Enka に問い合わせる（中継の設定があれば中継、なければ直接）。
    Enka の決まり：応答の ttl（秒）が切れるまでは同じUIDを取り直さない → この端末に応答を取っておき、ttl の間はそれを使う。
@@ -926,7 +926,7 @@ function cc2Samples(){ // 見本（実在のプレイヤーのデータではな
     sands:P('ER',[['CR',[3,3,2]],['CD',[3,3,3]],['ATK%',[2,3]],['DEF',[0]]]),
     goblet:P('DMG_雷',[['CR',[3,3,3]],['CD',[3,3,3,3]],['ATK%',[2]],['HP',[3]]]),
     circlet:P('CR',[['CD',[3,3,2,2,2]],['ATK%',[3]],['ER',[2,3]],['DEF',[0]]])}};
-  PS2(s2,'絶縁の旗印','circlet','剣闘士のフィナーレ'); PS2(s100,'絶縁の旗印','circlet','剣闘士のフィナーレ');
+  PS2(s2,'絶縁の旗印','circlet','剣闘士のフィナーレ'); delete s2.pieces.circlet; s2.low={circlet:{main:'CR',r:4,lv:16,set:'教官'}}; PS2(s100,'絶縁の旗印','circlet','剣闘士のフィナーレ');
   const smP=JSON.parse(JSON.stringify(sm)); smP.id='cc2-partial'; smP.pieces.sands.lv=12; smP.pieces.goblet.lv=12;
   return [{c:sm,l:'見本：フリーナ（★5）'},{c:smP,l:'見本：フリーナ（砂・杯が+12）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'}]; }
 // 新しいカード用の立ち絵の切り出し：fitCardArt と同じ切り出しで、減光（下へ薄く・外周を丸く薄く）を焼き込まない。端はカードの側で溶かす
@@ -1527,16 +1527,19 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     const SUBN={'HP':'HP','ATK':'攻撃','DEF':'防御','HP%':'HP%','ATK%':'攻撃%','DEF%':'防御%','ER':'チャージ','EM':'熟知','CR':'会心率','CD':'会心ダメ'}, effS=new Set(c.eff), BARS=true, RT=(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)||LV==='G'?132:96, RH=(H-50-RT-(UPM==='strip'?40:0)-BRH)/5, SX=rx+44, bx0=SX, bx1=RE, BX=d=>bx0+ES(d)*(bx1-bx0), bw=(bx1-bx0)/EN;
     { const top=[st.age,...SLOTS.map(s=>st.slots[s].age)].filter(d=>d>0).reduce((m,d)=>{ let k0=0; for(let i=0;i<EN;i++) if(d>=EB[i]) k0=i; return Math.max(m,k0); },0); /* 百年級・有史以来は隠し要素：届いた部位か全体があるときだけ段の名前を出す（棒の点線の延長は残す） */
       if(BARS) for(let k=0;k<EN;k++) if(k<TIERS.length||k<=top) g+=TX(bx0+(k+.5)*bw,RT-1,ELB[k],{a:'middle',fs:8.5,fw:700,c:'#646d80'}); }
-    SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), pim=c.pimg&&c.pimg[s], y1=Y+(BRH?25:33);
+    SLOTS.forEach((s,k)=>{ const Y=RT+k*RH, x=st.slots[s], p=c.pieces[s], d=x.rv!=null&&x.age>0?x.age:0, eq=p&&p.main&&(p.subs||[]).some(q=>q.v!==''), lo=!eq&&c.low&&c.low[s]&&c.low[s].main?c.low[s]:null, pim=c.pimg&&c.pimg[s], y1=Y+(BRH?25:33);
       g+=LN(rx,Y+4,RE,Y+4,'#c9b98f',.12,1);
-      const rid=typeof RELICS!=='undefined'&&eq?(p.setId||(p.set&&RELICS[p.set])||null):null, /* 部位ごとのセットが分かるときだけ絵を出す（4セットの名前からの推測はしない：自由枠の1個まで4セットに見えてしまうため） */ rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
+      const pp=eq?p:lo, rid=typeof RELICS!=='undefined'&&pp?(pp.setId||(pp.set&&RELICS[pp.set])||null):null, /* 部位ごとのセットが分かるときだけ絵を出す（4セットの名前からの推測はしない：自由枠の1個まで4セットに見えてしまうため） */ rimg=rid&&typeof RELIC_PART!=='undefined'?`icons/relic/${rid}_${RELIC_PART[s]}.webp`:null;
       g+=`<g transform="translate(${rx+16},${y1-5})">${pim?`<image href="${pim}" x="-15" y="-15" width="30" height="30" preserveAspectRatio="xMidYMid slice" clip-path="url(#ccP${k})"/>`:rimg?`<image href="${rimg}" x="-19" y="-19" width="38" height="38" preserveAspectRatio="xMidYMid meet"/>`:slotIcon(s,0,0,18,'#8a93a6')}${rimg&&!pim?'':`<circle r="15" fill="none" stroke="#c9b98f" stroke-opacity=".4" stroke-width="1"/>`}</g>`;
-      g+=`<text x="${SX}" y="${y1}" font-family='${sans}' font-size="11" fill="#9aa6bb">${SLOT_JP[s]}<tspan dx="8" font-size="15" font-weight="700" fill="${eq?'#e6dfcf':'#ff9b8a'}">${eq?esc(MAIN_SHORT(p.main)):'未装備'}</tspan>${eq&&p.lv!=null&&+p.lv<20?`<tspan dx="8" font-family='${mono}' font-size="12" font-weight="700" fill="#e8a15a">+${+p.lv}</tspan>${EST.has(s)?`<tspan dx="5" font-size="10" font-weight="700" fill="#e8a15a">→ +20の見込み</tspan>`:''}`:''}${UPM==='row'&&eq?`<tspan dx="14" font-size="10" fill="#8a93a6">1か月で更新 <tspan font-family='${mono}' font-size="11.5" font-weight="${PS[k]===PSB&&PSB>0?700:400}" fill="${PS[k]===PSB&&PSB>0?'#f3ead6':'#cfd4e6'}">${FPc(PS[k])}</tspan></tspan>`:''}</text>`;
-      const BH0=22, b=BADGE(RE,y1-5,BH0,d,{est:EST.has(s)}); g+=b.s; /* バッジの大きさ：全体と5部位で同じ */
+      g+=`<text x="${SX}" y="${y1}" font-family='${sans}' font-size="11" fill="#9aa6bb">${SLOT_JP[s]}<tspan dx="8" font-size="15" font-weight="700" fill="${eq?'#e6dfcf':lo?'#8a93a6':'#ff9b8a'}">${eq?esc(MAIN_SHORT(p.main)):lo?esc(MAIN_SHORT(lo.main)):'未装備'}</tspan>${UPM==='row'&&eq?`<tspan dx="14" font-size="10" fill="#8a93a6">1か月で更新 <tspan font-family='${mono}' font-size="11.5" font-weight="${PS[k]===PSB&&PSB>0?700:400}" fill="${PS[k]===PSB&&PSB>0?'#f3ead6':'#cfd4e6'}">${FPc(PS[k])}</tspan></tspan>`:''}</text>`;
+      { const mt=eq?MAIN_SHORT(p.main):lo?MAIN_SHORT(lo.main):'未装備', tw=[...SLOT_JP[s]].length*11+8+[...mt].reduce((a2,ch)=>a2+(/[ -~]/.test(ch)?9:15),0), wx=SX+tw+12, LVc='#ff6b5e';
+        if(eq&&p.lv!=null&&+p.lv<20){ const ty=y1-5; g+=`<path d="M${f1r(wx+6)},${f1r(ty-6)} L${f1r(wx+12.5)},${f1r(ty+5.5)} L${f1r(wx-.5)},${f1r(ty+5.5)} Z" fill="${LVc}" stroke="${LVc}" stroke-width="1" stroke-linejoin="round"/><text x="${f1r(wx+6)}" y="${f1r(ty+4.3)}" text-anchor="middle" font-family='${sans}' font-size="8.5" font-weight="900" fill="#14110a">!</text><text x="${f1r(wx+17)}" y="${y1}" font-family='${sans}' font-size="11.5" font-weight="700" fill="${LVc}">Lv.${+p.lv}${EST.has(s)?'（Lv.20の見込み）':''}</text>`; } /* +20未満の注意：赤い三角に「!」（書体に頼らず図形で）＋Lv.○（Lv.20の見込み） */
+        if(lo) g+=`<text x="${f1r(wx)}" y="${y1}" font-family='${sans}' font-size="11" font-weight="700" fill="#8a93a6">★4<tspan dx="4" font-weight="400" font-size="10" fill="#6f7a8e">Lv.${lo.lv!=null?lo.lv:16}</tspan></text>`; }
+      const BH0=22, b=lo?{s:`<text x="${RE}" y="${y1}" text-anchor="end" font-family='${sans}' font-size="10.5" fill="#6f7a8e">★4の聖遺物（秘境レベルの対象外）</text>`,w:-1}:BADGE(RE,y1-5,BH0,d,{est:EST.has(s)}); g+=b.s; /* バッジの大きさ：全体と5部位で同じ。★4は対象外の一文だけ */
       { // 部位の秘境レベル（MONTHS）。window.CC2_OPT.mv：plain＝そのまま／type＝見出しの MONTHS と同じ字面に／next＝いちばん短い部位（次の狙い）に金の下線と札／both＝両方
-        const MV=(window.CC2_OPT||{}).mv||'plain', TY=MV==='type'||MV==='both', NX=(MV==='next'||MV==='both')&&d>0&&d===NEXTD, fsV=TY?16.5:14, vx=RE-(b.w?b.w+10:0), vt=d>0?fmtAge(d):'—';
+        if(lo){} else { const MV=(window.CC2_OPT||{}).mv||'plain', TY=MV==='type'||MV==='both', NX=(MV==='next'||MV==='both')&&d>0&&d===NEXTD, fsV=TY?16.5:14, vx=RE-(b.w?b.w+10:0), vt=d>0?fmtAge(d):'—';
         g+=`<text x="${vx}" y="${y1}" text-anchor="end" font-family='${mono}' font-size="${fsV}" font-weight="${TY?700:600}" fill="${NX?'#f6e2a8':TY?'#f3ead6':'#d8d2c2'}">${d>0?UHT(vt,fsV,null):'—'}</text>`;
-        if(NX){ const w=UTW(vt,fsV*.6,fsV); g+=LN(vx-w,y1+4,vx,y1+4,'#e9d39a',.9,1.2)+`<text x="${f1r(vx-w-8)}" y="${y1-1}" text-anchor="end" font-family='${sans}' font-size="9" font-weight="800" letter-spacing=".1em" fill="#e9d39a">次の狙い</text>`; } }
+        if(NX){ const w=UTW(vt,fsV*.6,fsV); g+=LN(vx-w,y1+4,vx,y1+4,'#e9d39a',.9,1.2)+`<text x="${f1r(vx-w-8)}" y="${y1-1}" text-anchor="end" font-family='${sans}' font-size="9" font-weight="800" letter-spacing=".1em" fill="#e9d39a">次の狙い</text>`; } } }
       if(BARS){ const yb=y1+(BRH?14:19), xm=bx0+ES5*(bx1-bx0);
         g+=LN(bx0,yb,xm,yb,'#fff',.13,3,' stroke-linecap="round"')+LN(xm,yb,bx1,yb,'#fff',.22,1,' stroke-dasharray="2 3"');
         if(d>0) g+=LN(bx0,yb,BX(d),yb,CREAM,.78,3,' stroke-linecap="round"');

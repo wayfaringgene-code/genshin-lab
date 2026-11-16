@@ -27,12 +27,13 @@ patch('core.js', [
     const by = new Map(), notes = { low: 0, partial: 0 };
     for (const a of arts) {
       if (!a.location) continue;
-      if (a.rarity !== 5) { notes.low++; continue; }   // ラボの計算は★5だけ
+      if (a.rarity !== 5 && a.rarity !== 4) { notes.low++; continue; }   // ラボの計算は★5だけ。★4は計算に入れず、カードの表示用に low へ残す
 """),
 ("""        const subs = a.substats.concat(a.unactivatedSubstats || []).map(x => ({ s: LAB_STAT[x.key], v: String(x.value) }));
         while (subs.length < 4) subs.push({ s: '', v: '' });
         pieces[a.slotKey] = { main: LAB_STAT[a.mainStatKey], subs: subs.slice(0, 4) };
-""", """        // 未発動のサブOPは off の印を付けて後ろに置く（ラボは数えない）。+20未満なら lv を付ける（ラボはいまの値で評価する）
+""", """        if (a.rarity === 4) { notes.low++; low[a.slotKey] = { main: LAB_STAT[a.mainStatKey], r: 4, lv: a.level, set: D.sets[a.setKey] ? D.sets[a.setKey].n : '' }; continue; }
+        // 未発動のサブOPは off の印を付けて後ろに置く（ラボは数えない）。+20未満なら lv を付ける（ラボはいまの値で評価する）
         const subs = a.substats.map(x => ({ s: LAB_STAT[x.key], v: String(x.value) }))
           .concat((a.unactivatedSubstats || []).map(x => ({ s: LAB_STAT[x.key], v: String(x.value), off: true })));
         while (subs.length < 4) subs.push({ s: '', v: '' });
@@ -41,6 +42,8 @@ patch('core.js', [
         if (a.level < 20) { p.lv = a.level; notes.partial++; }
         pieces[a.slotKey] = p;
 """),
+("      const pieces = {}, count = {};\n", "      const pieces = {}, count = {}, low = {};\n"),
+("      chars.push({ id: 'scan-' + key, name: CHAR_NAME[key] || key, set, pieces, date });", "      if (!Object.keys(pieces).length) continue;\n      chars.push(Object.assign({ id: 'scan-' + key, name: CHAR_NAME[key] || key, set, pieces, date }, Object.keys(low).length ? { low } : {}));"),
 ("return { app: 'genshin-lab-chars', v: 1, at: new Date().toISOString(), chars };",
  "return { app: 'genshin-lab-chars', v: 1, at: new Date().toISOString(), chars, notes };"),
 ])
