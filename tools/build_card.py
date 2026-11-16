@@ -1557,8 +1557,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const y0=H-50-BRH+16, /* 5部位の行とのあいだに余白（区切りの線はやめ、見出しのチップで区切る） */ LX=rx, LX1=rx+214, TXa=rx+234, TXb=RE, SECr=(t,x,y)=>CHIP(t,x,y), BARr=(x0,x1,y,f)=>LN(x0,y,x1,y,'#fff',.12,2,' stroke-linecap="round"')+(f>0?LN(x0,y,x0+(x1-x0)*Math.min(1,f),y,CREAM,.8,2,' stroke-linecap="round"'):'');
       g+=LN(rx+222,y0+8,rx+222,H-56,'#c9b98f',.12,1);
       { // 左の列：大きな確率（どこか1部位でも）。右の列：5部位を縦に（アイコン・確率・棒）、右の表と同じ行の間隔
-        const RY=j=>y0+51+j*17, cx2=LX+92, bx0b=cx2+48, bx1b=LX1;
-        g+=SECr('1か月で更新できる見込み',LX,y0+18)+`<text x="${LX}" y="${y0+66}" font-family='${mono}' font-size="30" font-weight="700" fill="#f3ead6">${FPc(PA)}</text><text x="${LX}" y="${y0+84}" font-family='${sans}' font-size="9.5" fill="#8a93a6">どこか1部位でも</text>`;
+        const IN=14, RY=j=>y0+51+j*17, cx2=LX+IN+88, bx0b=cx2+48, bx1b=LX1-6; /* チップと大きな確率を少し右へ、棒は短く（段の右端はそのまま） */
+        g+=SECr('1か月で更新できる見込み',LX+IN,y0+18)+`<text x="${LX+IN}" y="${y0+66}" font-family='${mono}' font-size="30" font-weight="700" fill="#f3ead6">${FPc(PA)}</text><text x="${LX+IN}" y="${y0+84}" font-family='${sans}' font-size="9.5" fill="#8a93a6">どこか1部位でも</text>`;
         SLOTS.forEach((s2,j)=>{ const y=RY(j), b=PS[j]===PSB&&PSB>0; g+=slotIcon(s2,cx2+6,y-4,11,b?'#f3ead6':'#8a93a6')+`<text x="${cx2+42}" y="${y}" text-anchor="end" font-family='${mono}' font-size="11" font-weight="${b?700:400}" fill="${b?'#f3ead6':'#9aa6bb'}">${FPc(PS[j])}</text>`+BARr(bx0b,bx1b,y-4,PS[j]); }); }
       { // 有効OPごとの伸び：合計・付いた（そのサブOPが付いた部位／付きうる部位。メインOPと同じ部位は付かない）・伸びた（強化で伸びた回数。最初の1回は除く）・1回の伸び。初期の運（どれが付いたか）と強化の運（どこが伸びたか）を別々に数える
         const effL=(c.eff||[]).filter(k=>ROLL[k]).slice(0,4), effAll=(c.eff||[]).filter(k=>ROLL[k]), cols=[TXa,TXa+(TXb-TXa)*.30,TXa+(TXb-TXa)*.52,TXa+(TXb-TXa)*.76,TXb]; let UP=0,UA=0,NA=0,UU=0,AT=0,AM=0; /* cols[1] は使わない（合計の列はやめた：伸びた値の合計はノイズ） */
@@ -1630,7 +1630,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
         if(GS==='bold') for(let k=0;k<ENg;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
       for(let i=1;i<ENg;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
       const nearY=y=>false;
-      const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=(BG?4:5))||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||GYp(r)-GY0<12?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
+      const stp=BG?2000:([100,200,500,1000,2000,5000].find(v=>ymax/v<=5)||10000); for(let r=stp;r<ymax*.999;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||(!BG&&GYp(r)-GY0<12)?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
       g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(BG?CHIP('秘境レベルの物差し',GX0-12,GY0-26)+TX(GX0,GY0-6,`<tspan fill="#9aa6bb">有効RV %</tspan><tspan dx="14">上限</tspan> <tspan font-family='${mono}' font-weight="700" fill="#cfd4e6">${Math.round(ymax).toLocaleString('en-US')}</tspan>`,{fs:FLb,c:'#9aa6bb'}):(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'}));
       g+=LN(GX0,GY1,GX1,GY1,'#fff',.3,1)+LN(GX0,GY0,GX0,GY1,'#fff',.2,1)+(BG?'':TX(GX0-6,GY0-16,'有効RV %',{a:'end',fs:FLb,c:'#9aa6bb'})); /* G：有効RV % は上限の行にまとめる */
       // 横軸の文字：読みのかたまり（axis）・読み取りの札と重なるものは出さない
