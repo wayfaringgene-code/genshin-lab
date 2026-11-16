@@ -1625,9 +1625,9 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       if(BG){ g+=`<defs><linearGradient id="c2Area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ACC}" stop-opacity=".26"/><stop offset="1" stop-color="${ACC}" stop-opacity="0"/></linearGradient><linearGradient id="c2Curve" gradientUnits="userSpaceOnUse" x1="${GX0}" x2="${GX1}" y1="0" y2="0"><stop offset="0" stop-color="#cfd4e6"/><stop offset="1" stop-color="#f6e2a8"/></linearGradient></defs>`;
         if(GS==='bold') for(let k=0;k<ENg;k+=2){ const a=BX[k], b=Math.min(GX1,BX[k+1]); if(b>a) g+=`<rect x="${f1(a)}" y="${GY0}" width="${f1(b-a)}" height="${GY1-GY0}" fill="#fff" fill-opacity=".03"/>`; } }
       for(let i=1;i<ENg;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
-      const nearY=y=>BG&&py0!=null&&Math.abs(y-py0)<13;
+      const nearY=y=>false;
       const stp=[100,200,500,1000,2000,5000].find(v=>ymax/v<=(BG?4:5))||10000; for(let r=stp;r<ymax*.97;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||GYp(r)-GY0<12?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
-      g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'});
+      g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(BG?TX(GX0+4,GY0-6,`上限 <tspan font-family='${mono}' font-weight="700" fill="#cfd4e6">${Math.round(ymax).toLocaleString('en-US')}</tspan>`,{fs:FLb,c:'#9aa6bb'}):(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'}));
       g+=LN(GX0,GY1,GX1,GY1,'#fff',.3,1)+LN(GX0,GY0,GX0,GY1,'#fff',.2,1)+TX(GX0-6,GY0-(BG?20:16),'有効RV %',{a:'end',fs:FLb,c:'#9aa6bb'});
       // 横軸の文字：読みのかたまり（axis）・読み取りの札と重なるものは出さない
       const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, xc=BG&&px!=null?{w:UTW(fmtAge(age),10.5*.6,10.5)+18}:null, xcL=xc?Math.max(GX0-30,Math.min(GX1+24-xc.w,px-xc.w/2)):null,
@@ -1637,8 +1637,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:BG?'#b4bccb':'#6f7a8e',m:1}); } }
       if(XS==='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
       else if(BG&&XS!=='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),'∞',{a:'middle',fs:FE+2,c:'#b4bccb'}); /* 右端は描画の端（理論値ではない）。本当の理論値は平均的な人がいつまでも追いつかない＝無限なので ∞ */
-      if(BG) g+=`<text x="${GX0}" y="${GY1+29}" text-anchor="middle" font-family='${sans}' font-size="8.5" font-weight="700" letter-spacing=".06em" fill="#9aa6bb">MONTHS</text>`; /* 目盛りの数字の行の左端（数字を読み始める所）に単位 */
-      g+=TX(GX1,GY1+(BG?53:36),BG?'秘境を回った期間'+(XS==='log'?'（対数）':XS==='lin'?'（線形）':''):'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
+      if(BG) g+=`<text x="${GX0}" y="${GY1+29}" text-anchor="middle" font-family='${sans}' font-size="8.5" font-weight="700" letter-spacing=".06em" fill="#9aa6bb">MONTHS</text><text x="${GX0}" y="${GY1+40}" text-anchor="middle" font-family='${sans}' font-size="7.5" fill="#7d869a">（秘境を回る月数）</text>`; /* 目盛りの数字の行の左端（数字を読み始める所）に単位 */
+      if(!BG) g+=TX(GX1,GY1+(BG?53:36),BG?'秘境を回った期間'+(XS==='log'?'（対数）':XS==='lin'?'（線形）':''):'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
       // 曲線
       if(LV==='E'||G3){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
           const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-10,(yt+yb)/2,Math.min(BG?14:12,yb-yt-2),'#cfc6ae'); }); }
@@ -1659,7 +1659,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           if(wedge.length>1) g+=`<polygon points="${f1(px)},${f1(py)} ${wedge.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')} ${f1(x2)},${f1(y2)} ${f1(x2)},${f1(py)}" fill="url(#c2Gain)"/>`;
           g+=`<circle cx="${f1(x2)}" cy="${f1(y2)}" r="3.4" fill="#fff6dc" stroke="${ACC}" stroke-width="1.2"/>`;
           { // 拡大の窓：横はあなたの点〜その期間の先、縦はあなたの有効RV〜到達点。帯の部分だけを縦に引き伸ばして、伸び方と伸びの量（RV）を見せる。帯が左半分なら右下、右半分なら左上
-            const WW=170, WH2=92, wR=GX1-WW-28, hit=px>wR-14&&px<wR+WW+14, right=!hit||px-WW-22<GX0, wx=hit?Math.max(GX0+8,px-WW-22):wR, wy=GY1-WH2-14, /* いつも下の段。右端が基本で、あなたの点の真下（MONTHS を読む破線）にかかるときだけ点の左へ */ ix0=wx+38, ix1=wx+WW-12, iy0=wy+38, iy1=wy+WH2-12; /* 帯が左上の窓の下に来るなら右下へ */
+            const WW=170, WH2=92, right=true, wx=GX1-WW-28, wy=GY1-WH2-14, /* いつも右下。あなたの点の真下の破線とかぶっても、MONTHS は横軸の札で読める */ ix0=wx+38, ix1=wx+WW-12, iy0=wy+38, iy1=wy+WH2-12; /* 帯が左上の窓の下に来るなら右下へ */
             const yTop=Math.max(st.tot+Math.max(gain,ymax*.02),st.tot+1), IX=d=>ix0+(Math.log(Math.max(1,d))-Math.log(Math.max(1,age)))/Math.max(1e-9,Math.log(age+FW)-Math.log(Math.max(1,age)))*(ix1-ix0), IY=r=>iy1-(r-st.tot)/(yTop-st.tot)*(iy1-iy0);
             const M=24, seg=[...Array(M+1)].map((_,k)=>{ const d=Math.max(1,age)*Math.pow((age+FW)/Math.max(1,age),k/M); return [IX(d),IY(st.meanTot(d))]; });
             { // 拡大の囲み：グラフの上で拡大している範囲（あなたの点〜到達点）を金の四角で囲み、四角の角と窓の角を金の線で結ぶ（窓は四角の中身の拡大）
@@ -1676,7 +1676,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           }
         if(BG){ const CH=(x,y,w,t)=>`<rect x="${f1(x)}" y="${f1(y-9.5)}" width="${f1(w)}" height="19" rx="4" fill="#0b0e22" stroke="${ACC}" stroke-opacity=".75" stroke-width="1"/><text x="${f1(x+w/2)}" y="${f1(y+4)}" text-anchor="middle" font-family='${mono}' font-size="10.5" font-weight="700" fill="#f3ead6">${t}</text>`, yt=Math.round(st.tot).toLocaleString('en-US')+'%', yw=yt.length*6.6+14;
           g+=`<circle cx="${f1(px)}" cy="${f1(py)}" r="14" fill="${ACC}" opacity=".22" filter="url(#ccSoft)"/><circle cx="${f1(px)}" cy="${f1(py)}" r="8" fill="none" stroke="${ACC}" stroke-opacity=".8" stroke-width="1.2"/><circle cx="${f1(px)}" cy="${f1(py)}" r="4.2" fill="#fff"/>`+TX(FW>0?px-12:px+12,py-10,'あなた',{fs:10.5,fw:700,c:'#f3ead6',a:FW>0?'end':'start'});
-          g+=CH(GX0-4-yw,py,yw,yt)+CH(xcL,GY1+29,xc.w,UHT(fmtAge(age),10.5,null)); }
+          g+=CH(xcL,GY1+29,xc.w,UHT(fmtAge(age),10.5,null)); /* 縦軸の札（有効RV）はやめた：右上の有効RVと同じ数字なので */ }
         else g+=MARK(px,py)+TX(GX0+4,py-4,`あなたの有効RV ${Math.round(st.tot)}%`,{fs:8,c:'#cfd4e6'});
         if(OV==='pt'){ const below=py+78<GY1, x0=below?Math.max(40,Math.min(630-o0.w,px+16)):Math.max(40,Math.min(630-o0.w,px-o0.w/2)), yc=below?py+42:Math.max(150,py-(MYTH(age)?72:52)); g+=OVR(x0,yc).s; }
         if(OV==='ttl') g+=OVR(GX0-8,GY0-(MYTH(age)?66:52)).s;
