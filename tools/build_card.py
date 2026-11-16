@@ -1637,7 +1637,8 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       { let last=-99; for(let i=1;i<ENg;i++){ const x=BX[i]; if(x>GX1-1||x-last<(BG?26:20)||hideXE(x)) continue; last=x; g+=TX(x,GY1+(BG?29:25),EMO[i-1],{a:'middle',fs:FE,c:'#6f7a8e',m:1}); } }
       if(XS==='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),MOP(DMX),{a:'end',fs:FE,c:'#6f7a8e',m:1});
       else if(BG&&XS!=='lin'&&!hideXE(GX1)) g+=TX(GX1,GY1+(BG?29:25),'∞',{a:'middle',fs:FE+2,c:'#6f7a8e'}); /* 右端は描画の端（理論値ではない）。本当の理論値は平均的な人がいつまでも追いつかない＝無限なので ∞ */
-      g+=TX(GX1,GY1+(BG?53:36),'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
+      if(BG) g+=`<text x="${GX0}" y="${GY1+29}" text-anchor="middle" font-family='${sans}' font-size="8.5" font-weight="700" letter-spacing=".06em" fill="#9aa6bb">MONTHS</text>`; /* 目盛りの数字の行の左端（数字を読み始める所）に単位 */
+      g+=TX(GX1,GY1+(BG?53:36),BG?'秘境を回った期間'+(XS==='log'?'（対数）':XS==='lin'?'（線形）':''):'秘境を回った期間（MONTHS）'+(XS==='log'?'・対数':XS==='lin'?'・線形':''),{a:'end',fs:BG?9.5:7.5,c:'#7d869a'});
       // 曲線
       if(LV==='E'||G3){ cum.forEach((top,j)=>{ const bot=j?cum[j-1]:ds.map(()=>0); g+=`<polygon points="${PL(top).join(' ')} ${PL(bot).reverse().join(' ')}" fill="${CREAM}" fill-opacity="${j%2?.13:.07}"/>`; if(j<4) g+=`<polyline points="${PL(top).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".22" stroke-width=".7"/>`;
           const yt=GYp(top[N]), yb=GYp(bot[N]); if(yb-yt>9) g+=slotIcon(SLOTS[j],GX1-10,(yt+yb)/2,Math.min(BG?14:12,yb-yt-2),'#cfc6ae'); }); }
