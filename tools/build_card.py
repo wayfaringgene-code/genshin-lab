@@ -1625,7 +1625,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       else if(BG&&GS==='mid') g+=`<polygon points="${PL(cum[4]).join(' ')} ${f1(GX1)},${GY1} ${GX0},${GY1}" fill="url(#c2Area)" opacity=".4"/><polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="url(#c2Curve)" stroke-width="1.8" stroke-linejoin="round"/>`;
       else g+=`<polyline points="${PL(cum[4]).join(' ')}" fill="none" stroke="${CREAM}" stroke-opacity=".9" stroke-width="1.6"/>`;
       // 原神のリリースから毎日回った線
-      { const x=GXp(REL), lf=x+(BG?190:165)>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="${BG?9.5:8}" fill="${RELC}">${REL_T}</text>`; }
+      { const x=GXp(REL), lf=x+(BG?190:165)>GX1; g+=LN(x,GY0,x,GY1,RELC,.6,1,' stroke-dasharray="3 2.5"')+`<text${HAL()} x="${f1(lf?x-4:x+4)}" y="${BG?GY0+14:GY1-6}"${lf?' text-anchor="end"':''} font-family='${sans}' font-size="${BG?9.5:8}" fill="${RELC}">${REL_T}</text>`; }
       // あなた：有効RVの横線が曲線とぶつかる点 → 真下が秘境レベル。G は縦軸・横軸に読み取りの札
       if(age>0){ const py=py0; g+=LN(GX0,py,px,py,'#fff',BG?.7:.55,1,' stroke-dasharray="2 2.5"')+LN(px,py,px,OV==='axis'?GY1+8:BG?GY1+19:GY1,'#fff',BG?.7:.55,1,' stroke-dasharray="2 2.5"');
         const FW=BG?+((window.CC2_OPT||{}).fw||0):0; /* これからの帯（G）：あなたの点から FW 日先まで。対数の横軸では、同じ期間でも右へ行くほど帯が細くなり、帯の中の伸びも小さくなる＝潮時が見える */
@@ -1636,7 +1636,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           g+=`<rect x="${f1(px)}" y="${GY0}" width="${f1(Math.max(1.5,x2-px))}" height="${GY1-GY0}" fill="${ACC}" fill-opacity=".05"/>`+LN(x2,GY0,x2,GY1,ACC,.45,1);
           if(wedge.length>1) g+=`<polygon points="${f1(px)},${f1(py)} ${wedge.map(([x,y])=>`${f1(x)},${f1(y)}`).join(' ')} ${f1(x2)},${f1(y2)} ${f1(x2)},${f1(py)}" fill="url(#c2Gain)"/>`;
           g+=`<circle cx="${f1(x2)}" cy="${f1(y2)}" r="3.4" fill="#fff6dc" stroke="${ACC}" stroke-width="1.2"/>`;
-          g+=`<text${HAL()} x="${f1(px+4)}" y="${GY0+13}" font-family='${sans}' font-size="9" font-weight="800" letter-spacing=".22em" fill="${ACC}">${lab}</text>`;
+          { // 標語は帯の下端（横軸のすぐ上）に、帯の幅いっぱいの括弧と一緒に：帯の範囲＝その期間、が形で分かる
+            const yb=GY1-8, tw=lab.length*7.6, cx=Math.max(GX0+tw/2+4,Math.min(GX1-tw/2-4,(px+x2)/2));
+            g+=LN(px,yb,x2,yb,ACC,.85,1.2)+LN(px,yb-4,px,yb+4,ACC,.85,1.2)+LN(x2,yb-4,x2,yb+4,ACC,.85,1.2)
+              +`<text${HAL()} x="${f1(cx)}" y="${yb-6}" text-anchor="middle" font-family='${sans}' font-size="9" font-weight="800" letter-spacing=".22em" fill="${ACC}">${lab}</text>`; }
           const gt=gain<.5?'≈ +0%':'+'+Math.round(gain).toLocaleString('en-US')+'%', gw=gt.length*9.6, rt=x2+6+gw>GX1-18, gx=rt?x2-8:x2+7, gy=Math.max(GY0+30,y2-7);
           g+=`<text x="${f1(gx)}" y="${f1(gy)}"${rt?' text-anchor="end"':''} font-family='${mono}' font-size="${gain<.5?12:16}" font-weight="800" fill="${gain<.5?'#cdb980':'#fff2c4'}"${gain<.5?'':' filter="url(#c2GainGl)"'} paint-order="stroke" stroke="#05060d" stroke-width="2.4" stroke-opacity=".7">${gt}</text>`; }
         if(BG){ const CH=(x,y,w,t)=>`<rect x="${f1(x)}" y="${f1(y-9.5)}" width="${f1(w)}" height="19" rx="4" fill="#0b0e22" stroke="${ACC}" stroke-opacity=".75" stroke-width="1"/><text x="${f1(x+w/2)}" y="${f1(y+4)}" text-anchor="middle" font-family='${mono}' font-size="10.5" font-weight="700" fill="#f3ead6">${t}</text>`, yt=Math.round(st.tot).toLocaleString('en-US')+'%', yw=yt.length*6.6+14;
