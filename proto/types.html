@@ -1,0 +1,375 @@
+<title>型くらべ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Murecho:wght@400;500;700&display=swap">
+<style>
+
+/* 型くらべ。命ノ星座カードと同じ「夜空を映した漆の机」。1つの暗い見た目に決めている（アプリと同じ）。
+   レイアウト：前提（回数・現実度・エネルギー） → 型ごとのカード（式・必要なチャージ効率・育てる順番の図・断面・有効OP） → 型の一覧表 */
+:root{
+  color-scheme: dark;
+  --bg:#060818; --panel:#0e1230; --panel-2:#121741; --line:rgba(233,211,154,.16); --line-2:rgba(233,211,154,.32);
+  --ink:#f3ead6; --ink-2:#c9c2b2; --muted:#949db3;
+  --gold:#e9d39a; --gold-dim:#a88748;
+  --s-cr:#3987e5; --s-cd:#d95926; --s-em:#199e70; --s-atk:#c9c2b2; --s-er:#9085e9; --s-hp:#d55181;
+  --grid:rgba(233,211,154,.09);
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Murecho","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.7;
+  background-image:radial-gradient(1100px 620px at 22% -8%,#191b46 0%,transparent 70%),radial-gradient(800px 520px at 100% 100%,#130f2c 0%,transparent 70%); background-attachment:fixed}
+.wrap{max-width:1180px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:28px 64px; display:grid; gap:22px}
+header{display:grid; gap:8px}
+.eyebrow{font-size:12px; letter-spacing:.18em; color:var(--gold)}
+h1{font-family:var(--display); font-weight:800; font-size:clamp(30px,5vw,44px); line-height:1.2; margin:0; letter-spacing:.06em}
+h2{font-family:var(--display); font-weight:800; font-size:20px; margin:0; letter-spacing:.06em; text-wrap:balance}
+h3{font-size:14px; margin:0; color:var(--gold); letter-spacing:.06em}
+p{margin:0}
+.lead{color:var(--ink-2); max-width:46em}
+.note{font-size:12.5px; color:var(--muted)}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; display:grid; gap:12px; min-width:0; align-content:start}
+.pick{display:grid; grid-template-columns:max-content minmax(0,1fr); gap:10px 16px; align-items:center}
+.pick > span{font-size:12.5px; color:var(--muted); letter-spacing:.06em}
+@media (max-width:620px){ .pick{grid-template-columns:minmax(0,1fr); gap:4px} .pick > span{margin-top:6px} }
+.seg{display:inline-flex; flex-wrap:wrap; gap:2px; border:1px solid var(--line-2); border-radius:999px; padding:3px; background:rgba(5,7,18,.5); justify-self:start; max-width:100%}
+.seg button{font:inherit; font-size:13.5px; color:var(--ink-2); background:none; border:0; border-radius:999px; padding:5px 13px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:rgba(233,211,154,.16); color:var(--ink); box-shadow:inset 0 0 0 1px rgba(233,211,154,.6)}
+.seg button:focus-visible,input:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.rng{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:13.5px; color:var(--ink-2)}
+.rng input[type=range]{width:min(260px,60vw); accent-color:var(--gold)}
+.rng b{color:var(--ink); font-variant-numeric:tabular-nums}
+.legend{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12.5px; color:var(--ink-2)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.dot{display:inline-block; width:10px; height:10px; border-radius:2px; background:var(--c); flex:none}
+.types{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr)); gap:18px}
+.ty{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; display:grid; gap:10px; min-width:0; align-content:start}
+.ty-h{display:grid; gap:2px}
+.ty-h h2{font-size:19px}
+.ty-h .w{font-size:12.5px; color:var(--muted)}
+.fml{font-size:13.5px; line-height:1.7; padding:8px 12px; border-radius:8px; background:rgba(5,7,18,.6); border:1px solid var(--line); color:var(--ink)}
+.say{font-size:15px; line-height:1.8; padding-left:12px; border-left:2px solid var(--gold-dim)}
+.say b{color:var(--gold)}
+.eff{display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:13px}
+.eff .k{color:var(--muted)}
+.chip{display:inline-flex; align-items:center; gap:6px; padding:1px 10px 1px 7px; border-radius:999px; border:1px solid var(--line-2); color:var(--ink); white-space:nowrap}
+.chip.req{border-style:dashed}
+.chip small{color:var(--muted)}
+.stack{display:flex; height:22px; gap:2px; border-radius:4px; overflow:hidden}
+.stack i{display:flex; align-items:center; justify-content:center; height:100%; background:var(--c); color:#0b0e22; font-style:normal; font-size:12px; font-weight:700; min-width:0; overflow:hidden; white-space:nowrap}
+.stats{display:flex; flex-wrap:wrap; gap:2px 14px; font-size:12.5px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink)}
+.chart{position:relative}
+.chart svg{display:block; width:100%; height:auto; overflow:visible; touch-action:pan-y}
+.chart text{font-family:var(--body)}
+.tip{position:absolute; pointer-events:none; background:var(--panel-2); border:1px solid var(--line-2); border-radius:8px; padding:7px 10px; font-size:12px; line-height:1.55; color:var(--ink-2); box-shadow:0 10px 28px rgba(0,0,0,.5); min-width:150px; font-variant-numeric:tabular-nums; z-index:3}
+.tip b{color:var(--ink)}
+.tw{overflow-x:auto}
+.tb{border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums}
+.tb th,.tb td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+.tb th{font-weight:400; color:var(--muted); font-size:12px; white-space:nowrap}
+.tb td.t{font-family:var(--display); font-weight:700; letter-spacing:.04em; white-space:nowrap}
+.tm{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px; color:var(--ink-2)} .tm .k{color:var(--muted)} .tm input{font:inherit; font-size:13.5px; width:5.2em; margin-left:6px; color:var(--ink); background:rgba(5,7,18,.75); border:1px solid var(--line-2); border-radius:6px; padding:3px 6px}
+.busy{color:var(--muted); font-size:13px}
+footer{font-size:12px; color:var(--muted); display:grid; gap:4px}
+
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">命ノ星座カード・ダメージの見積もり（試作）</div>
+    <h1>型くらべ</h1>
+    <p class="lead">同じキャラでも、どの技（通常攻撃・重撃・元素スキル・元素爆発・反応）でダメージを出すか、どの反応を使うかで、ダメージの式が変わります。型は「箱」の欄（役割・比べる技・式の部品・元素爆発の要否・エネルギー・武器・聖遺物）から組み立てていて、式の部品が変われば「育てる順番」の図の形も、有効OPも変わります。</p>
+  </header>
+
+  <div class="seg chars" role="group" aria-label="キャラ" id="cSel"></div>
+
+  <section class="panel" aria-label="全キャラ共通の値">
+    <h3>全キャラ共通の値（「えいや」で決めるもの）</h3>
+    <div class="pick">
+      <span>断面</span><div class="seg" role="group" aria-label="サブOPの回数" id="nSel"></div>
+      <span>厳選の現実度</span><div class="seg" role="group" aria-label="1行に入る回数の上限" id="lSel"></div>
+      <span>チームのエネルギー</span><div class="rng"><input type="range" id="e0" min="0" max="50" step="1"><span>ほかのキャラからもらうエネルギー（チャージ効率100%で、元素爆発1回分の間に） <b id="e0v"></b></span></div>
+    </div>
+    <p class="note">必要なチャージ効率＝元素爆発のコスト ÷（自分の粒子＋チームからもらうエネルギー＋西風）。自分の粒子＝元素スキルの粒子 × (元素爆発のクールタイム ÷ 元素スキルのクールタイム) × 3（場にいて受け取るとみなす）。元素爆発を使わない型は、チャージ効率を考えません。</p>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="types" id="types" aria-label="型ごとの図"></section>
+
+  <section class="panel" aria-labelledby="sumH">
+    <h2 id="sumH">型ごとの有効OP（断面での答え）</h2>
+    <div class="tw"><table class="tb" id="sum"></table></div>
+    <p class="note">有効OP＝断面のいちばん良い配分で、1回以上入るサブOP。点線の枠は、元素爆発を回すために必須のチャージ効率。</p>
+  </section>
+
+  <section class="panel" aria-labelledby="boxH">
+    <h2 id="boxH">箱の一覧（全キャラ・全型）</h2>
+    <div class="tw"><table class="tb" id="boxes"></table></div>
+    <p class="note">必要なチャージ効率は、いまの「チームのエネルギー」で出したもの。式の部品の中身は、型ごとのカードに式で出ています。</p>
+  </section>
+
+  <footer>
+    <p>条件：Lv90・無凸・天賦9。★5はモチーフ武器R1、★4の武器は型ごとに代表を1つ（香菱は「漁獲」R5）。数字は genshin-db 5.2.15、式とバフの条件は gcsim（2026-11-09）で照らし合わせました。サブOPの回数は理想の配分の話で、実際の厳選は運です。1つのステータスに入れられるのは「メインOPでない部位の数×1行の上限」まで、1部位に入る効く強化は「5＋効く行の数」回まで。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+/* ---- 共通の数字 ---- */
+const AVG={CR:3.305,CD:6.6125,ATK:4.9575,EM:19.815,ER:5.505,HP:4.9575};
+const MAINV={'ATK%':46.6,'HP%':46.6,EM:186.5,ER:51.8,CR:31.1,CD:62.2,DMG:46.6};
+const LV=1446.85;                       // Lv90 の反応の基礎値
+const ST={CR:['会心率','--s-cr'],CD:['会心ダメ','--s-cd'],ATK:['攻撃力%','--s-atk'],EM:['元素熟知','--s-em'],ER:['元素チャージ','--s-er'],HP:['HP%','--s-hp']};
+const MK=k=>({'ATK%':'ATK','HP%':'HP',EM:'EM',ER:'ER',CR:'CR',CD:'CD'})[k];
+/* ---- 箱の部品：武器と聖遺物（どのキャラでも同じ） ---- */
+const WEAPON={
+  oath:{name:'誓いの明瞳 R1', atk:564.78, add:{atkP:27.56, ER:24}, note:'攻撃力% 27.6%・元素スキルの後 チャージ効率+24%'},
+  mappa:{name:'万国諸海の図譜 R5', atk:564.78, add:{EM:110.26, dmgP:32}, note:'熟知110・反応の後 元素ダメージ+16%×2'},
+  favC:{name:'西風秘典 R1', atk:509.61, add:{ER:45.94}, fav:6, note:'チャージ効率45.9%・会心で粒子（エネルギー6）'},
+  thecatch:{name:'「漁獲」 R5', atk:509.61, add:{ER:45.94, burstDmg:32, burstCR:12}, note:'チャージ効率45.9%・元素爆発ダメージ+32%・元素爆発の会心率+12%'},
+  daybreak:{name:'暁を告げる歴史 R1', atk:674.33, add:{CD:44.1, naDmg:60, burstDmg:60}, note:'会心ダメ44.1%・魔導秘儀があると命中のたびに通常攻撃・元素スキル・元素爆発ダメージ+20%（上限60%、攻撃し続ければ60%のまま）'},
+  favW:{name:'西風猟弓 R1', atk:454.36, add:{ER:61.25}, fav:6, note:'チャージ効率61.3%・会心で粒子（エネルギー6）'},
+  favL:{name:'西風長槍 R1', atk:564.78, add:{ER:30.63}, fav:6, note:'チャージ効率30.6%・会心で粒子（エネルギー6）'},
+  engulf:{name:'草薙の稲光 R1', atk:608.07, add:{ER:55.13+30}, erAtk:{rate:0.28, cap:80}, note:'チャージ効率55.1%・元素爆発の後 チャージ効率+30%・100%を超えた分の28%が攻撃力%（上限80%）'},
+  homa:{name:'護摩の杖 R1', atk:608.07, add:{CD:66.15, hpP:20}, hpAtk:1.8, note:'会心ダメ66.2%・HP+20%・HP上限の0.8%（HP50%未満でさらに1%）が攻撃力'},
+  suns:{name:'千烈の日輪 R1', atk:740.58, add:{CR:11.03, CD:35, atkP:49}, note:'会心率11.0%・焚光（夜魂の加護で1.75倍）：会心ダメ+35%・攻撃力+49%'},
+  azure:{name:'蒼耀 R1', atk:674.33, add:{CR:22.05, CD:40, atkP:48}, note:'会心率22.1%・エネルギー0：攻撃力+48%・会心ダメ+40%'},
+  blood:{name:'血染めの荒れ地 R1', atk:674.33, add:{CR:22.05, CD:28, reactLunar:0.36}, note:'会心率22.1%・月感電の後 会心ダメ+28%・元素爆発の後 月感電+36%'},
+  reliq:{name:'真言の匣 R1', atk:541.83, add:{CR:8, CD:88.2+36, EM:120}, note:'会心ダメ88.2%・会心率+8%・嘘の秘密と真実の月（熟知+120・会心ダメ+36%）'}
+};
+const SET={
+  emblem:{name:'絶縁の旗印 4セット', add:{ER:20}, emblem:true, note:'チャージ効率+20%・元素爆発ダメージ＝チャージ効率の25%（上限75%）'},
+  tf:{name:'雷のような怒り 4セット', add:{dmgP:15, reactAgg:0.2, reactLunar:0.2}, note:'雷元素+15%・超激化の上乗せ+20%・月感電+20%'},
+  noblesse:{name:'旧貴族のしつけ 4セット', add:{burstDmg:20, atkP:20}, note:'元素爆発ダメージ+20%・元素爆発の後 攻撃力+20%'},
+  vv:{name:'翠緑の影 4セット', add:{dmgP:15, reactSwirl:0.6}, note:'風元素+15%・拡散+60%（元素耐性-40%は比べると消える）'},
+  cw:{name:'燃え盛る炎の魔女 4セット', add:{dmgP:22.5, reactAmp:0.15}, note:'炎元素+15%（元素スキル1回で+7.5%）・蒸発と溶解+15%'},
+  codex:{name:'黒曜の秘典 4セット', add:{dmgP:15, CR:40}, note:'夜魂の加護中ダメージ+15%・夜魂値を使ったあと会心率+40%'},
+  finale:{name:'深廊の終曲 4セット', add:{dmgP:15, naDmg:60}, note:'氷元素+15%・エネルギー0で通常攻撃+60%'},
+  night:{name:'天穹の顕現せし夜 4セット', add:{EM:80, CR:30, reactLunar:0.10}, note:'熟知+80・昇輝で会心率+30%・月反応+10%'}
+};
+/* ---- 箱：キャラ（共通のデータ）と型（キャラごと） ----
+   parts.base：攻撃力が土台（'atk'）
+   parts.react：'none'／'amp'（蒸発・溶解：ampMult 倍、share＝反応する割合）／'agg'（超激化：talent＝天賦倍率、share）／'lunar'（月感電・自分1人分。攻撃力もダメージバフも効かない）
+   parts.kind：'burst'／'skill'（元素爆発ダメージのバフ・会心率が効くか）
+   burst：元素爆発が必須か（必要なチャージ効率を確保する） */
+const CHARS={
+ 'リサ':{elem:'雷', atk:231.51, cr:5, cd:50, em:96, cost:80, burstCD:20, skill:{name:'長押しE', particles:5, cd:16},
+   types:[
+    {id:'l-emblem', name:'元素爆発・反応なし', role:'サブアタッカー', measure:'元素爆発の放電', weapon:'oath', set:'emblem', burst:true, parts:{kind:'burst', react:'none'}},
+    {id:'l-aggq', name:'元素爆発・超激化', role:'サブアタッカー', measure:'元素爆発の放電（5回に2回が超激化）', weapon:'mappa', set:'tf', burst:true, parts:{kind:'burst', react:'agg', talent:0.62152, share:0.4}},
+    {id:'l-agge', name:'長押しE・超激化', role:'アタッカー', measure:'長押しE（誘雷3重）', weapon:'mappa', set:'tf', burst:false, parts:{kind:'skill', react:'agg', talent:8.2824, share:1}},
+    {id:'l-support', name:'サポート（西風）', role:'サポーター', measure:'元素爆発の放電（主な仕事は旧貴族と防御力-15%を配ること）', weapon:'favC', set:'noblesse', burst:true, parts:{kind:'burst', react:'none'}},
+    {id:'l-lunar', name:'月感電の発生役', role:'サブアタッカー', measure:'月感電（リサ1人分）', weapon:'mappa', set:'tf', burst:true, parts:{kind:'reaction', react:'lunar'}}
+   ]},
+ '香菱':{elem:'炎', atk:225.14, cr:5, cd:50, em:96, cost:80, burstCD:20, skill:{name:'グゥオパァー', particles:4, cd:12},
+   types:[
+    {id:'x-none', name:'元素爆発・反応なし', role:'サブアタッカー', measure:'旋火輪の回転', weapon:'thecatch', set:'emblem', burst:true, parts:{kind:'burst', react:'none'}},
+    {id:'x-vape', name:'元素爆発・蒸発', role:'サブアタッカー', measure:'旋火輪の回転（全部が蒸発）', weapon:'thecatch', set:'emblem', burst:true, parts:{kind:'burst', react:'amp', ampMult:1.5, share:1}},
+    {id:'x-melt', name:'元素爆発・溶解', role:'サブアタッカー', measure:'旋火輪の回転（全部が溶解）', weapon:'thecatch', set:'emblem', burst:true, parts:{kind:'burst', react:'amp', ampMult:2, share:1}}
+   ]},
+ 'ウェンティ':{elem:'風', atk:263.10, cr:5, cd:50, em:0, er:32, cost:60, refund:15, burstCD:15, skill:{name:'一回押しE', particles:3, cd:6},
+   types:[
+    {id:'v-arrow', name:'暴風の矢（魔導秘儀あり）', role:'アタッカー', measure:'暴風の矢（元素爆発中の通常攻撃。倍率は比べると消える）', weapon:'daybreak', set:'vv', burst:true,
+     add:{dmgP:50}, addNote:'魔導秘儀：拡散を起こしたあと与えるダメージ+50%（ウェンティが場にいて拡散するとみなす）。暴風の目の135%は比べると消える', parts:{kind:'na', react:'none'}},
+    {id:'v-swirl', name:'拡散サポート', role:'サポーター', measure:'ウェンティが起こす拡散（会心しない固定の反応）', weapon:'favW', set:'vv', burst:true, parts:{kind:'reaction', react:'swirl'}}
+   ]},
+ '雷電将軍':{elem:'雷', atk:337.24, cr:5, cd:50, em:0, er:32, erDmg:0.4, cost:90, burstCD:18, skill:{name:'神変・悪曜開眼（連携攻撃。粒子は目安）', particles:4, cd:10},
+   types:[
+    {id:'r-burst', name:'元素爆発（夢想の一太刀）', role:'アタッカー', measure:'夢想の一太刀（願力の上乗せも攻撃力に比例するので消える）', weapon:'engulf', set:'emblem', burst:true,
+     add:{burstDmg:27}, addNote:'雷罰悪曜の眼：元素爆発ダメージ＋元素エネルギー90×0.3%＝27%。固有天賦：チャージ効率100%を超えた分1%につき雷元素ダメージ+0.4%', parts:{kind:'burst', react:'none'}},
+    {id:'r-skill', name:'元素スキルのサポート', role:'サポーター', measure:'雷罰悪曜の眼の連携攻撃', weapon:'favL', set:'emblem', burst:true,
+     addNote:'固有天賦：チャージ効率100%を超えた分1%につき雷元素ダメージ+0.4%（絶縁の上乗せは元素スキルには効かない）', parts:{kind:'skill', react:'none'}}
+   ]},
+ '胡桃':{elem:'炎', atk:106.43, hp:15552.31, cr:5, cd:50+38.4, em:0, hpAtk:{rate:5.957, capMult:4}, cost:60, burstCD:15, skill:{name:'蝶導来世', particles:2.5, cd:16},
+   cand:{sands:['HP%','ATK%','EM'],goblet:['DMG','HP%','ATK%','EM'],circlet:['CR','CD','HP%','ATK%','EM']},
+   types:[
+    {id:'h-vape', name:'重撃・蒸発', role:'アタッカー', measure:'冥蝶の舞の重撃（全部が蒸発）', weapon:'homa', set:'cw', burst:false,
+     add:{dmgP:33}, addNote:'冥蝶の舞：HP上限の5.96%が攻撃力（胡桃の基礎攻撃力の400%まで）。固有天賦：HP50%以下で炎元素+33%', parts:{kind:'ca', react:'amp', ampMult:1.5, share:1}},
+    {id:'h-none', name:'重撃・反応なし', role:'アタッカー', measure:'冥蝶の舞の重撃', weapon:'homa', set:'cw', burst:false,
+     add:{dmgP:33}, addNote:'冥蝶の舞：HP上限の5.96%が攻撃力（基礎攻撃力の400%まで）。固有天賦：HP50%以下で炎元素+33%', parts:{kind:'ca', react:'none'}}
+   ]},
+ 'フリンズ':{elem:'雷', atk:351.59, cr:5, cd:50+38.4, em:0, cost:0, burstCD:20, skill:{name:'—', particles:0, cd:1},
+   types:[
+    {id:'f-lunar', name:'月感電の直接ダメージ', role:'アタッカー', measure:'雷霆のシンフォニー（月感電の直接ダメージ）', weapon:'blood', set:'night', burst:false,
+     add:{reactLunar:0.20}, addNote:'固有天賦：昇輝の月感電+20%。基礎ボーナス＝攻撃力100ごとに+0.7%（上限14%）、熟知に攻撃力の8%（上限160）', parts:{kind:'burst', react:'lunarAtk'}}
+   ]},
+ 'マーヴィカ':{elem:'炎', atk:358.77, cr:5, cd:50+38.4, em:0, cost:0, burstCD:18, skill:{name:'—', particles:0, cd:1},
+   types:[
+    {id:'m-melt', name:'墜陽斬・溶解', role:'アタッカー', measure:'墜陽斬（戦意200。戦意の上乗せは攻撃力に比例するので消える）', weapon:'suns', set:'codex', burst:false,
+     add:{atkP:30, dmgP:40}, addNote:'固有天賦1：攻撃力+30%・固有天賦2：ダメージ+40%（戦意200）。元素爆発は戦意で撃つのでチャージ効率は考えない', parts:{kind:'burst', react:'amp', ampMult:2, share:1}}
+   ]},
+ 'スカーク':{elem:'氷', atk:358.77, cr:5, cd:50+38.4, em:0, cost:0, burstCD:15, skill:{name:'—', particles:0, cd:1},
+   types:[
+    {id:'s-na', name:'七相一閃の通常攻撃', role:'アタッカー', measure:'七相一閃の通常攻撃（固有天賦の×1.1〜1.7は消える）', weapon:'azure', set:'finale', burst:false,
+     add:{naDmg:20}, addNote:'極悪技・尽：通常攻撃+20%（天賦10・裂け目3つ）。エネルギーの上限が0なので、チャージ効率は考えない', parts:{kind:'na', react:'none'}}
+   ]},
+ 'ネフェル':{elem:'草', atk:344.42, cr:5, cd:50+38.4, em:0, cost:0, burstCD:15, skill:{name:'—', particles:0, cd:1},
+   types:[
+    {id:'n-bloom', name:'幻の戯（月開花）', role:'アタッカー', measure:'幻の戯の虚ろな影3段（月開花の直接ダメージ）', weapon:'reliq', set:'night', burst:false,
+     add:{EM:100}, addNote:'固有天賦：偽りの帳3層で熟知+100、月開花の基礎ボーナス＝熟知×0.0175%（上限14%）', parts:{kind:'ca', react:'lunarEM'}}
+   ]}
+};
+const REACT_JP={none:'なし', amp:'増幅（蒸発・溶解）', agg:'超激化', lunar:'月感電（反応）', lunarAtk:'月感電（直接ダメージ・攻撃力）', lunarEM:'月開花（直接ダメージ・熟知）', swirl:'拡散（固定の反応。会心しない）'};
+const KIND_JP={na:'通常攻撃', ca:'重撃', skill:'元素スキル', burst:'元素爆発', reaction:'反応'};
+/* ---- 計算 ---- */
+let ch='リサ', N=30, lc=3, e0=25;
+try{ const v=JSON.parse(localStorage.getItem('typesCmp')||'{}'); if(CHARS[v.ch]) ch=v.ch; if([20,30,40].includes(v.N)) N=v.N; if([3,4,6].includes(v.lc)) lc=v.lc; if(v.e0>=0&&v.e0<=50) e0=v.e0; }catch(e){}
+const save=()=>{ try{ localStorage.setItem('typesCmp',JSON.stringify({ch,N,lc,e0})); }catch(e){} };
+const $=id=>document.getElementById(id);
+const C=()=>CHARS[ch];
+const ownEnergy=c=>c.skill.particles*(c.burstCD/c.skill.cd)*3;
+const needERc=(T,c)=>T.burst?Math.max(0,c.cost-(c.refund||0))/(ownEnergy(c)+e0+(WEAPON[T.weapon].fav||0))*100:0;
+const favOf=T=>WEAPON[T.weapon].fav||0;
+const needER=T=>{ const c=C(); return T.burst?Math.max(0,c.cost-(c.refund||0))/(ownEnergy(c)+e0+favOf(T))*100:0; };
+// この型のダメージに効くサブOP（ER は絶縁の旗印で元素爆発のときだけ）
+function varsOf(T){ const p=T.parts, c=C(), w=WEAPON[T.weapon]; if(p.react==='swirl') return ['EM']; const v=['CR','CD'];
+  if(p.react!=='lunar'&&p.react!=='lunarEM') v.push('ATK'); if(c.hpAtk||w.hpAtk) v.push('HP');
+  if(['amp','agg','lunar','lunarAtk','lunarEM'].includes(p.react)) v.push('EM');
+  if((SET[T.set].emblem&&p.kind==='burst')||w.erAtk||c.erDmg) v.push('ER'); return v; }
+function baseT(T,mains){ const c=C(), w=WEAPON[T.weapon], s=SET[T.set], t={atkP:0,hpP:0,flat:311,CR:c.cr,CD:c.cd,EM:c.em,ER:100+(c.er||0),dmgP:0,burstDmg:0,burstCR:0,naDmg:0,reactAgg:0,reactLunar:0,reactAmp:0,reactSwirl:0,watk:w.atk};
+  for(const src of [w.add,s.add,T.add||{}]) for(const k in src){ if(!(k in t)) throw new Error('unknown stat key '+k); t[k]+=src[k]; }
+  for(const m of mains){ if(m==='ATK%') t.atkP+=MAINV['ATK%']; else if(m==='HP%') t.hpP+=MAINV['HP%']; else if(m==='DMG') t.dmgP+=MAINV.DMG; else t[m]+=MAINV[m]; } return t; }
+function evalT(T,b,a){ const c=C(), w=WEAPON[T.weapon], t=Object.assign({},b); t.CR=b.CR+a.CR*AVG.CR; t.CD=b.CD+a.CD*AVG.CD; t.EM=b.EM+a.EM*AVG.EM; t.ER=b.ER+a.ER*AVG.ER; t.atkP=b.atkP+(a.ATK||0)*AVG.ATK; t.hpP=b.hpP+(a.HP||0)*AVG.HP;
+  if(w.erAtk) t.atkP+=Math.min(w.erAtk.cap,w.erAtk.rate*Math.max(0,t.ER-100));       // 草薙の稲光：チャージ効率→攻撃力%
+  if(c.erDmg) t.dmgP+=c.erDmg*Math.max(0,t.ER-100);                                  // 雷電の固有天賦：チャージ効率→雷元素ダメージ
+  const base=c.atk+b.watk; t.hp=(c.hp||0)*(1+t.hpP/100)+4780;
+  t.atk=base*(1+t.atkP/100)+b.flat+(c.hpAtk?Math.min(c.hpAtk.capMult*base,c.hpAtk.rate/100*t.hp):0)+(w.hpAtk?w.hpAtk/100*t.hp:0); return t; }
+function dmgOf(T,t){ const p=T.parts, isB=p.kind==='burst', em=t.EM; let core;
+  if(p.react==='swirl') return 0.6*LV*(1+16*em/(2000+em)+t.reactSwirl);
+  const crit=1+Math.min(1,t.CR/100)*t.CD/100;
+  if(p.react==='lunar') return 3*LV*(1+6*em/(2000+em)+t.reactLunar)*crit;
+  if(p.react==='lunarAtk'){ const e2=em+Math.min(0.08*t.atk,160); return t.atk*(1+Math.min(t.atk/100*0.007,0.14))*(1+6*e2/(e2+2000)+t.reactLunar)*crit; }
+  if(p.react==='lunarEM') return em*(1+Math.min(em*0.000175,0.14))*(1+6*em/(em+2000)+t.reactLunar)*crit;
+  if(p.react==='agg') core=t.atk*p.talent+p.share*1.15*LV*(1+5*em/(em+1200)+t.reactAgg); else core=t.atk;
+  const dm=1+(t.dmgP+(p.kind==='na'?t.naDmg:0)+(isB?t.burstDmg+(SET[T.set].emblem?Math.min(75,t.ER*0.25):0):0))/100;
+  const amp=p.react==='amp'?(1-p.share)+p.share*p.ampMult*(1+2.78*em/(em+1400)+t.reactAmp):1;
+  const cr=Math.min(1,(t.CR+(isB?t.burstCR:0))/100);
+  return core*dm*amp*(1+cr*t.CD/100); }
+function fmlOf(T){ const p=T.parts, isB=p.kind==='burst', s=SET[T.set], w=WEAPON[T.weapon];
+  if(p.react==='swirl') return `0.6×1446.85×(1＋16×熟知÷(熟知＋2000)＋拡散のボーナス)　※会心しない・攻撃力もダメージバフも効かない`;
+  if(p.react==='lunarAtk') return `攻撃力 × (1＋基礎ボーナス：攻撃力100ごと0.7%・上限14%) × (1＋6×熟知÷(熟知＋2000)＋反応ボーナス) × (1＋会心率×会心ダメ)　※熟知に攻撃力の8%（上限160）が足される。ダメージバフは効かない`;
+  if(p.react==='lunarEM') return `熟知 × (1＋基礎ボーナス：熟知×0.0175%・上限14%) × (1＋6×熟知÷(熟知＋2000)＋反応ボーナス) × (1＋会心率×会心ダメ)　※攻撃力とダメージバフは効かない`;
+  if(p.react==='lunar') return `3×1446.85×(1＋6×熟知÷(熟知＋2000)＋反応ボーナス) × (1＋会心率×会心ダメ)　※攻撃力とダメージバフは効かない`;
+  const c=C(), w2=WEAPON[T.weapon], atkTxt=c.hpAtk?'攻撃力（＋HP上限×5.96%・基礎攻撃力の400%まで＋護摩のHP×1.8%）':w2.erAtk?'攻撃力（＋チャージ効率の超えた分×28%・上限80%）':'攻撃力';
+  const core=p.react==='agg'?`(攻撃力×${p.talent}${p.share<1?` ＋ ${p.share===0.4?'5回に2回':p.share}`:' ＋ '}× 超激化の上乗せ 1.15×1446.85×(1＋5×熟知÷(熟知＋1200)＋反応ボーナス))`:atkTxt;
+  const dm=`(1＋${C().elem}元素ダメージ${c.erDmg?'＋チャージ効率の超えた分×0.4%':''}${T.add&&T.add.dmgP?'＋魔導秘儀':''}${p.kind==='na'&&w.add.naDmg?'＋通常攻撃ダメージ':''}${isB&&(w.add.burstDmg||s.add.burstDmg)?'＋元素爆発ダメージ':''}${isB&&s.emblem?'＋チャージ効率×25%（上限75%）':''})`;
+  const amp=p.react==='amp'?` × ${p.ampMult}×(1＋2.78×熟知÷(熟知＋1400))`:'';
+  return `${core} × ${dm}${amp} × (1＋会心率${isB&&w.add.burstCR?'（＋元素爆発の会心率）':''}×会心ダメ)`; }
+const capOf=(mains,k)=>lc*(5-mains.filter(m=>MK(m)===k).length);
+function pieceMax(mains,ks){ let s=0; for(const m of ['HP','ATK'].concat(mains)){ const L=Math.min(4,ks.filter(k=>k!==MK(m)).length); s+=Math.min(5+L,L*lc); } return s; }
+function prep(T,mains){ const b=baseT(T,mains), vars=varsOf(T), req=needER(T), erMin=T.burst?Math.max(0,Math.ceil((req-b.ER)/AVG.ER-1e-9)):0;
+  const ks=vars.concat(erMin>0&&!vars.includes('ER')?['ER']:[]), caps={}; for(const k of ks) caps[k]=capOf(mains,k); return {b,vars,erMin,ks,caps}; }
+// 全部数える（効くサブOPが4種類まで）
+function solExact(T,mains,n){ const {b,vars,erMin,ks,caps}=prep(T,mains);
+  if(erMin>0&&erMin>(caps.ER||0)) return null; if(n<erMin||n>pieceMax(mains,ks)) return null;
+  const fixedER=vars.includes('ER')?0:erMin; let best=null; const a={CR:0,CD:0,ATK:0,EM:0,ER:fixedER,HP:0};
+  (function rec(i,left){ const k=vars[i], lo=(k==='ER')?erMin:0; if(i===vars.length-1){ if(left<lo||left>caps[k]) return; a[k]=left; const D=dmgOf(T,evalT(T,b,a)); if(!best||D>best.D) best={D,a:Object.assign({},a)}; return; }
+    for(let x=lo;x<=Math.min(left,caps[k]);x++){ a[k]=x; rec(i+1,left-x); } a[k]=lo; })(0,n-fixedER);
+  if(best) best.erMin=erMin; return best; }
+// 効くサブOPが5種類以上のとき：いくつかの出発点（1回ずつ一番効く所へ／どれか1つを先に上限まで）から、
+// 2つのステータスの間で何回でも入れ替えて良くなる間は続ける。いちばん良かったものを答えにする
+function solLS(T,mains,n){ const {b,vars,erMin,ks,caps}=prep(T,mains);
+  if(erMin>0&&erMin>(caps.ER||0)) return null; if(n<erMin||n>pieceMax(mains,ks)) return null;
+  const lo={ER:vars.includes('ER')?erMin:0}, base={CR:0,CD:0,ATK:0,EM:0,ER:erMin,HP:0};
+  const f=a=>dmgOf(T,evalT(T,b,a));
+  const greedy=(a,left)=>{ while(left>0){ let bk=null,bd=-1; for(const k of vars){ if(a[k]>=caps[k]) continue; a[k]++; const dd=f(a); a[k]--; if(dd>bd){ bd=dd; bk=k; } } if(!bk) return false; a[bk]++; left--; } return true; };
+  const polish=a=>{ let D=f(a), go=true; while(go){ go=false; let bm=null, bd=D;
+      for(const i of vars) for(const j of vars){ if(i===j) continue; const mx=Math.min(a[i]-(lo[i]||0),caps[j]-a[j]); for(let m=1;m<=mx;m++){ a[i]-=m; a[j]+=m; const dd=f(a); a[i]+=m; a[j]-=m; if(dd>bd+1e-9){ bd=dd; bm=[i,j,m]; } } }
+      if(bm){ a[bm[0]]-=bm[2]; a[bm[1]]+=bm[2]; D=bd; go=true; } } return D; };
+  let best=null; const starts=[null].concat(vars);
+  for(const s0 of starts){ const a=Object.assign({},base); let left=n-erMin;
+    if(s0){ const add=Math.min(left,caps[s0]-a[s0]); a[s0]+=add; left-=add; }
+    if(!greedy(a,left)) continue; const D=polish(a); if(!best||D>best.D+1e-9) best={D,a:Object.assign({},a),erMin}; }
+  return best; }
+const sol=(T,mains,n)=>varsOf(T).length<=4?solExact(T,mains,n):solLS(T,mains,n);
+const CAND0={sands:['ATK%','EM','ER'],goblet:['DMG','ATK%','EM'],circlet:['CR','CD','ATK%','EM']};
+function combos(){ const C0=C().cand||CAND0, o=[]; for(const s of C0.sands) for(const g of C0.goblet) for(const c of C0.circlet) o.push([s,g,c]); return o; }
+const CACHE=new Map();
+function compute(T){ const key=ch+'|'+T.id+'|'+N+'|'+lc+'|'+e0; if(CACHE.has(key)) return CACHE.get(key);
+  // メインOPの組み合わせごとに、その組み合わせで入りきる回数（断面まで）で比べる。メインOPと同じステータスのサブOPは付かないので、入る回数は組み合わせで変わる
+  let best=null, n0=N; for(const c of combos()){ for(let n=N;n>=0;n--){ const r=sol(T,c,n); if(r){ if(!best||r.D>best.r.D){ best={mains:c,r}; n0=n; } break; } } }
+  const res={best,path:[],cutN:n0}; if(best){ for(let n=0;n<=45;n++) res.path.push(sol(T,best.mains,n)); res.b=baseT(T,best.mains); }
+  CACHE.set(key,res); return res; }
+/* ---- 描画 ---- */
+const MAIN_SHORT=k=>({'ATK%':'攻撃力%','HP%':'HP%',EM:'熟知',ER:'チャージ',CR:'会心率',CD:'会心ダメ',DMG:C().elem+'元素'})[k]||k;
+const cname=c=>c.map(MAIN_SHORT).join('／');
+const ORD=['CR','CD','ATK','HP','EM','ER'];
+const allocTxt=a=>ORD.filter(k=>a[k]>0).map(k=>`${ST[k][0]}${a[k]}`).join('・');
+function seg(id,items,val,fn){ $(id).innerHTML=items.map(([v,l,dis])=>`<button type="button" aria-pressed="${String(v)===String(val)}" data-v="${v}"${dis?' disabled':''}>${l}</button>`).join(''); $(id).querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ if(!b.disabled) fn(b.dataset.v); })); }
+function chart(T,res){ const W=560,H=260,L=36,R=96,Tp=10,B=34,IW=W-L-R,IH=H-Tp-B, NM=45, xs=n=>L+n/NM*IW, ys=v=>Tp+IH-v/NM*IH, P=res.path;
+  let last=0; P.forEach((p,i)=>{ if(p) last=i; });
+  let g=''; for(const v of [0,10,20,30,40]) g+=`<line x1="${L}" x2="${L+IW}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--grid)"/><text x="${L-8}" y="${ys(v)+4}" text-anchor="end" font-size="12" fill="var(--muted)">${v}</text>`;
+  for(const v of [0,10,20,30,40,45]) g+=`<text x="${xs(v)}" y="${Tp+IH+18}" text-anchor="middle" font-size="12" fill="var(--muted)">${v}</text>`;
+  g+=`<text x="${L+IW}" y="${H-2}" text-anchor="end" font-size="12" fill="var(--muted)">効くサブOPに入った回数 →</text>`;
+  if(last<NM) g+=`<rect x="${xs(last)}" y="${Tp}" width="${xs(NM)-xs(last)}" height="${IH}" fill="var(--grid)"/>`;
+  const order=['ER','CR','CD','ATK','EM'].filter(k=>P.some(p=>p&&p.a[k]>0)); let A='', lab='';
+  const first=P.findIndex(p=>p);
+  for(const k of order){ let top='', bot=''; for(let n=first;n<=last;n++){ const p=P[n]; if(!p) continue; let lo=0; for(const j of order){ if(j===k) break; lo+=p.a[j]; } const hi=lo+p.a[k];
+      top+=(top?'L':'M')+xs(n).toFixed(1)+' '+ys(hi).toFixed(1)+' '; bot=`L${xs(n).toFixed(1)} ${ys(lo).toFixed(1)} `+bot; }
+    if(top) A+=`<path d="${top}${bot}Z" fill="var(${ST[k][1]})" stroke="var(--panel)" stroke-width="1.5" stroke-linejoin="round"${k==='ER'&&!varsOf(T).includes('ER')?' fill-opacity=".55"':''}/>`;
+    const p=P[last]; let lo=0; for(const j of order){ if(j===k) break; lo+=p.a[j]; } if(p.a[k]>=2) lab+=`<text x="${xs(last)+8}" y="${ys(lo+p.a[k]/2)+4}" font-size="12.5" fill="var(--ink-2)">${ST[k][0]} ${p.a[k]}</text>`; }
+  const cut=`<line x1="${xs(N)}" x2="${xs(N)}" y1="${Tp}" y2="${Tp+IH}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3"/><text x="${xs(N)+4}" y="${Tp+11}" font-size="12" fill="var(--ink)">断面 ${N}回</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${T.name}の育てる順番">${g}${A}${lab}${cut}<g class="hv" opacity="0"><line class="hl" y1="${Tp}" y2="${Tp+IH}" stroke="var(--gold)"/></g><rect class="hit" x="${L}" y="${Tp}" width="${IW}" height="${IH}" fill="transparent"/></svg><div class="tip" hidden></div>`;
+}
+function bindChart(el,T,res){ const svg=el.querySelector('svg'), tip=el.querySelector('.tip'), hv=svg.querySelector('.hv'), W=560,L=36,IW=560-36-96, NM=45;
+  const show=ev=>{ const r=svg.getBoundingClientRect(); let n=Math.round(((ev.clientX-r.left)/r.width*W-L)/IW*NM); n=Math.max(0,Math.min(NM,n)); const p=res.path[n];
+    hv.setAttribute('opacity','1'); const x=L+n/NM*IW; hv.querySelector('.hl').setAttribute('x1',x); hv.querySelector('.hl').setAttribute('x2',x);
+    if(!p){ tip.innerHTML=`<b>${n}回</b>：入りきらない`; } else { const t=evalT(T,res.b,p.a); tip.innerHTML=`<b>${n}回</b>：${allocTxt(p.a)}<br>会心率 ${Math.min(100,t.CR).toFixed(0)}%・会心ダメ ${t.CD.toFixed(0)}%・熟知 ${t.EM.toFixed(0)}・チャージ ${t.ER.toFixed(0)}%`; }
+    tip.hidden=false; const px=x/W*r.width, tw=tip.offsetWidth; tip.style.left=Math.max(0,Math.min(r.width-tw,px+(px>r.width/2?-tw-12:12)))+'px'; tip.style.top='4px'; };
+  const hit=svg.querySelector('.hit'); hit.addEventListener('pointermove',show); hit.addEventListener('pointerdown',show); hit.addEventListener('pointerleave',()=>{ hv.setAttribute('opacity','0'); tip.hidden=true; }); }
+
+function partsTxt(T){ const p=T.parts, c=C(), w=WEAPON[T.weapon], baseTxt=p.react==='lunarEM'||p.react==='lunar'||p.react==='swirl'?'熟知（攻撃力は効かない）':c.hpAtk?'攻撃力（HPから）':w.erAtk?'攻撃力（チャージ効率から）':'攻撃力';
+  const noDm=['lunar','lunarAtk','lunarEM','swirl'].includes(p.react); return `土台：${baseTxt}／ダメージバフ：${noDm?'効かない':'効く'}／反応：${REACT_JP[p.react]}／会心：${p.react==='swirl'?'なし':'あり'}`; }
+function boxTable(T){ const p=T.parts, w=WEAPON[T.weapon], s=SET[T.set], c=C(), req=needER(T), own=ownEnergy(c);
+  const rows=[['役割',T.role],['技の種類',KIND_JP[p.kind]],['比べる技',T.measure],['式の部品',partsTxt(T)],
+    ['元素爆発',!c.cost?'エネルギーで撃たない、またはチャージ効率は考えない型':T.burst?`必須。必要なチャージ効率 ${req.toFixed(0)}% ＝ (${c.cost}${c.refund?`－固定で戻る ${c.refund}`:''}) ÷ (自分 ${own.toFixed(1)}＋チーム ${e0}${favOf(T)?'＋西風 '+favOf(T):''})。自分の粒子＝${c.skill.name}の粒子${c.skill.particles}個×(${c.burstCD}÷${c.skill.cd})×3`:'使わない（チャージ効率は考えない）'],
+    ['武器',`${w.name}（${w.note}）${w.fav?'・西風':''}`],['聖遺物',`${s.name}（${s.note}）`]].concat(T.addNote?[['いつも入れるバフ',T.addNote]]:[]);
+  return `<table class="box">${rows.map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>`; }
+function render(){
+  seg('cSel',Object.keys(CHARS).map(k=>[k,CHARS[k].pending?k+'（データ待ち）':k,!!CHARS[k].pending]),ch,v=>{ ch=v; save(); render(); });
+  seg('nSel',[[20,'20回'],[30,'30回'],[40,'40回']],N,v=>{ N=+v; save(); render(); });
+  seg('lSel',[[3,'1行3回まで（現実的）'],[4,'4回まで'],[6,'6回まで（理論上）']],lc,v=>{ lc=+v; save(); render(); });
+  $('e0').value=e0; $('e0v').textContent=e0;
+  $('legend').innerHTML=ORD.map(k=>`<span><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}</span>`).join('');
+  const TY=C().types;
+  $('types').innerHTML=TY.map(T=>`<article class="ty" id="ty-${T.id}"><div class="ty-h"><h2>${ch}：${T.name}</h2></div><p class="busy">計算しています…</p></article>`).join('');
+  $('sum').innerHTML='';
+  renderBoxes();
+  let i=0; const next=()=>{ if(i>=TY.length){ renderSum(); return; } renderType(TY[i++]); setTimeout(next,0); }; setTimeout(next,20); }
+function phases(T,res){ const P=res.path, vars=varsOf(T); let last=0; P.forEach((p,i)=>{ if(p) last=i; }); const out=[];
+  for(const k of ORD){ if(!vars.includes(k)) continue; const c=n=>P[n]?P[n].a[k]:0; let st=-1; for(let n=0;n<=last;n++) if(P[n]&&c(n)>(k==='ER'?(P[n].erMin||0):0)){ st=n; break; }
+    if(st<0){ out.push([k,'入れない']); continue; } let stop=last; for(let n=last;n>=st;n--){ if(c(n)!==c(last)) break; stop=n; }
+    out.push([k,`${st<=2?'はじめから':st+'回目ごろから'}${stop<=last-4?`、${c(last)}回で打ち止め`:''}`]); }
+  return out; }
+function renderType(T){ const el=$('ty-'+T.id), res=compute(T), req=needER(T), vars=varsOf(T);
+  const head=`<div class="ty-h"><h2>${ch}：${T.name}</h2></div>${boxTable(T)}<div class="fml">ダメージ ∝ ${fmlOf(T)}</div>`;
+  if(!res.best){ el.innerHTML=head+`<p class="say">この前提（断面${N}回・1行${lc}回まで・必要なチャージ効率${req.toFixed(0)}%）だと、どのメインOPでも入りきりません。チームのエネルギーを増やすか、回数を減らしてください。</p>`; return; }
+  const p=res.best.r, a=p.a, t=evalT(T,res.b,a), tot=Math.max(1,ORD.reduce((x,k)=>x+a[k],0)), ph=phases(T,res);
+  const noEff=['CR','CD','ATK','EM','ER'].filter(k=>!vars.includes(k)&&!(k==='ER'&&T.burst));
+  let say=`メインOPは<b>${cname(res.best.mains)}</b>。${res.cutN<N?`効くサブOPが少ないので、1行${lc}回までだと<b>${res.cutN}回まで</b>しか入りません。その${res.cutN}回なら`:`断面${N}回なら`}<b>${allocTxt(a)}</b>。`;
+  if(T.burst) say+=p.erMin>0?`元素爆発を回すのに<b>チャージ効率${p.erMin}回</b>を先に確保。`:'必要なチャージ効率は、メインOPと武器・セットで足りています。';
+  if(vars.includes('ER')) say+=a.ER>p.erMin?`絶縁の旗印でチャージ効率がダメージにもなるので、必要な分を超えて<b>あと${a.ER-p.erMin}回</b>入れるのがいちばん強い。`:`チャージ効率は絶縁の旗印でダメージにもなりますが、この断面ではほかのほうが効くので、必要な分だけで足ります（元素爆発ダメージ+${Math.min(75,t.ER*0.25).toFixed(0)}%）。`;
+  if(noEff.length) say+=`${noEff.map(k=>ST[k][0]).join('・')}はこの型のダメージに効きません。`;
+  if(T.parts.react==='lunar') say+=`月感電は発生役ごとに計算して大きい順に60%・30%…と足しますが、チームは毎回違うので<b>${ch}1人分</b>の値で比べています。`;
+  el.innerHTML=head+`<p class="say">${say}</p><div class="chart">${chart(T,res)}</div>
+    <div class="stack">${ORD.filter(k=>a[k]>0).map(k=>`<i style="--c:var(${ST[k][1]}); width:${a[k]/tot*100}%${k==='ER'&&!vars.includes('ER')?';opacity:.65':''}" title="${ST[k][0]} ${a[k]}回">${a[k]/tot>0.07?a[k]:''}</i>`).join('')}</div>
+    <div class="stats"><span>断面${N}回で：</span><span>会心率 <b>${Math.min(100,t.CR).toFixed(0)}%</b></span><span>会心ダメ <b>${t.CD.toFixed(0)}%</b></span><span>攻撃力 <b>${t.atk.toFixed(0)}</b></span><span>熟知 <b>${t.EM.toFixed(0)}</b></span><span>チャージ <b>${t.ER.toFixed(0)}%</b>${T.burst?`（必要 ${req.toFixed(0)}%）`:''}</span></div>
+    <div class="eff"><span class="k">育てる順番：</span>${ph.map(([k,s])=>`<span class="chip"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}<small>${s}</small></span>`).join('')}</div>`;
+  bindChart(el.querySelector('.chart'),T,res); }
+function renderBoxes(){ const sv=ch; let h=`<tr><th>キャラ</th><th>型</th><th>役割</th><th>技の種類</th><th>式の部品</th><th>元素爆発（必要なチャージ効率）</th><th>武器</th><th>聖遺物</th></tr>`;
+  for(const k of Object.keys(CHARS)){ ch=k; const c=C(); for(const T of c.types){ const w=WEAPON[T.weapon];
+    h+=`<tr><td class="t">${k}</td><td>${T.name}</td><td>${T.role}</td><td>${KIND_JP[T.parts.kind]}</td><td class="note">${partsTxt(T)}</td><td>${!c.cost?'—（考えない）':T.burst?`必須 ${needER(T).toFixed(0)}%`:'使わない'}</td><td>${w.name}${w.fav?'（西風）':''}</td><td>${SET[T.set].name}</td></tr>`; } }
+  ch=sv; $('boxes').innerHTML=h; }
+function renderSum(){ $('sum').innerHTML=`<tr><th>型</th><th>メインOP（砂／杯／冠）</th><th>有効OP</th><th>効かない／入らない</th></tr>`+C().types.map(T=>{ const res=compute(T), vars=varsOf(T); if(!res.best) return `<tr><td class="t">${T.name}</td><td colspan="3" class="note">入りきらない</td></tr>`;
+    const a=res.best.r.a, eff=ORD.filter(k=>a[k]>0), ne=ORD.filter(k=>a[k]===0);
+    return `<tr><td class="t">${T.name}</td><td>${cname(res.best.mains)}</td><td><div class="eff">${eff.map(k=>`<span class="chip${k==='ER'&&!vars.includes('ER')?' req':''}"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}<small>${a[k]}回</small></span>`).join('')}</div></td><td class="note">${ne.map(k=>ST[k][0]).join('・')||'—'}</td></tr>`; }).join(''); }
+$('e0').addEventListener('input',()=>{ $('e0v').textContent=$('e0').value; });
+$('e0').addEventListener('change',()=>{ e0=+$('e0').value; save(); render(); });
+// #check：効くサブOPが4種類までの型で、全部数える方法と入れ替えの方法の答えを照らし合わせる（開発用）
+window.__check=()=>{ const out=[], sv=ch; for(const k of Object.keys(CHARS)){ ch=k; for(const T of C().types){ if(varsOf(T).length>4) continue; for(const n of [10,20,30,40]) for(const m of combos()){ const x=solExact(T,m,n), y=solLS(T,m,n); if(!x&&!y) continue; if(!x||!y||Math.abs(y.D/x.D-1)>1e-9) out.push([k,T.id,n,m.join('/'),x?x.D:null,y?y.D:null,x&&y?(y.D/x.D-1):null]); } } } ch=sv; return out; };
+let rsT=0; window.addEventListener('resize',()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ for(const T of C().types){ const el=$('ty-'+T.id); const c=el&&el.querySelector('.chart'); if(c){ const res=compute(T); if(res.best){ c.innerHTML=chart(T,res); bindChart(c,T,res); } } } },200); });
+render();
+})();
+</script>

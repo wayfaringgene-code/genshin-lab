@@ -1,0 +1,664 @@
+<title>サブOPの効き方</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Murecho:wght@400;500;700&display=swap">
+<style>
+/* 命ノ星座カードと同じ「夜空を映した漆の机」。1つの暗い見た目に決めている（アプリと同じ）。
+   レイアウト：1 前提を決める（キャラ・メインOP・回数・バフ） → 2 答え（配分と幅・育成の順番） → くわしく（山・地図・次の1回） */
+:root{
+  color-scheme: dark;
+  --bg:#060818; --panel:#0e1230; --panel-2:#121741; --line:rgba(233,211,154,.16); --line-2:rgba(233,211,154,.32);
+  --ink:#f3ead6; --ink-2:#c9c2b2; --muted:#949db3;
+  --gold:#e9d39a; --gold-dim:#a88748;
+  --s-cr:#3987e5; --s-cd:#d95926; --s-em:#199e70; --s-atk:#c9c2b2;
+  --h0:#15172b; --h1:#3a3220; --h2:#6e5a2c; --h3:#a88748; --h4:#e2c47a; --h5:#fbe9b4;
+  --grid:rgba(233,211,154,.09);
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Murecho","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.7;
+  background-image:radial-gradient(1100px 620px at 22% -8%,#191b46 0%,transparent 70%),radial-gradient(800px 520px at 100% 100%,#130f2c 0%,transparent 70%); background-attachment:fixed}
+.wrap{max-width:1120px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:28px 64px; display:grid; gap:22px}
+header{display:grid; gap:8px}
+.eyebrow{font-size:12px; letter-spacing:.18em; color:var(--gold)}
+h1{font-family:var(--display); font-weight:800; font-size:clamp(30px,5vw,44px); line-height:1.2; margin:0; letter-spacing:.06em}
+h2{font-family:var(--display); font-weight:800; font-size:21px; margin:0; letter-spacing:.06em; display:flex; align-items:baseline; gap:10px; text-wrap:balance}
+h2 .no{font-family:var(--body); font-size:12px; font-weight:700; color:var(--bg); background:var(--gold); border-radius:4px; padding:0 7px; letter-spacing:.04em}
+h3{font-size:14px; margin:0; color:var(--gold); letter-spacing:.06em}
+p{margin:0}
+.lead{color:var(--ink-2); max-width:44em}
+.note{font-size:12.5px; color:var(--muted)}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; display:grid; gap:14px; min-width:0; align-content:start}
+/* 1 前提 */
+.pick{display:grid; grid-template-columns:max-content minmax(0,1fr); gap:10px 16px; align-items:center}
+.pick > span{font-size:12.5px; color:var(--muted); letter-spacing:.06em}
+@media (max-width:620px){ .pick{grid-template-columns:minmax(0,1fr); gap:4px} .pick > span{margin-top:6px} }
+.seg{display:inline-flex; flex-wrap:wrap; gap:2px; border:1px solid var(--line-2); border-radius:999px; padding:3px; background:rgba(5,7,18,.5); justify-self:start; max-width:100%}
+.seg button{font:inherit; font-size:13.5px; color:var(--ink-2); background:none; border:0; border-radius:999px; padding:5px 13px; cursor:pointer; position:relative}
+.seg button[aria-pressed="true"]{background:rgba(233,211,154,.16); color:var(--ink); box-shadow:inset 0 0 0 1px rgba(233,211,154,.6)}
+.seg button:focus-visible,.chipb:focus-visible,summary:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.seg button .best{position:absolute; top:-4px; right:-2px; width:7px; height:7px; border-radius:50%; background:var(--gold)}
+.seg.chars button{font-family:var(--display); font-weight:700; letter-spacing:.06em; font-size:15px}
+.verdict{display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:10px 12px; border-radius:8px; background:rgba(5,7,18,.55); border:1px solid var(--line); font-size:13.5px}
+.verdict b{color:var(--ink)} .verdict .pct{font-size:20px; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums}
+.chipb{font:inherit; font-size:12.5px; color:var(--ink-2); background:none; border:1px solid var(--line); border-radius:999px; padding:2px 10px; cursor:pointer}
+.chipb:hover{border-color:var(--line-2)}
+/* 2 答え */
+.say{font-size:16px; line-height:1.85; padding-left:14px; border-left:2px solid var(--gold-dim)}
+.say b{color:var(--gold)}
+.ans{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px}
+@media (max-width:900px){ .ans{grid-template-columns:minmax(0,1fr)} }
+.ans > div{display:grid; gap:10px; align-content:start; min-width:0}
+.stack{display:flex; height:26px; gap:2px; border-radius:4px; overflow:hidden}
+.stack i{display:flex; align-items:center; justify-content:center; height:100%; background:var(--c); color:#0b0e22; font-style:normal; font-size:12px; font-weight:700; min-width:0; overflow:hidden; white-space:nowrap}
+.stats{display:flex; flex-wrap:wrap; gap:4px 16px; font-size:13px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink)}
+.tol{display:grid; grid-template-columns:max-content minmax(80px,1fr) max-content; gap:8px 12px; align-items:center; font-size:13px}
+.tol .k{display:inline-flex; align-items:center; gap:6px; color:var(--ink-2)}
+.tol .tr{position:relative; height:14px; border-radius:7px; background:rgba(255,255,255,.05)}
+.tol .tr .rg{position:absolute; top:0; bottom:0; border-radius:7px; background:var(--c); opacity:.38}
+.tol .tr .op{position:absolute; top:50%; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; background:var(--c); border:2px solid var(--panel)}
+.tol .v{font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap}
+.tol .v small{color:var(--muted); margin-left:6px}
+.dot{display:inline-block; width:10px; height:10px; border-radius:2px; background:var(--c); flex:none}
+.order{display:grid; gap:6px; font-size:13.5px; color:var(--ink-2)}
+.order div{display:grid; grid-template-columns:max-content minmax(0,1fr); gap:8px; align-items:baseline}
+.order b{color:var(--ink)}
+.chart{position:relative}
+.chart svg{display:block; width:100%; height:auto; overflow:visible; touch-action:pan-y}
+.chart text{font-family:var(--body)}
+.tip{position:absolute; pointer-events:none; background:var(--panel-2); border:1px solid var(--line-2); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.55; color:var(--ink-2); box-shadow:0 10px 28px rgba(0,0,0,.5); min-width:160px; font-variant-numeric:tabular-nums; z-index:3}
+.tip b{color:var(--ink)}
+.legend{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12.5px; color:var(--ink-2)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+/* くわしく */
+details.more{border-top:1px solid var(--line); padding-top:12px}
+details.more > summary{cursor:pointer; font-family:var(--display); font-weight:800; font-size:18px; letter-spacing:.06em; color:var(--ink)}
+details.more > summary small{font-family:var(--body); font-weight:400; font-size:12.5px; color:var(--muted); margin-left:8px; letter-spacing:0}
+.more-in{display:grid; gap:20px; margin-top:14px}
+.two{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:20px}
+@media (max-width:900px){ .two{grid-template-columns:minmax(0,1fr)} }
+.sub{display:grid; gap:10px; align-content:start; min-width:0}
+.scale{display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--muted)}
+.scale i{display:block; width:140px; height:8px; border-radius:4px; background:linear-gradient(90deg,var(--h0),var(--h1),var(--h2),var(--h3),var(--h4),var(--h5))}
+.mg{display:grid; grid-template-columns:max-content minmax(60px,1fr) max-content; gap:5px 10px; align-items:center; font-size:13px; font-variant-numeric:tabular-nums}
+.mg .k{display:inline-flex; align-items:center; gap:6px; color:var(--ink-2)}
+.mg .b{height:8px; border-radius:4px; background:rgba(255,255,255,.06); overflow:hidden}
+.mg .b i{display:block; height:100%; background:var(--c); border-radius:4px}
+.mg .v{text-align:right; color:var(--ink)}
+.rk{border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; width:100%}
+.rk td{padding:4px 8px; border-bottom:1px solid var(--line)} .rk td.p{text-align:right; color:var(--ink)} .rk tr.on td{color:var(--gold)}
+.rkw{overflow-x:auto}
+.dg-in{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center}
+.filebtn{font-size:13.5px; color:var(--ink); border:1px solid rgba(233,211,154,.6); background:rgba(233,211,154,.12); border-radius:999px; padding:6px 16px; cursor:pointer}
+.filebtn:focus-within{outline:2px solid var(--gold); outline-offset:2px}
+.dg{display:grid; gap:14px}
+.dg-top{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 16px}
+.dg-top .pct{font-size:30px; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; line-height:1.1}
+.dg-bars{display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 10px; align-items:center; font-size:12.5px; color:var(--muted)}
+.dgt{border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; width:100%}
+.dgt th,.dgt td{padding:5px 8px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap}
+.dgt th{font-weight:400; color:var(--muted); font-size:11.5px}
+.dgt td:first-child,.dgt th:first-child{text-align:left}
+.dgt td.ok{color:var(--ink-2)} .dgt td.lo{color:#8fbaff} .dgt td.hi{color:#f0a37a}
+.dgtw{overflow-x:auto}
+#fbox{display:grid; gap:12px} #fbox h3{margin-top:8px}
+.topbar{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center}
+.seg.views button{font-weight:700}
+.seg button:disabled{opacity:.4; cursor:default}
+.fx{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px} .fx b{font-family:var(--display); font-size:19px; letter-spacing:.06em}
+.fsrc{display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+.idx{display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 18px; align-items:center; padding:12px 14px; border:1px solid var(--line-2); border-radius:10px; background:rgba(233,211,154,.06)}
+.idx > div{display:grid} .idx b{font-size:38px; line-height:1.05; color:var(--gold); font-variant-numeric:tabular-nums}
+@media (max-width:560px){ .idx{grid-template-columns:minmax(0,1fr)} }
+.fml{font-size:16px; line-height:1.8; padding:10px 14px; border-radius:8px; background:rgba(5,7,18,.6); border:1px solid var(--line); color:var(--ink)}
+.fml2{font-size:14px; color:var(--ink-2)} .fml2 b{color:var(--ink)}
+.boxes{display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+.bx{display:grid; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:rgba(5,7,18,.45); min-width:0}
+.bx b{font-size:18px; font-variant-numeric:tabular-nums}
+.times{color:var(--muted)}
+.fnotes{margin:0; padding-left:1.2em; font-size:13px; color:var(--ink-2); display:grid; gap:2px}
+.ftw{overflow-x:auto}
+.ft{border-collapse:collapse; width:100%; font-size:13px}
+.ft th,.ft td{padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left}
+.ft th{white-space:nowrap; color:var(--ink); font-weight:700} .ft th small{display:block; font-weight:400; color:var(--muted); font-size:11px}
+.ft td.tot{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; color:var(--gold)}
+.ft tr.off th,.ft tr.off td{opacity:.55}
+.src{display:inline-block; margin:1px 12px 1px 0; color:var(--ink-2)} .src b{color:var(--ink); font-variant-numeric:tabular-nums; font-weight:500}
+.blist{display:grid; gap:6px}
+.brow{display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; font-size:13.5px} .brow.dim{opacity:.55}
+.brow small,.ft small{color:var(--muted); margin-left:6px}
+.badd{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:flex-end}
+.badd label{display:grid; gap:2px; font-size:12px; color:var(--muted)}
+.badd input,.badd select{font:inherit; font-size:14px; color:var(--ink); background:rgba(5,7,18,.75); border:1px solid var(--line-2); border-radius:6px; padding:5px 8px; max-width:100%}
+.badd input[type=number]{width:7em} .badd input[type=text]{width:14em}
+.badd button{font:inherit}
+.err{color:#ff9b8a; font-size:13px}
+.ixs{font-size:13px; color:var(--ink-2)} .ixs b{color:var(--gold); font-size:15px}
+footer{font-size:12px; color:var(--muted); display:grid; gap:4px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">命ノ星座カード・ダメージの見積もり（試作 5）</div>
+    <h1>サブOPの効き方</h1>
+    <p class="lead">メインOPを決めると、サブOPを何にどれだけ入れるのがいちばん強いか、どの順番で育てるといいかが出ます。GOODファイルを読み込むと、いまの装備の診断もできます（3）。</p>
+  </header>
+
+  <div class="topbar">
+    <div class="seg views" role="group" aria-label="ページ" id="vSel"><button type="button" data-v="plan">配分を考える</button><button type="button" data-v="formula">計算式とバフ</button></div>
+    <div class="seg chars" role="group" aria-label="キャラ" id="cSel"></div>
+  </div>
+  <div id="vPlan" class="vw">
+  <section class="panel" aria-labelledby="s1">
+    <h2 id="s1"><span class="no">1</span>前提を決める</h2>
+    <div class="pick">
+      <span>時の砂</span><div class="seg" role="group" aria-label="時の砂のメインOP" id="pS"></div>
+      <span>空の杯</span><div class="seg" role="group" aria-label="空の杯のメインOP" id="pG"></div>
+      <span>理の冠</span><div class="seg" role="group" aria-label="理の冠のメインOP" id="pC"></div>
+      <span>サブOP</span><div class="seg" role="group" aria-label="有効OPの回数" id="nSel"></div>
+      <span>バフ</span><div class="seg" role="group" aria-label="ベネットのバフ" id="bSel"></div>
+      <span>厳選の現実度</span><div class="seg" role="group" aria-label="1行に入る回数の上限" id="lSel"></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <p class="note">金の点＝いちばん強い組み合わせのメインOP。「サブOP」は、サブOPのうち効くもの（有効OP）に入った強化の回数。+20の聖遺物5個で、だいたい20回でふつう、30回でよく育った、40回でかなりの厳選。「厳選の現実度」＝サブOPの1行に何回まで入るとみなすか。理論上は6回（はじめの1回＋強化5回）だが、1行に4回以上入るのは1割ほどなので、ふつうは「1行3回まで」で考えるのが現実的。指数＝そのキャラの「よく育った基準」（初期値の表のメインOP・サブOP 30回を1行3回までで理想に配分・バフなし）を100としたダメージ。手入力のバフは「計算式とバフ」で足せます。</p>
+  </section>
+
+  <section class="panel" aria-labelledby="s2">
+    <h2 id="s2"><span class="no">2</span>答え</h2>
+    <p class="say" id="say"></p>
+    <div class="ans">
+      <div>
+        <h3 id="h2a"></h3>
+        <div class="stack" id="stack"></div>
+        <div class="stats" id="stats"></div>
+        <p class="note">下の帯＝ダメージがいちばん良い配分から1%しか変わらない範囲。点がいちばん良い回数。帯が狭いものは「ほぼこの回数で決まり」、広いものは「多くても少なくてもほぼ同じ」。</p>
+        <div class="tol" id="tol"></div>
+      </div>
+      <div>
+        <h3>育てる順番（0〜45回）</h3>
+        <div class="order" id="order"></div>
+        <div class="chart" id="path"></div>
+        <p class="note" id="pathCap"></p>
+        <p class="note">回数ごとのいちばん良い配分を積み上げた図。縦の線が、いま選んでいる回数。+20の5部位に入る強化は全体で40〜45回（はじめ3OPなら1個8回、4OPなら9回）。そのうち効くサブOPに入った回数が横軸なので、効かない行がある分だけ右端より手前で止まります。</p>
+      </div>
+    </div>
+
+    <details class="more" id="more">
+      <summary>くわしく見る<small>配分の山・三角の地図・次の1回・メインOPの全組み合わせ</small></summary>
+      <div class="more-in">
+        <div class="sub"><h3>配分の山</h3><p class="note" id="n2"></p><div class="legend" id="lg2"></div><div class="chart" id="peak"></div></div>
+        <div class="two">
+          <div class="sub"><h3>三角の地図</h3><p class="note" id="n3"></p><div class="chart" id="tri"></div><div class="scale"><span>この組み合わせの最高の</span><span>70%</span><i></i><span>100%</span></div></div>
+          <div class="sub"><h3>この配分から、次の1回</h3><p class="note" id="pt"></p><div class="mg" id="mg"></div><p class="note" id="n4"></p></div>
+        </div>
+        <div class="sub"><h3>メインOPの全組み合わせ</h3><p class="note">どれも、サブOPをいちばん良く配ったとき。1位＝100%。押すとその組み合わせを選びます。</p><div class="rkw"><table class="rk" id="rk"></table></div></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel" aria-labelledby="s3">
+    <h2 id="s3"><span class="no">3</span>いまの装備を診断する</h2>
+    <div class="dg-in"><label class="filebtn">GOODファイルを選ぶ<input type="file" id="goodIn" accept=".json,application/json" hidden></label>
+      <span class="note" id="goodMsg">ファイルはこのページの中で読むだけで、どこにも送りません。読み込んだ4人分の装備だけを、この端末に覚えておきます。</span></div>
+    <div id="diag"></div>
+  </section>
+
+  </div>
+  <div id="vFormula" class="vw" hidden>
+  <section class="panel" aria-labelledby="sf">
+    <h2 id="sf">計算式とバフ</h2>
+    <div id="fbox"></div>
+  </section>
+  </div>
+
+  <footer>
+    <p>有効OPのN回を、いちばん強くなるように配れたらという理想の話です。1回分は平均の伸び（会心率3.3%・会心ダメ6.6%・攻撃力%5.0%・熟知19.8）。サブOPは、そのステータスがメインOPの部位には付かないので、1つのステータスに入れられるのは「メインOPでない部位の数×1行の上限（厳選の現実度）」まで。</p>
+    <p>条件はどのキャラも Lv90・無凸・モチーフ武器R1・そのキャラの4セット。数字は genshin-db 5.2.15、式とバフの条件は gcsim で照らし合わせました。実際の厳選は運なので、「どんな1個を残すか」の目安として見てください。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+const SLOTS=['flower','plume','sands','goblet','circlet'];
+const ROLL={'HP':[209.13,239.00,268.88,298.75],'ATK':[13.62,15.56,17.51,19.45],'DEF':[16.20,18.52,20.83,23.15],'HP%':[4.08,4.66,5.25,5.83],'ATK%':[4.08,4.66,5.25,5.83],'DEF%':[5.10,5.83,6.56,7.29],'ER':[4.53,5.18,5.83,6.48],'EM':[16.32,18.65,20.98,23.31],'CR':[2.72,3.11,3.50,3.89],'CD':[5.44,6.22,6.99,7.77]};
+const INV_SUB={'ATK%':'攻撃力%','EM':'元素熟知','CR':'会心率','CD':'会心ダメ'};
+const MAIN_SHORT=k=>({'ATK%':'攻撃力%',EM:'熟知',CR:'会心率',CD:'会心ダメ'})[k]||(k&&k.startsWith('DMG_')?k.slice(4)+'元素':k||'');
+const esc=s=>String(s); const store={get:()=>0}; const invLoad=()=>null;
+/* ---- ダメージの見積もり（v2.3 試作）：「この1個に替えたら、基準の技のダメージが何%変わるか」 ----
+   ダメージそのものは求めない（天賦倍率・敵の耐性・防御・反応の係数は、どのサブOPでも同じだけ掛かるので、比べると消える）。
+   キャラごとに、ステータスの効き方だけを式にする。数字は genshin-db 5.2.15、式は gcsim（b107b5d）の実装で照らし合わせた。考え方は docs/DAMAGE.md
+   dmg(t) の t（dmgTotal の戻り値）：atk＝攻撃力の合計、CR・CD・EM、dmgP＝ダメージバフ%（そのキャラの元素の杯を含む）、react＝反応ボーナス（倍率）
+   subs＝有効OP（src/builds.csv と同じ）、std＝標準の装備の砂・杯・冠（育成の段階ごとの重みの表に使う） */
+const dmgCrit=t=>1+Math.min(1,t.CR/100)*t.CD/100;
+const DMG_MODELS={
+  'フリンズ':{skill:'雷霆のシンフォニー', elem:'雷',  // 元素爆発（特殊）。月感電の直接ダメージ（攻撃力×倍率×3×(1+基礎ボーナス)×(1+熟知ボーナス+反応ボーナス)×会心）
+    baseAtk:351.59+674.33,                          // Lv90 フリンズ＋Bloodsoaked Ruins
+    cr:5+22.05, cd:50+38.4+28,                       // 基礎＋武器の会心率／基礎＋突破＋武器（月感電の後 +28%）
+    react:0.36+0.20,                                 // 武器（元爆の後の月感電 +36%）＋固有天賦（昇輝の月感電 +20%）
+    set:'天穹の顕現せし夜', set2:{EM:80}, set4:{CR:30,react:0.10}, // 2セット：熟知+80／4セット（昇輝）：会心率+30%・月反応+10%
+    subs:['CR','CD','ATK%','EM'], std:{sands:'ATK%',goblet:'ATK%',circlet:'CD'},
+    dmg(t){ const atk=t.atk, em=t.EM+Math.min(0.08*atk,160), base=Math.min(atk/100*0.007,0.14);
+      return atk*(1+base)*(1+6*em/(em+2000)+t.react)*dmgCrit(t); } },
+  'マーヴィカ':{skill:'墜陽斬（戦意200・溶解）', elem:'炎', // 元素爆発。戦意で足されるダメージ（戦意×攻撃力の割合）も攻撃力に比例するので、比べると消える
+    baseAtk:358.77+740.58,                          // Lv90 マーヴィカ＋千烈の日輪
+    cr:5+11.03, cd:50+38.4+35,                       // 基礎＋武器／基礎＋突破＋武器（焚光の+20%が夜魂の加護で1.75倍）
+    atkP:49+30, dmgP:40,                             // 焚光（+28%の1.75倍）＋固有天賦1（夜魂バーストの後 +30%）／固有天賦2（戦意200で+40%）
+    set:'黒曜の秘典', set2:{dmgP:15}, set4:{CR:40},   // 2セット：夜魂の加護中ダメージ+15%／4セット：夜魂値を使ったあと会心率+40%（E→Q が前提）
+    subs:['CR','CD','EM'], std:{sands:'EM',goblet:'DMG_炎',circlet:'CD'},
+    dmg(t){ return t.atk*(1+t.dmgP/100)*(1+2.78*t.EM/(t.EM+1400)+t.react)*dmgCrit(t); } }, // 溶解（炎→氷の×2）。×2 は比べると消える
+  'スカーク':{skill:'七相一閃の通常攻撃', elem:'氷',  // 溶解・凍結の増幅はしない前提
+    baseAtk:358.77+674.33,                          // Lv90 スカーク＋蒼耀
+    cr:5+22.05, cd:50+38.4+40,                       // 基礎＋武器／基礎＋突破＋蒼耀（エネルギー0で+40%）
+    atkP:48, dmgP:20,                                // 蒼耀（エネルギー0で+24%×2）／極悪技・尽（天賦10・裂け目3つで通常攻撃+20%）
+    set:'深廊の終曲', set2:{dmgP:15}, set4:{dmgP:60}, // 2セット：氷元素ダメージ+15%／4セット：エネルギー0で通常攻撃+60%（スカークはエネルギーの上限が0なので常に）
+    subs:['CR','CD','ATK%'], std:{sands:'ATK%',goblet:'DMG_氷',circlet:'CD'},
+    dmg(t){ return t.atk*(1+t.dmgP/100)*dmgCrit(t); } },
+  'ネフェル':{skill:'幻の戯（虚ろな影の月開花）', elem:'草', // 重撃。虚ろな影の3段（熟知×倍率、月開花の直接ダメージ）。本人の2段は月開花ではないので入れない
+    baseAtk:344.42+541.83,                          // Lv90 ネフェル＋真言の匣（月開花には効かないが、ベネットの表示のため）
+    cr:5+8, cd:50+38.4+88.2+36, em:120+100,          // 基礎＋武器／基礎＋突破＋武器＋真実の月（+24%の1.5倍）／嘘の秘密（+80の1.5倍）＋偽りの帳3層（+100）
+    set:'天穹の顕現せし夜', set2:{EM:80}, set4:{CR:30,react:0.10},
+    subs:['CR','CD','EM'], std:{sands:'EM',goblet:'EM',circlet:'CR'},
+    dmg(t){ const em=t.EM; return em*(1+Math.min(em*0.000175,0.14))*(1+6*em/(em+2000)+t.react)*dmgCrit(t); } } // 基礎ボーナス：固有天賦（熟知1につき0.0175%、上限14%）
+};
+const BENNETT_ATK=1.19*(191.16+674.33); // ベネットの元素爆発（天賦13）：ベネットの基礎攻撃力（キャラ＋基礎攻撃力674の武器）の119%
+const MAIN_NUM={HP:4780,ATK:311,'ATK%':46.6,'HP%':46.6,'DEF%':58.3,EM:186.5,ER:51.8,CR:31.1,CD:62.2,HEAL:35.9,PHYS:58.3};
+const rollAvg=s=>ROLL[s]?ROLL[s].reduce((a,b)=>a+b,0)/4:0;
+function dmgBennett(){ return !!store.get('dmgBennett',0); }
+// いま付けている5部位（とセット）。部位のセットは手持ちの「装備中」から、分からなければキャラのセットのものとみなす
+function dmgSetOf(c,slot){ const inv=invLoad(); const a=inv&&inv.arts.find(x=>x.loc===c.name&&x.slot===slot); return a?a.set:((DMG_MODELS[c.name]||{}).set||''); }
+// ex＝足すステータス（重みの計算用。{EM:18.65} など）
+function dmgTotal(M,pieces,sets,bennett,ex){ const t={atkP:M.atkP||0,atk:0,CR:M.cr,CD:M.cd,EM:M.em||0,dmgP:M.dmgP||0,react:M.react||0};
+  const add=(k,v)=>{ if(k==='ATK%') t.atkP+=v; else if(k==='ATK') t.atk+=v; else if(k==='CR'||k==='CD'||k==='EM') t[k]+=v; else if(k==='DMG_'+M.elem) t.dmgP+=v; };
+  for(const s of SLOTS){ const p=pieces[s]; if(!p||!p.main) continue; const mv=MAIN_NUM[p.main]!=null?MAIN_NUM[p.main]:(String(p.main).startsWith('DMG_')?46.6:0);
+    add(p.main,mv); for(const q of p.subs||[]){ if(!q.s||q.off) continue; add(q.s,parseFloat(q.v)||0); } }
+  if(ex) for(const k in ex) add(k,ex[k]);
+  const n=SLOTS.filter(s=>sets[s]===M.set).length, put=o=>{ for(const k in o) t[k]+=o[k]; }; if(n>=2) put(M.set2); if(n>=4) put(M.set4);
+  t.atk=M.baseAtk*(1+t.atkP/100)+t.atk+(bennett?BENNETT_ATK:0); return t; }
+// この1個（+20まで上げたときの伸び方を、強化が4行に入る回数の組み合わせごとに数える。伸び幅は平均）
+function dmgCompare(c,a,f){ const M=DMG_MODELS[c.name]; if(!M||!f) return null; const ben=dmgBennett(), slot=a.slot;
+  const sets={}; for(const s of SLOTS) sets[s]=dmgSetOf(c,s); const D0=M.dmg(dmgTotal(M,c.pieces,sets,ben)); if(!(D0>0)) return null;
+  const sets2=Object.assign({},sets,{[slot]:a.set}), L=a.p.subs.filter(x=>x.s), rem=f.rem||0;
+  const evalWith=adds=>{ const subs=L.map((x,i)=>({s:x.s,v:String((parseFloat(x.v)||0)+adds[i])})); /* off も付いた値として数える */ return M.dmg(dmgTotal(M,Object.assign({},c.pieces,{[slot]:{main:a.p.main,subs}}),sets2,ben))/D0-1; };
+  let mean=0,pUp=0,best=-Infinity,pBest=0; const fact=n=>{ let r=1; for(let i=2;i<=n;i++) r*=i; return r; };
+  (function rec(i,left,ns){ if(i===L.length-1){ ns.push(left); const pr=fact(rem)/ns.reduce((a,n)=>a*fact(n),1)/Math.pow(L.length,rem); const r=evalWith(ns.map((n,j)=>n*rollAvg(L[j].s)));
+      mean+=pr*r; if(r>1e-9) pUp+=pr; ns.pop(); return; } for(let n=0;n<=left;n++){ ns.push(n); rec(i+1,left-n,ns); ns.pop(); } })(0,rem,[]);
+  for(let j=0;j<L.length;j++){ const r=evalWith(L.map((x,k)=>k===j?rem*(ROLL[x.s]?ROLL[x.s][3]:0):0)); if(r>best+1e-12){ best=r; pBest=Math.pow(1/16,rem); } else if(Math.abs(r-best)<=1e-12) pBest+=Math.pow(1/16,rem); }
+  if(!rem){ best=mean; pBest=1; }
+  return {skill:M.skill,mean,pUp,max:best,pMax:pBest,ben}; }
+/* ---- 重み（説明用）：サブOP 1回分（平均の伸び）で、基準の技のダメージが何%上がるか。判定には使わない（装備で変わるので） ---- */
+const DMG_W=['CR','CD','ATK%','EM','ATK','HP%','DEF%','ER'], DMG_W4=['CR','CD','ATK%','EM'];
+function dmgWeightsOf(M,pieces,sets,ben){ const D0=M.dmg(dmgTotal(M,pieces,sets,ben)); if(!(D0>0)) return null; const w={};
+  for(const k of DMG_W){ const v=M.dmg(dmgTotal(M,pieces,sets,ben,{[k]:rollAvg(k)}))/D0-1; w[k]=v>1e-9?v:0; } return w; }
+function dmgWeights(c){ const M=DMG_MODELS[c&&c.name]; if(!M||!c.pieces) return null; const sets={}, ben=dmgBennett(); for(const s of SLOTS) sets[s]=dmgSetOf(c,s);
+  const w=dmgWeightsOf(M,c.pieces,sets,ben); return w?{M,w,t:dmgTotal(M,c.pieces,sets,ben),ben}:null; }
+// 育成の段階：標準の装備（5部位とも M.set、メインOPは M.std）に、有効OP（M.subs）のロールを n 回、均等に足す。会心率は100%で止め、余りはほかの有効OPへ
+const DMG_STAGES=[[0,'メインOPだけ'],[10,'育て始め'],[20,'ふつう'],[30,'よく育った'],[40,'かなりの厳選']];
+function dmgStdPieces(M,n,ben){ const P={flower:{main:'HP',subs:[]},plume:{main:'ATK',subs:[]}}, sets={}; for(const s of ['sands','goblet','circlet']) P[s]={main:M.std[s],subs:[]}; for(const s of SLOTS) sets[s]=M.set;
+  const al={}; for(const k of M.subs) al[k]=n/M.subs.length;
+  if(al.CR!=null){ const need=Math.max(0,(100-dmgTotal(M,P,sets,ben).CR)/rollAvg('CR')), o=M.subs.filter(k=>k!=='CR'); if(al.CR>need&&o.length){ const r=al.CR-need; al.CR=need; for(const k of o) al[k]+=r/o.length; } }
+  P.flower.subs=M.subs.map(k=>({s:k,v:String(al[k]*rollAvg(k))})); return {P,sets}; }
+function dmgStages(M,ben){ return DMG_STAGES.map(([n,lab])=>{ const {P,sets}=dmgStdPieces(M,n,ben); return {n,lab,t:dmgTotal(M,P,sets,ben),w:dmgWeightsOf(M,P,sets,ben)}; }); }
+// 「簡単に言えば」の一言（いまの装備の重みから）
+function dmgSay(x){ const w=x.w, t=x.t, ks=DMG_W4.slice().sort((a,b)=>w[b]-w[a]), top=ks[0], sec=ks[1], cd=w.CD||0, nm=k=>INV_SUB[k]||k, r=k=>cd>0?(w[k]/cd).toFixed(1)+'倍':'';
+  const capped=t.CR>=95&&w.CR<cd; // 会心率が上限の100%にかかって、会心ダメより効かなくなっている
+  const nt=[top!=='CD'&&cd>0?`会心ダメ1回の${r(top)}`:'',x.M.subs.includes(top)?'':'有効OPには入れていない項目です'].filter(Boolean).join('。');
+  let s=`いまの装備では、いちばん効くのは<b>${nm(top)}</b>${nt?`（${nt}）`:''}`;
+  if(sec&&w[sec]>=w[top]*0.8) s+=`、次に${nm(sec)}${sec!=='CD'&&cd>0?`（${r(sec)}）`:''}`;
+  if(capped) s+=`。会心率はもう${Math.min(100,t.CR).toFixed(0)}%${t.CR>=100?'（上限）':''}なので、${w.CR>0?`会心ダメの${r('CR')}しか効きません`:'会心率を足しても伸びません'}`;
+  const zero=DMG_W4.filter(k=>w[k]<=0&&!(k==='CR'&&capped)), low=DMG_W4.filter(k=>k!==top&&k!==sec&&w[k]>0&&w[k]<w[top]*0.45&&!(k==='CR'&&capped));
+  if(low.length) s+=`。${low.map(nm).join('・')}は思ったほど効きません`;
+  if(zero.length) s+=`。${zero.map(nm).join('・')}は、この技のダメージに関係しません`;
+  if(x.ben&&w['ATK%']>0) s+=`（ベネットのバフで攻撃力が高いぶん、攻撃力%の価値は下がります）`;
+  return s+'。'; }
+function dmgPanel(c){ const x=dmgWeights(c); if(!x) return ''; const w=x.w, ks=DMG_W.filter(k=>w[k]>0||DMG_W4.includes(k)).sort((a,b)=>w[b]-w[a]), top=w[ks[0]]||1e-9, pc=v=>v>0?'+'+(v*100).toFixed(2)+'%':'0';
+  const bars=ks.map(k=>`<i class="k">${INV_SUB[k]||k}</i><span class="bar"><b style="width:${(w[k]/top*100).toFixed(0)}%"></b></span><i>${pc(w[k])}</i>`).join('');
+  const st=dmgStages(x.M,x.ben), sk=DMG_W4.filter(k=>st.some(r=>r.w&&r.w[k]>0));
+  const tbl=`<div class="dwtw"><table class="dwt"><tr><th>有効OPのロール</th>${sk.map(k=>`<th>${INV_SUB[k]}</th>`).join('')}<th>そのときの<br>会心率</th></tr>${st.map(r=>{ const mx=Math.max(...sk.map(k=>r.w[k]));
+    return `<tr><td>${r.n}回 <small>${r.lab}</small></td>${sk.map(k=>`<td class="${r.w[k]>=mx-1e-12?'on':''}">${pc(r.w[k])}</td>`).join('')}<td class="m">${Math.min(100,r.t.CR).toFixed(0)}%</td></tr>`; }).join('')}</table></div>`;
+  const sd=x.M.std, mt=m=>MAIN_SHORT(m);
+  return `<details class="dmgw"><summary><span class="hd">ダメージの効き方（試作）</span>${dmgSay(x)}</summary>
+    <p class="note" style="margin:6px 0 4px">基準の技＝${esc(x.M.skill)}（Lv90・無凸・モチーフ武器R1・${x.ben?'ベネットのバフあり':'バフなし'}）。いまの装備に、サブOPを1回分（平均の伸び）足したら、ダメージが何%上がるか：</p>
+    <div class="dws">${bars}</div>
+    <p class="note" style="margin:10px 0 4px">育成の段階で変わります。標準の装備（${esc(x.M.set)}4セット・${mt(sd.sands)}／${mt(sd.goblet)}／${mt(sd.circlet)}）に、有効OP（${x.M.subs.map(k=>INV_SUB[k]).join('・')}）のロールを均等に足していったとき（会心率は100%で止めて、余りはほかへ）：</p>${tbl}
+    <p class="note" style="margin:6px 0 0">重みは説明のための目安です。1個を比べるとき（ダメージの何%）は、強化が入る組み合わせごとに数えています。</p></details>`; }
+
+// メインOPの組み合わせ × サブOPの配分の最適化（ページでも同じものを使う）
+function makeOpt(T){ const {DMG_MODELS,dmgTotal,rollAvg}=T, SLOTS=['flower','plume','sands','goblet','circlet'];
+  const CAND=M=>({sands:['ATK%','EM'],goblet:['DMG_'+M.elem,'ATK%','EM'],circlet:['CR','CD','ATK%','EM']});
+  const A={CR:rollAvg('CR'),CD:rollAvg('CD'),'ATK%':rollAvg('ATK%'),EM:rollAvg('EM')};
+  function base(M,mains,ben){ const P={flower:{main:'HP',subs:[]},plume:{main:'ATK',subs:[]},sands:{main:mains[0],subs:[]},goblet:{main:mains[1],subs:[]},circlet:{main:mains[2],subs:[]}}, sets={}; for(const s of SLOTS) sets[s]=M.set;
+    const t=dmgTotal(M,P,sets,ben,null); const flat=t.atk-M.baseAtk*(1+t.atkP/100); return {t,flat}; }
+  function evalA(M,b,a){ const t=Object.assign({},b.t); t.CR+=a.CR*A.CR; t.CD+=a.CD*A.CD; t.EM+=a.EM*A.EM; t.atkP+=a.ATK*A['ATK%']; t.atk=M.baseAtk*(1+t.atkP/100)+b.flat; return M.dmg(t); }
+  // 会心率 i・会心ダメ j・ほか k（攻撃力%と熟知を最善に分ける）。useATK/useEM＝効くものだけ
+  // 1つのサブOPに入れられるのは、そのステータスがメインOPでない部位だけ（1部位で最大6回：はじめの1回＋強化5回）
+  // lineCap＝1つの行（部位のサブOP1行）に入る回数の上限。理論上は6（はじめの1回＋強化5回）。現実的には3〜4
+  let lineCap=6; const capOf=(mains,k)=>lineCap*(5-mains.filter(m=>m===k).length);
+  function pieceMax(mains,ks){ const all=['HP','ATK'].concat(mains); let t=0; for(const m of all){ const L=Math.min(4,ks.filter(k=>k!==m).length); t+=Math.min(5+L,L*lineCap); } return t; }
+  function solve(M,mains,N,ben,ks,bIn){ if(N>pieceMax(mains,ks)) return {mains,b:bIn||base(M,mains,ben),grid:[],best:{D:-1}};
+    const b=bIn||base(M,mains,ben), uA=ks.includes('ATK%'), uE=ks.includes('EM'), grid=[]; let best={D:-1};
+    const cCR=capOf(mains,'CR'), cCD=capOf(mains,'CD'), cA=uA?capOf(mains,'ATK%'):0, cE=uE?capOf(mains,'EM'):0;
+    for(let i=0;i<=N;i++) for(let j=0;i+j<=N;j++){ const k=N-i-j; let bb={D:-1};
+      if(i>cCR||j>cCD||k>cA+cE){ grid.push({i,j,k,D:null}); continue; }
+      for(let x=0;x<=k;x++){ const at=uA?(uE?x:k):0, em=uE?(uA?k-x:k):0; if(at>cA||em>cE){ if(!(uA&&uE)) break; continue; } const a={CR:i,CD:j,ATK:at,EM:em}, D=evalA(M,b,a); if(D>bb.D) bb={D,a}; if(!(uA&&uE)) break; }
+      if(bb.D<0){ grid.push({i,j,k,D:null}); continue; }
+      grid.push({i,j,k,D:bb.D,a:bb.a}); if(bb.D>best.D) best=Object.assign({i,j,k},bb); }
+    return {mains,b,grid,best}; }
+  function marg(M,b,a){ const D0=evalA(M,b,a), r={}; for(const [k,kk] of [['CR','CR'],['CD','CD'],['ATK%','ATK'],['EM','EM']]){ const a2=Object.assign({},a); a2[kk]+=1; r[k]=evalA(M,b,a2)/D0-1; } return r; }
+  function combos(M){ const c=CAND(M), out=[]; for(const s of c.sands) for(const g of c.goblet) for(const ci of c.circlet) out.push([s,g,ci]); return out; }
+  return {solve,marg,combos,evalA,base,capOf,pieceMax,setLineCap:c=>{ lineCap=c; }}; }
+
+// 回数ごとのいちばん良い配分（0〜Nmax）と、いちばん良い配分から thr 以内に収まる配分の、ステータスごとの回数の範囲
+function makeOpt2(T,O){ const caps=(mains,k)=>O.capOf(mains,k);
+  function path(M,mains,Nmax,ben,ks){ const out=[]; for(let n=0;n<=Nmax;n++){ const r=O.solve(M,mains,n,ben,ks); out.push(r.best.D>0?{n,a:r.best.a,D:r.best.D,b:r.b}:null); } return out; }
+  function tol(M,b,mains,N,ks,best,thr){ const uA=ks.includes('ATK%'), uE=ks.includes('EM'), rg={CR:[1e9,-1],CD:[1e9,-1],ATK:[1e9,-1],EM:[1e9,-1]}, lim=best*thr;
+    const cc={CR:caps(mains,'CR'),CD:caps(mains,'CD'),ATK:uA?caps(mains,'ATK%'):0,EM:uE?caps(mains,'EM'):0};
+    for(let i=0;i<=Math.min(N,cc.CR);i++) for(let j=0;i+j<=N&&j<=cc.CD;j++){ const k=N-i-j; for(let x=0;x<=k;x++){ const a={CR:i,CD:j,ATK:uA?(uE?x:k):0,EM:uE?(uA?k-x:k):0};
+      if(!uA&&!uE&&k>0) break; if(a.ATK>cc.ATK||a.EM>cc.EM){ if(!(uA&&uE)) break; continue; }
+      if(O.evalA(M,b,a)>=lim) for(const s in rg){ if(a[s]<rg[s][0]) rg[s][0]=a[s]; if(a[s]>rg[s][1]) rg[s][1]=a[s]; } if(!(uA&&uE)) break; } }
+    return rg; }
+  return {path,tol}; }
+
+const T={DMG_MODELS,dmgTotal,rollAvg}, O=makeOpt(T), O2=makeOpt2(T,O);
+
+const ST={CR:['会心率','--s-cr'],CD:['会心ダメ','--s-cd'],'ATK%':['攻撃力%','--s-atk'],EM:['元素熟知','--s-em']}, AK={CR:'CR',CD:'CD','ATK%':'ATK',EM:'EM'};
+const ORDER=['マーヴィカ','ネフェル','スカーク','フリンズ'], NMAX=45;
+let ch='マーヴィカ', N=30, ben=0, mains=null, pin=null, lc=3, MINE=null, DG={};
+try{ const v=JSON.parse(localStorage.getItem('subopGuide3')||'{}'); if(ORDER.includes(v.ch)) ch=v.ch; if(v.N>=1&&v.N<=40) N=Math.round(v.N); ben=v.ben?1:0; if([3,4,6].includes(v.lc)) lc=v.lc; }catch(e){}
+try{ MINE=JSON.parse(localStorage.getItem('subopGuideMine')||'null'); }catch(e){}
+const save=()=>{ try{ localStorage.setItem('subopGuide3',JSON.stringify({ch,N,ben,lc})); }catch(e){} };
+const $=id=>document.getElementById(id), pc=v=>(v*100).toFixed(1)+'%', pc2=v=>v>0?'+'+(v*100).toFixed(2)+'%':'0';
+const cname=c=>c.map(MAIN_SHORT).join('／');
+const KSC=new Map(); function keysOf(M){ if(KSC.has(M)) return KSC.get(M); const b=O.base(M,[M.std.sands,M.std.goblet,M.std.circlet],0), m=O.marg(M,b,{CR:0,CD:0,ATK:0,EM:0}); const r=['CR','CD','ATK%','EM'].filter(k=>m[k]>1e-9); KSC.set(M,r); return r; }
+const otherLabel=ks=>ks.filter(k=>k!=='CR'&&k!=='CD').map(k=>ST[k][0]).join('・');
+const CAND=M=>({sands:['ATK%','EM'],goblet:['DMG_'+M.elem,'ATK%','EM'],circlet:['CR','CD','ATK%','EM']});
+let R=null, KS=null, CUR=null, PATH=null, TOL=null;
+const MEMO=new Map();
+function solveAll(){ const M=MD(); KS=keysOf(DMG_MODELS[ch]); O.setLineCap(lc); const key=ch+'|'+N+'|'+ben+'|'+lc+'|'+bsig(); if(!MEMO.has(key)) MEMO.set(key,O.combos(M).map(c=>O.solve(M,c,N,ben,KS)).filter(r=>r.best.D>0).sort((a,b)=>b.best.D-a.best.D)); R=MEMO.get(key); }
+function solveCur(){ const M=MD(); CUR=R.find(r=>r.mains.join()===mains.join()); const pk=ch+'|'+ben+'|'+lc+'|'+bsig()+'|'+mains.join(); if(!MEMO.has(pk)) MEMO.set(pk,O2.path(M,mains,NMAX,ben,KS)); PATH=MEMO.get(pk);
+  TOL=O2.tol(M,CUR.b,mains,N,KS,CUR.best.D,0.99); pin=null; }
+
+function seg(id,items,val,fn,bestV){ $(id).innerHTML=items.map(([v,l])=>`<button type="button" aria-pressed="${v===val}" data-v="${v}">${l}${bestV!=null&&v===bestV?'<span class="best" aria-label="いちばん強い組み合わせ"></span>':''}</button>`).join(''); $(id).querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>fn(b.dataset.v))); }
+function renderPick(){ const M=MD(), c=CAND(M), b=R[0].mains;
+  seg('cSel',ORDER.map(n=>[n,n]),ch,v=>{ ch=v; mains=null; save(); all(); });
+  seg('pS',c.sands.map(k=>[k,MAIN_SHORT(k)]),mains[0],v=>{ mains=[v,mains[1],mains[2]]; upd(); },b[0]);
+  seg('pG',c.goblet.map(k=>[k,MAIN_SHORT(k)]),mains[1],v=>{ mains=[mains[0],v,mains[2]]; upd(); },b[1]);
+  seg('pC',c.circlet.map(k=>[k,MAIN_SHORT(k)]),mains[2],v=>{ mains=[mains[0],mains[1],v]; upd(); },b[2]);
+  const nOpts=[[10,'10回'],[20,'20回'],[30,'30回'],[40,'40回']]; if(DG.n&&DG.ch===ch&&!nOpts.find(o=>o[0]===DG.n)) nOpts.push([DG.n,`${DG.n}回（いまの装備）`]); else if(![10,20,30,40].includes(N)) nOpts.push([N,`${N}回`]); nOpts.sort((a,b)=>a[0]-b[0]);
+  seg('nSel',nOpts.map(([v,l])=>[String(v),l]),String(N),v=>{ N=+v; save(); all(true); });
+  seg('lSel',[['3','1行3回まで（現実的）'],['4','4回まで（がんばる）'],['6','6回まで（理論上）']],String(lc),v=>{ lc=+v; O.setLineCap(lc); save(); all(true); });
+  seg('bSel',[['0','なし'],['1','ベネットあり']],String(ben),v=>{ ben=+v; save(); all(true); });
+  const top=R[0].best.D, r=CUR.best.D/top, rank=R.indexOf(CUR)+1, std=[M.std.sands,M.std.goblet,M.std.circlet].join();
+  const alts=R.slice(0,3).filter(x=>x!==CUR);
+  $('verdict').innerHTML=`<span class="ixs">指数 <b>${fmtIdx(idx(CUR.best.D))}</b></span><span class="pct">${pc(r)}</span><span>${rank===1?'<b>いちばん強い組み合わせ</b>です':`いちばん強い組み合わせ（<b>${cname(R[0].mains)}</b>）と比べて。${R.length}通り中 ${rank}位`}</span>${alts.length?`<span class="note">ほかの上位：</span>${alts.map(x=>`<button type="button" class="chipb" data-m="${x.mains.join()}">${cname(x.mains)} ${pc(x.best.D/top)}</button>`).join('')}`:''}${mains.join()!==std?`<button type="button" class="chipb" data-m="${std}">初期値の表の組み合わせ</button>`:''}`;
+  $('verdict').querySelectorAll('[data-m]').forEach(bt=>bt.addEventListener('click',()=>{ mains=bt.dataset.m.split(','); upd(); })); }
+
+/* ---- 2 答え ---- */
+function allocTxt(a){ return KS.filter(k=>a[AK[k]]>0).map(k=>`${ST[k][0]}${a[AK[k]]}`).join('・')||'なし'; }
+function statsOf(a){ const M=MD(), t=Object.assign({},CUR.b.t); t.CR+=a.CR*rollAvg('CR'); t.CD+=a.CD*rollAvg('CD'); t.EM+=a.EM*rollAvg('EM'); t.atkP+=a.ATK*rollAvg('ATK%'); return {CR:t.CR,CD:t.CD,EM:t.EM,atk:M.baseAtk*(1+t.atkP/100)+CUR.b.flat}; }
+// 育てる順番：ステータスごとに、いつ入れ始めて、いつ打ち止めになるか
+const lastN=()=>{ let n=NMAX; while(n>0&&!PATH[n]) n--; return n; };
+function phases(){ const P=PATH, NM=lastN(), last=P[NM].a, out=[];
+  for(const k of KS){ const s=AK[k], cnt=n=>P[n]?P[n].a[s]:0; let st=-1; for(let n=1;n<=NM;n++) if(cnt(n)>0){ st=n; break; }
+    if(st<0){ out.push({k,st,txt:'入れない（ほかのほうがいつも効く）'}); continue; }
+    let stop=NM; for(let n=NM;n>=st;n--){ if(cnt(n)!==last[s]) break; stop=n; }
+    const startTxt=st<=2?'はじめから':`${st}回目ごろから`;
+    let endTxt; if(stop<=NM-4){ const c=CUR.mains, cap=O.capOf(mainsSafe(),k); const why=k==='CR'?`会心率${Math.min(100,statsOf(P[stop].a).CR).toFixed(0)}%`:last[s]>=cap?'入れられる上限':'ほかのほうが効くため';
+      endTxt=`<b>${last[s]}回で打ち止め</b>（${why}）`; }
+    else { const rate=(cnt(NM)-cnt(Math.max(0,NM-10))); endTxt=`最後まで少しずつ（10回ごとに約${rate}回）`; }
+    out.push({k,st,txt:`${startTxt}、${endTxt}`}); }
+  return out.sort((a,b)=>(a.st<0?99:a.st)-(b.st<0?99:b.st)); }
+const mainsSafe=()=>mains;
+function renderAnswer(){ const a=CUR.best.a, s=statsOf(a), tot=Math.max(1,N);
+  $('h2a').textContent=`サブOP ${N}回なら、この配分がいちばん強い`;
+  $('stack').innerHTML=KS.filter(k=>a[AK[k]]>0).map(k=>`<i style="--c:var(${ST[k][1]}); width:${a[AK[k]]/tot*100}%" title="${ST[k][0]} ${a[AK[k]]}回">${a[AK[k]]/tot>0.08?a[AK[k]]:''}</i>`).join('');
+  $('stats').innerHTML=`<span>${KS.map(k=>`<span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]} <b>${a[AK[k]]}回</b></span>`).join('')}</span><span>→ 会心率 <b>${Math.min(100,s.CR).toFixed(0)}%</b>・会心ダメ <b>${s.CD.toFixed(0)}%</b>・攻撃力 <b>${s.atk.toFixed(0)}</b>・熟知 <b>${s.EM.toFixed(0)}</b></span>`;
+  const mx=Math.max(N,1);
+  $('tol').innerHTML=KS.map(k=>{ const r=TOL[AK[k]], w=r[1]-r[0], tag=w<=3?'ほぼ決まり':w>=Math.max(6,N*0.25)?'幅が広い':'';
+    return `<span class="k"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}</span><span class="tr" style="--c:var(${ST[k][1]})"><span class="rg" style="left:${r[0]/mx*100}%; width:${Math.max(1.5,(r[1]-r[0])/mx*100)}%"></span><span class="op" style="left:${a[AK[k]]/mx*100}%"></span></span><span class="v">${r[0]===r[1]?r[0]+'回':r[0]+'〜'+r[1]+'回'}${tag?`<small>${tag}</small>`:''}</span>`; }).join('');
+  const ph=phases();
+  $('order').innerHTML=ph.map(p=>`<div><span style="display:inline-flex;align-items:center;gap:6px"><i class="dot" style="--c:var(${ST[p.k][1]})"></i><b>${ST[p.k][0]}</b></span><span>${p.txt}</span></div>`).join('');
+  // 一言
+  const narrow=KS.filter(k=>TOL[AK[k]][1]-TOL[AK[k]][0]<=3&&a[AK[k]]>0), wide=KS.filter(k=>TOL[AK[k]][1]-TOL[AK[k]][0]>=Math.max(6,N*0.25)), zero=KS.filter(k=>a[AK[k]]===0&&TOL[AK[k]][1]<=1);
+  const crP=ph.find(p=>p.k==='CR'), first=ph[0];
+  let say=`${cname(mains)}・サブOP ${N}回なら、<b>${allocTxt(a)}</b>。`;
+  if(first&&first.st>0&&first.st<=2) say+=`育てる順番は、まず<b>${ST[first.k][0]}</b>から。`;
+  if(crP&&/打ち止め/.test(crP.txt)) say+=`会心率は${PATH[lastN()].a.CR}回（${crP.txt.match(/（(.*)）/)[1]}）で打ち止めで、それ以上はいりません。`;
+  if(narrow.length) say+=`${narrow.map(k=>ST[k][0]).join('・')}は<b>ほぼこの回数で決まり</b>。`;
+  if(wide.length) say+=`${wide.map(k=>ST[k][0]).join('・')}は<b>多めでも少なめでもほぼ同じ</b>なので、迷ったら手持ちで付いているほうでかまいません。`;
+  if(zero.length) say+=`${zero.map(k=>ST[k][0]).join('・')}は入れなくていい。`;
+  const capd=KS.filter(k=>a[AK[k]]>0&&a[AK[k]]>=O.capOf(mains,k)); if(capd.length) say+=`${capd.map(k=>ST[k][0]).join('・')}は、メインOPと重ならない部位に1行${lc}回ずつ入れた上限（${capd.map(k=>O.capOf(mains,k)+'回').join('・')}）まで入っています。`;
+  $('say').innerHTML=say;
+  renderPath(); }
+
+/* 育てる順番の図：横＝回数、縦＝回数（いちばん良い配分を積み上げ） */
+function renderPath(){ const W=Math.round(Math.max(360,Math.min(560,$('path').clientWidth||560))), H=280, L=36, Rr=88, Tp=12, B=34, IW=W-L-Rr, IH=H-Tp-B;
+  const xs=n=>L+n/NMAX*IW, ys=v=>Tp+IH-v/NMAX*IH, P=PATH;
+  let g=''; for(let v=0;v<=NMAX;v+=v===40?5:10) g+=(v<=40?`<line x1="${L}" x2="${L+IW}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--grid)"/><text x="${L-8}" y="${ys(v)+4}" text-anchor="end" font-size="12" fill="var(--muted)">${v}</text>`:'')+`<text x="${xs(v)}" y="${Tp+IH+18}" text-anchor="middle" font-size="12" fill="var(--muted)">${v}</text>`;
+  g+=`<text x="${L+IW}" y="${H-2}" text-anchor="end" font-size="12" fill="var(--muted)">サブOPの回数 →</text>`;
+  const order=['CR','CD','ATK%','EM'].filter(k=>KS.includes(k)); let L2='', lab='', NMx=lastN(); if(NMx<NMAX) g+=`<rect x="${xs(NMx)}" y="${Tp}" width="${xs(NMAX)-xs(NMx)}" height="${IH}" fill="var(--grid)"/>`;
+  const cum=(n,upto)=>{ let s=0; for(const k of order){ if(k===upto) break; s+=P[n]?P[n].a[AK[k]]:0; } return s; };
+  for(const k of order){ let top='', bot=''; const NM=lastN(); for(let n=0;n<=NM;n++){ const lo=cum(n,k), hi=lo+(P[n]?P[n].a[AK[k]]:0); top+=(n?'L':'M')+xs(n).toFixed(1)+' '+ys(hi).toFixed(1)+' '; bot=`L${xs(n).toFixed(1)} ${ys(lo).toFixed(1)} `+bot; }
+    L2+=`<path d="${top}${bot}Z" fill="var(${ST[k][1]})" stroke="var(--panel)" stroke-width="1.5" stroke-linejoin="round"/>`;
+    const lo=cum(NM,k), v=P[NM].a[AK[k]]; if(v>=2) lab+=`<text x="${xs(NM)+8}" y="${ys(lo+v/2)+4}" font-size="12.5" fill="var(--ink-2)">${ST[k][0]} ${v}</text>`; }
+  const cur=`<line x1="${xs(N)}" x2="${xs(N)}" y1="${Tp}" y2="${Tp+IH}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3"/><text x="${xs(N)+4}" y="${Tp+11}" font-size="12" fill="var(--ink)">${N}回</text>`;
+  $('pathCap').textContent=NMx<NMAX?`このメインOPと「1行${lc}回まで」だと、効くサブOPに入れられるのは${NMx}回まで（薄い所は入りきらない）。`:'';
+  $('path').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="育てる順番">${g}${L2}${lab}${cur}<g class="hv" opacity="0"><line class="hl" y1="${Tp}" y2="${Tp+IH}" stroke="var(--gold)"/></g><rect class="hit" x="${L}" y="${Tp}" width="${IW}" height="${IH}" fill="transparent"/></svg><div class="tip" hidden></div>`;
+  const svg=$('path').querySelector('svg'), tip=$('path').querySelector('.tip'), hv=svg.querySelector('.hv');
+  const show=ev=>{ const r=svg.getBoundingClientRect(); let n=Math.round(((ev.clientX-r.left)/r.width*W-L)/IW*NMAX); n=Math.max(0,Math.min(NMAX,n)); if(!P[n]) return; hv.setAttribute('opacity','1'); hv.querySelector('.hl').setAttribute('x1',xs(n)); hv.querySelector('.hl').setAttribute('x2',xs(n));
+    const s=statsOf(P[n].a); tip.innerHTML=`<b>${n}回</b>：${allocTxt(P[n].a)}<br>会心率 ${Math.min(100,s.CR).toFixed(0)}%・会心ダメ ${s.CD.toFixed(0)}%`; tip.hidden=false;
+    const px=xs(n)/W*r.width, tw=tip.offsetWidth; tip.style.left=Math.max(0,Math.min(r.width-tw,px+(px>r.width/2?-tw-12:12)))+'px'; tip.style.top='4px'; };
+  const hit=svg.querySelector('.hit'); hit.addEventListener('pointermove',show); hit.addEventListener('pointerdown',show); hit.addEventListener('pointerleave',()=>{ hv.setAttribute('opacity','0'); tip.hidden=true; }); }
+
+/* ---- くわしく：配分の山 ---- */
+function peakLine(r){ const pts=[]; for(let k=0;k<=N;k++){ let b=null; for(const g of r.grid) if(g.k===k&&g.D!=null&&(!b||g.D>b.D)) b=g; pts.push(b?{k,D:b.D,g:b}:null); } return pts; }
+function renderPeak(){ const M=MD(), PW=Math.round(Math.max(400,Math.min(760,$('peak').clientWidth||760))), PH=290, PL=48, PR=70, PT=14, PB=42, IW=PW-PL-PR, IH=PH-PT-PB, YLO=0.6, top=R[0].best.D, oth=otherLabel(KS);
+  $('n2').textContent=`横＝${N}回のうち、会心以外（${oth}）に入れた回数。縦＝残りを会心率・会心ダメにいちばん良く配ったときのダメージ（1位の組み合わせ＝100%）。てっぺんがいちばん良い配分、左右の下り坂が寄せすぎの損。`;
+  const lines=[]; const add=(r,lab,sty)=>{ if(r&&!lines.find(l=>l.r===r)) lines.push({r,lab,sty}); };
+  add(CUR,'選択中',{c:'var(--gold)',w:2.75,d:''}); add(R[0],'1位',{c:'var(--ink-2)',w:2,d:'7 5'}); add(R.find(r=>r.mains.join()===[M.std.sands,M.std.goblet,M.std.circlet].join()),'初期値',{c:'var(--muted)',w:2,d:'2 4'});
+  const xs=k=>PL+k/N*IW, ys=v=>PT+IH-(Math.max(YLO,Math.min(1,v))-YLO)/(1-YLO)*IH;
+  let g=''; for(let v=YLO;v<=1.0001;v+=0.1) g+=`<line x1="${PL}" x2="${PL+IW}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--grid)"/><text x="${PL-8}" y="${ys(v)+4}" text-anchor="end" font-size="12" fill="var(--muted)">${Math.round(v*100)}%</text>`;
+  for(let k=0;k<=N;k+=10) g+=`<text x="${xs(k)}" y="${PT+IH+18}" text-anchor="middle" font-size="12" fill="var(--muted)">${k}</text>`;
+  g+=`<line x1="${PL}" x2="${PL+IW}" y1="${PT+IH}" y2="${PT+IH}" stroke="var(--line-2)"/><text x="${PL}" y="${PH-4}" font-size="12" fill="var(--muted)">← 会心に全部</text><text x="${PL+IW}" y="${PH-4}" text-anchor="end" font-size="12" fill="var(--muted)">${oth}に全部 →</text>`;
+  let Lx=''; const ends=[];
+  for(const l of lines.slice().reverse()){ const pts=peakLine(l.r); let d='', pen=false; pts.forEach(p=>{ if(!p){ pen=false; return; } d+=(pen?'L':'M')+xs(p.k).toFixed(1)+' '+ys(p.D/top).toFixed(1)+' '; pen=true; });
+    Lx+=`<path d="${d}" fill="none" stroke="${l.sty.c}" stroke-width="${l.sty.w}" stroke-dasharray="${l.sty.d}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const pk=pts.filter(Boolean).reduce((a,p)=>p.D>a.D?p:a); Lx+=`<circle cx="${xs(pk.k)}" cy="${ys(pk.D/top)}" r="5" fill="${l.sty.c}" stroke="var(--panel)" stroke-width="2"/>`;
+    const last=pts.filter(Boolean).pop(); ends.push({y:ys(last.D/top),x:xs(last.k),l}); }
+  ends.sort((a,b)=>a.y-b.y); for(let i=1;i<ends.length;i++) if(ends[i].y-ends[i-1].y<16) ends[i].y=ends[i-1].y+16;
+  for(const e of ends) Lx+=`<text x="${e.x+10}" y="${e.y+4}" font-size="13" fill="var(--ink-2)">${e.l.lab}</text>`;
+  $('lg2').innerHTML=lines.map(l=>`<span><svg width="26" height="8" aria-hidden="true"><line x1="1" x2="25" y1="4" y2="4" stroke="${l.sty.c}" stroke-width="${l.sty.w}" stroke-dasharray="${l.sty.d}"/></svg>${l.lab}：${cname(l.r.mains)}</span>`).join('');
+  $('peak').innerHTML=`<svg viewBox="0 0 ${PW} ${PH}" role="img" aria-label="配分の山">${g}${Lx}</svg>`; }
+
+/* ---- くわしく：三角の地図・次の1回 ---- */
+const TW=460, TH=430, TS=380, TX=(TW-TS)/2, TY=36, V={CR:[TX,TY+TS*0.866], CD:[TX+TS,TY+TS*0.866], O:[TX+TS/2,TY]};
+const pos=(i,j,k)=>[(i*V.CR[0]+j*V.CD[0]+k*V.O[0])/N,(i*V.CR[1]+j*V.CD[1]+k*V.O[1])/N];
+function heat(v){ const st=['--h0','--h1','--h2','--h3','--h4','--h5']; if(v<0.7) return 'var(--h0)'; return `var(${st[Math.min(5,Math.round(Math.min(1,(v-0.7)/0.3)*5))]})`; }
+function renderTri(){ const c=CUR, top=c.best.D, oth=otherLabel(KS), s=TS/N, rad=s/Math.sqrt(3)+0.4;
+  $('n3').textContent=`${N}回をどう配るか。左下＝会心率に全部、右下＝会心ダメに全部、上＝${oth}に全部。明るいほど強く、★がてっぺん。空白はメインOPのせいで入りきらない配分。押すと右の「次の1回」がその配分になります。`;
+  const hex=(x,y)=>Array.from({length:6},(_,q)=>{ const a=Math.PI/3*q+Math.PI/6; return (x+rad*Math.cos(a)).toFixed(1)+','+(y+rad*Math.sin(a)).toFixed(1); }).join(' ');
+  let h=`<polygon points="${V.CR.join(',')} ${V.CD.join(',')} ${V.O.join(',')}" fill="none" stroke="var(--line-2)" stroke-dasharray="3 4"/>`;
+  for(const g of c.grid){ if(g.D==null) continue; const [x,y]=pos(g.i,g.j,g.k); h+=`<polygon class="hx" data-i="${g.i}" data-j="${g.j}" points="${hex(x,y)}" fill="${heat(g.D/top)}"/>`; }
+  const [bx,by]=pos(c.best.i,c.best.j,c.best.k);
+  h+=`<text x="${V.CR[0]}" y="${V.CR[1]+26}" font-size="12.5" fill="var(--ink-2)">会心率に全部</text><text x="${V.CD[0]}" y="${V.CD[1]+26}" text-anchor="end" font-size="12.5" fill="var(--ink-2)">会心ダメに全部</text><text x="${V.O[0]}" y="${V.O[1]-14}" text-anchor="middle" font-size="12.5" fill="var(--ink-2)">${oth}に全部</text>`;
+  h+=`<text x="${bx}" y="${by+6}" text-anchor="middle" font-size="18" fill="var(--ink)" stroke="var(--bg)" stroke-width="3" paint-order="stroke">★</text><circle class="pinc" r="${rad+2}" fill="none" stroke="var(--ink)" stroke-width="2" opacity="0"/>`;
+  $('tri').innerHTML=`<svg viewBox="0 0 ${TW} ${TH}" role="img" aria-label="三角の地図">${h}</svg><div class="tip" hidden></div>`;
+  const svg=$('tri').querySelector('svg'), tip=$('tri').querySelector('.tip'), at=t=>{ const p=t.closest&&t.closest('.hx'); return p?c.grid.find(g=>g.i===+p.dataset.i&&g.j===+p.dataset.j):null; };
+  svg.addEventListener('pointermove',ev=>{ const g=at(ev.target); if(!g){ tip.hidden=true; return; } const r=svg.getBoundingClientRect(), [x,y]=pos(g.i,g.j,g.k);
+    tip.innerHTML=`<b>${pc(g.D/top)}</b>（この組み合わせの最高に対して）<br>${allocTxt(g.a)}`; tip.hidden=false; const px=x/TW*r.width, py=y/TH*r.height, tw=tip.offsetWidth;
+    tip.style.left=Math.max(0,Math.min(r.width-tw,px-tw/2))+'px'; tip.style.top=Math.max(0,py-tip.offsetHeight-14)+'px'; });
+  svg.addEventListener('pointerleave',()=>{ tip.hidden=true; });
+  svg.addEventListener('click',ev=>{ const g=at(ev.target); if(!g) return; pin=g; const [x,y]=pos(g.i,g.j,g.k), el=svg.querySelector('.pinc'); el.setAttribute('cx',x); el.setAttribute('cy',y); el.setAttribute('opacity','1'); renderMarg(); }); }
+function renderMarg(){ const M=MD(), c=CUR, g=pin||c.best, m=O.marg(M,c.b,g.a), s=statsOf(g.a), mx=Math.max(...KS.map(k=>m[k]),1e-9);
+  $('pt').innerHTML=`${pin?'押した配分':'★てっぺん'}：${allocTxt(g.a)}（${pc(g.D/c.best.D)}）。会心率 ${Math.min(100,s.CR).toFixed(0)}%・会心ダメ ${s.CD.toFixed(0)}%`;
+  $('mg').innerHTML=KS.slice().sort((a,b)=>m[b]-m[a]).map(k=>`<span class="k"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}</span><span class="b"><i style="--c:var(${ST[k][1]}); width:${(Math.max(0,m[k])/mx*100).toFixed(0)}%"></i></span><span class="v">${pc2(m[k])}</span>`).join('');
+  const caps=KS.filter(k=>g.a[AK[k]]>=O.capOf(mains,k));
+  $('n4').textContent=pin?'★に近づくほど、棒の長さがそろっていきます。':`てっぺんでは棒の長さがほぼそろいます（どれかが長ければ、そちらへ1回動かしたほうが強いから）。${caps.length?`${caps.map(k=>ST[k][0]).join('・')}は入れられる上限まで入っているので、長くても足せません。`:''}${s.CR>=99.5?'会心率はもう上限なので0。':''}`; }
+function renderRank(){ const top=R[0].best.D; $('rk').innerHTML=R.map((r,i)=>`<tr class="${r===CUR?'on':''}"><td>${i+1}</td><td><button type="button" class="chipb" data-m="${r.mains.join()}">${cname(r.mains)}</button></td><td class="p">${pc(r.best.D/top)}</td><td>${allocTxt(r.best.a)}</td></tr>`).join('');
+  $('rk').querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{ mains=b.dataset.m.split(','); upd(); })); }
+
+
+/* ---- 3 いまの装備を診断する（GOOD ファイル） ---- */
+const GKEY={'マーヴィカ':'Mavuika','ネフェル':'Nefer','スカーク':'Skirk','フリンズ':'Flins'};
+const GSET={ObsidianCodex:'黒曜の秘典',FinaleOfTheDeepGalleries:'深廊の終曲',NightOfTheSkysUnveiling:'天穹の顕現せし夜'};
+const GST={hp:'HP',atk:'ATK',def:'DEF',hp_:'HP%',atk_:'ATK%',def_:'DEF%',enerRech_:'ER',eleMas:'EM',critRate_:'CR',critDMG_:'CD',heal_:'HEAL',physical_dmg_:'PHYS',pyro_dmg_:'DMG_炎',hydro_dmg_:'DMG_水',cryo_dmg_:'DMG_氷',electro_dmg_:'DMG_雷',anemo_dmg_:'DMG_風',geo_dmg_:'DMG_岩',dendro_dmg_:'DMG_草'};
+const SUBN={HP:'HP',ATK:'攻撃力',DEF:'防御力','HP%':'HP%','ATK%':'攻撃力%','DEF%':'防御力%',ER:'元素チャージ',EM:'元素熟知',CR:'会心率',CD:'会心ダメ'};
+function goodRead(txt){ let d; try{ d=JSON.parse(txt); }catch(e){ return null; } if(!d||d.format!=='GOOD'||!Array.isArray(d.artifacts)) return null;
+  const out={}; for(const [nm,key] of Object.entries(GKEY)){ const L=d.artifacts.filter(a=>a&&a.location===key&&a.rarity===5); if(!L.length) continue; out[nm]={};
+    for(const a of L) out[nm][a.slotKey]={set:GSET[a.setKey]||a.setKey,main:GST[a.mainStatKey],lv:a.level,subs:(a.substats||[]).filter(s=>s&&s.key&&GST[s.key]).map(s=>({s:GST[s.key],v:+s.value}))}; }
+  return out; }
+$('goodIn').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; const r=goodRead(await f.text());
+  if(!r){ $('goodMsg').textContent='GOOD形式のファイルではないようです（"format":"GOOD" が見つかりません）。'; return; }
+  const n=Object.keys(r).length; if(!n){ $('goodMsg').textContent='マーヴィカ・ネフェル・スカーク・フリンズの装備が見つかりませんでした。'; return; }
+  MINE=r; try{ localStorage.setItem('subopGuideMine',JSON.stringify(r)); }catch(e){} $('goodMsg').textContent=`${Object.keys(r).join('・')}の装備を読み込みました（この端末に覚えておきます）。キャラを切り替えると、それぞれの診断が出ます。`; renderDiag(); });
+function renderDiag(){ const box=$('diag'); DG={}; if(!MINE){ box.innerHTML=''; return; }
+  const P=MINE[ch]; if(!P){ box.innerHTML=`<p class="note">${ch}の装備はファイルにありませんでした。</p>`; return; }
+  const M=MD(), miss=SLOTS.filter(s=>!P[s]); if(miss.length){ box.innerHTML=`<p class="note">${ch}は空いている部位があるので、診断できません。</p>`; return; }
+  const pm=[P.sands.main,P.goblet.main,P.circlet.main], sets={}; for(const s of SLOTS) sets[s]=P[s].set; const nSet=SLOTS.filter(s=>sets[s]===M.set).length;
+  // 効くサブOP（KS）は回数に直し、それ以外（攻撃力の実数など）は土台に入れたまま
+  const pieces={}, roll={CR:0,CD:0,ATK:0,EM:0}, waste={}; let maxLine=0;
+  for(const s of SLOTS){ const p=P[s]; pieces[s]={main:p.main,subs:[]}; for(const q of p.subs){ const n=q.v/rollAvg(q.s);
+      if(KS.includes(q.s)){ roll[AK[q.s]]+=n; maxLine=Math.max(maxLine,Math.round(n)); } else { pieces[s].subs.push({s:q.s,v:String(q.v)}); if(ROLL[q.s]) waste[q.s]=(waste[q.s]||0)+n; } } }
+  const t=dmgTotal(M,pieces,sets,ben,null), b={t,flat:t.atk-M.baseAtk*(1+t.atkP/100)}, nEff=roll.CR+roll.CD+roll.ATK+roll.EM, Nr=Math.max(1,Math.round(nEff));
+  const dc=Math.max(lc,maxLine); O.setLineCap(dc);
+  const Dnow=O.evalA(M,b,roll), id=O.solve(M,pm,Nr,ben,KS,b), Did=id.best.D, eff=Dnow/Did, tl=O2.tol(M,b,pm,Nr,KS,Did,0.99), mg=O.marg(M,b,roll);
+  const others=O.combos(M).map(c=>O.solve(M,c,Nr,ben,KS)).filter(r=>r.best.D>0).sort((x,y)=>y.best.D-x.best.D), mine=others.find(r=>r.mains.join()===pm.join()), better=others[0]&&mine&&others[0].best.D/mine.best.D>1.01?others[0]:null;
+  O.setLineCap(lc); DG={ch,n:Nr};
+  const wN=Object.values(waste).reduce((x,y)=>x+y,0), sNow=statsOf2(M,b,roll), sId=statsOf2(M,b,id.best.a);
+  const bar=a=>{ const tot=Math.max(1,KS.reduce((x,k)=>x+a[AK[k]],0)); return `<div class="stack" style="height:20px">${KS.filter(k=>a[AK[k]]>0.05).map(k=>`<i style="--c:var(${ST[k][1]}); width:${a[AK[k]]/tot*100}%">${a[AK[k]]/tot>0.08?a[AK[k]].toFixed(a===roll?1:0):''}</i>`).join('')}</div>`; };
+  const rows=KS.map(k=>{ const s=AK[k], now=roll[s], r=tl[s], cls=now<r[0]-0.5?'lo':now>r[1]+0.5?'hi':'ok', lab=cls==='lo'?`あと${(r[0]-now).toFixed(1)}回ほど足りない`:cls==='hi'?`${(now-r[1]).toFixed(1)}回ほど多い`:'ちょうどいい範囲';
+    return `<tr><td><span style="display:inline-flex;align-items:center;gap:6px"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}</span></td><td>${now.toFixed(1)}回</td><td>${id.best.a[s]}回</td><td>${r[0]===r[1]?r[0]:r[0]+'〜'+r[1]}回</td><td class="${cls}">${lab}</td><td>${pc2(mg[k])}</td></tr>`; }).join('');
+  const top=KS.slice().sort((x,y)=>mg[y]-mg[x])[0], low=KS.filter(k=>roll[AK[k]]<tl[AK[k]][0]-0.5), high=KS.filter(k=>roll[AK[k]]>tl[AK[k]][1]+0.5);
+  let say=`${ch}のいまの装備は、同じメインOP・同じ回数（有効OP 約${nEff.toFixed(1)}回）で理想の配分にしたときの<b>${pc(Math.min(eff,1))}</b>。`;
+  if(sNow.CR>=99.5) say+=`会心率はもう${Math.min(100,sNow.CR).toFixed(0)}%なので、これ以上いりません。`;
+  if(low.length) say+=`${low.map(k=>ST[k][0]).join('・')}が少なめ。`; if(high.length) say+=`${high.map(k=>ST[k][0]).join('・')}が多め。`;
+    say+=`次に厳選で狙うなら<b>${ST[top][0]}</b>（1回で${pc2(mg[top])}）。`;
+  if(wN>=1) say+=`効かないサブOP（${Object.entries(waste).filter(e=>e[1]>=0.5).sort((x,y)=>y[1]-x[1]).map(([k,v])=>SUBN[k]+' '+v.toFixed(1)+'回').join('・')}）に約${wN.toFixed(1)}回とられています。`;
+  if(better) say+=`メインOPは${cname(better.mains)}にすると、同じ回数でさらに${pc(better.best.D/mine.best.D-1)}強くなれます。`;
+  if(nSet<4) say+=`（${M.set}が${nSet}個なので、4セット効果なしで計算しています）`;
+  const unf=SLOTS.filter(s=>P[s].lv!=null&&P[s].lv<20);
+  box.innerHTML=`<div class="dg"><div class="dg-top"><span class="pct">${pc(Math.min(eff,1))}</span><span class="ixs">いまの装備の指数 <b>${fmtIdx(idx(Dnow))}</b>（理想の配分なら ${fmtIdx(idx(Did))}）</span><span>理想の配分に対するいまのダメージ（${cname(pm)}・有効OP 約${nEff.toFixed(1)}回・1行${dc}回まで${dc>lc?`：いまの装備に1行${maxLine}回入った当たりがあるので、上限を合わせて比べています`:''}）</span></div>
+    <p class="say">${say}</p>
+    <div class="dg-bars"><span>いま</span>${bar(roll)}<span>理想</span>${bar(id.best.a)}</div>
+    <div class="stats"><span>いま：会心率 <b>${Math.min(100,sNow.CR).toFixed(0)}%</b>・会心ダメ <b>${sNow.CD.toFixed(0)}%</b>・攻撃力 <b>${sNow.atk.toFixed(0)}</b>・熟知 <b>${sNow.EM.toFixed(0)}</b></span><span>理想：会心率 <b>${Math.min(100,sId.CR).toFixed(0)}%</b>・会心ダメ <b>${sId.CD.toFixed(0)}%</b>・攻撃力 <b>${sId.atk.toFixed(0)}</b>・熟知 <b>${sId.EM.toFixed(0)}</b></span></div>
+    <div class="dgtw"><table class="dgt"><tr><th></th><th>いま</th><th>理想</th><th>1%以内の幅</th><th>判定</th><th>次の1回</th></tr>${rows}</table></div>
+    <p class="note">回数は、サブOPの値を1回分の平均の伸びで割った見積もり。${unf.length?`+20でない部位（${unf.length}個）は、いまの値で数えています。`:''}武器・レベル・凸はファイルに入っていないので、Lv90・無凸・モチーフ武器R1とみなしています。</p>
+    <div class="btns" style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="chipb" id="dgUse">この装備（${cname(pm)}・${Nr}回）を前提にする</button></div></div>`;
+  $('dgUse').addEventListener('click',()=>{ mains=pm.slice(); N=Nr; save(); all(true); document.getElementById('s2').scrollIntoView({behavior:'smooth',block:'start'}); }); }
+function statsOf2(M,b,a){ const t=Object.assign({},b.t); t.CR+=a.CR*rollAvg('CR'); t.CD+=a.CD*rollAvg('CD'); t.EM+=a.EM*rollAvg('EM'); t.atkP+=a.ATK*rollAvg('ATK%'); return {CR:t.CR,CD:t.CD,EM:t.EM,atk:M.baseAtk*(1+t.atkP/100)+b.flat}; }
+
+function renderPick0(){ $('verdict').innerHTML=`<span>サブOP ${N}回は、1行${lc}回までだと、どのメインOPでも入りきりません。回数を減らすか、厳選の現実度を上げてください。</span>`; $('say').textContent=''; const sv=N; N=Math.min(N,30); mains=null; solveAll(); mains=R[0].mains.slice(); solveCur(); N=sv; renderPick(); $('verdict').innerHTML=`<span>サブOP ${N}回は、1行${lc}回までだと、どのメインOPでも入りきりません。回数を減らすか、厳選の現実度を上げてください。</span>`; }
+/* ==== 手入力のバフ・計算式とバフ・指数 ==== */
+const BK={atkP:['攻撃力%','%'],atk:['攻撃力（実数）',''],dmgP:['ダメージバフ','%'],CR:['会心率','%'],CD:['会心ダメ','%'],EM:['元素熟知',''],react:['反応ボーナス','%']};
+// この技に効かない種類（比べると消える or 式にない）
+const NOEFF={'フリンズ':['dmgP'],'ネフェル':['dmgP','atkP','atk'],'マーヴィカ':[],'スカーク':['EM','react']};
+let BUFF={}; try{ BUFF=JSON.parse(localStorage.getItem('subopGuideBuffs')||'{}')||{}; }catch(e){ BUFF={}; }
+const saveBuff=()=>{ try{ localStorage.setItem('subopGuideBuffs',JSON.stringify(BUFF)); }catch(e){} };
+const buffsOf=c=>(BUFF[c]||[]).filter(b=>b.on&&+b.val);
+const bsig=()=>buffsOf(ch).map(b=>b.kind+':'+b.val).join(',');
+const DCACHE=new Map();
+function derive(c){ const M=DMG_MODELS[c], bs=buffsOf(c), key=c+'|'+bs.map(b=>b.kind+':'+b.val).join(','); if(DCACHE.has(key)) return DCACHE.get(key);
+  const s={atkP:0,atk:0,dmgP:0,CR:0,CD:0,EM:0,react:0}; for(const b of bs) s[b.kind]+=+b.val;
+  const D=Object.create(M); D.atkP=(M.atkP||0)+s.atkP; D.dmgP=(M.dmgP||0)+s.dmgP; D.cr=M.cr+s.CR; D.cd=M.cd+s.CD; D.em=(M.em||0)+s.EM; D.react=(M.react||0)+s.react/100; D.manual=s;
+  if(s.atk) D.dmg=t=>M.dmg(Object.assign({},t,{atk:t.atk+s.atk})); DCACHE.set(key,D); return D; }
+const MD=()=>derive(ch);
+// 指数100＝「よく育った基準」：初期値の表のメインOP・4セット・有効OP 30回を1行3回までで理想に配分・バフなし
+const REF=new Map();
+function refD(c){ if(REF.has(c)) return REF.get(c); const M=DMG_MODELS[c], ks=keysOf(M), sv=lc; O.setLineCap(3); const r=O.solve(M,[M.std.sands,M.std.goblet,M.std.circlet],30,0,ks); O.setLineCap(sv); REF.set(c,r.best.D); return r.best.D; }
+const idx=(D,c)=>D/refD(c||ch)*100;
+const fmtIdx=v=>v.toFixed(1);
+/* キャラごとの出典（DMG_MODELS の数字の内訳。合計が合わないときは画面に出す） */
+const SRC={
+ 'フリンズ':{base:[['フリンズ Lv90',351.59],['血染めの荒れ地（Lv90）',674.33]], cr:[['基礎',5],['血染めの荒れ地のサブステータス',22.05]], cd:[['基礎',50],['突破',38.4],['血染めの荒れ地：月感電を起こした後',28]], atkP:[], dmgP:[], em:[], react:[['血染めの荒れ地：元素爆発の後の月感電',0.36],['固有天賦：昇輝の月感電',0.20]],
+   formula:'攻撃力 × (1＋基礎ボーナス) × (1＋6×熟知÷(熟知＋2000)＋反応ボーナス) × (1＋会心率×会心ダメ)',
+   extra:['基礎ボーナス：攻撃力100ごとに+0.7%（上限14%）','熟知には、攻撃力の8%（上限160）が足される','月感電の直接ダメージには、ダメージバフ（元素ダメージ%）が効かない'],
+   gone:['天賦の倍率','月感電の×3','敵の耐性・防御']},
+ 'マーヴィカ':{base:[['マーヴィカ Lv90',358.77],['千烈の日輪（Lv90）',740.58]], cr:[['基礎',5],['千烈の日輪のサブステータス',11.03]], cd:[['基礎',50],['突破',38.4],['千烈の日輪：焚光（20%が夜魂の加護で1.75倍）',35]], atkP:[['千烈の日輪：焚光（28%が夜魂の加護で1.75倍）',49],['固有天賦1：夜魂バーストの後',30]], dmgP:[['固有天賦2：戦意200',40]], em:[], react:[],
+   formula:'攻撃力 × (1＋ダメージバフ) × (1＋2.78×熟知÷(熟知＋1400)＋反応ボーナス) × (1＋会心率×会心ダメ)',
+   extra:['溶解（炎→氷）の増幅。熟知の項は 2.78×熟知÷(熟知＋1400)','黒曜の秘典4セットの会心率+40%は、元素スキル（長押し）で夜魂値を使ったあとの元素爆発（E→Q）が前提'],
+   gone:['天賦の倍率','戦意で足されるダメージ（戦意×攻撃力の割合なので攻撃力に比例）','溶解の×2','敵の耐性・防御']},
+ 'スカーク':{base:[['スカーク Lv90',358.77],['蒼耀（Lv90）',674.33]], cr:[['基礎',5],['蒼耀のサブステータス',22.05]], cd:[['基礎',50],['突破',38.4],['蒼耀：エネルギー0のとき',40]], atkP:[['蒼耀：元素スキルの後（エネルギー0で2倍）',48]], dmgP:[['極悪技・尽：通常攻撃（天賦10・裂け目3つ）',20]], em:[], react:[],
+   formula:'攻撃力 × (1＋ダメージバフ) × (1＋会心率×会心ダメ)',
+   extra:['スカークはエネルギーの上限が0なので、蒼耀の追加効果と深廊の終曲4セットはいつも成立','溶解・凍結の増幅はしない前提なので、熟知は効かない'],
+   gone:['天賦の倍率','固有天賦2の倍率（×1.1〜1.7）','敵の耐性・防御']},
+ 'ネフェル':{base:[['ネフェル Lv90',344.42],['真言の匣（Lv90）',541.83]], cr:[['基礎',5],['真言の匣',8]], cd:[['基礎',50],['突破',38.4],['真言の匣のサブステータス',88.2],['真言の匣：真実の月（24%が1.5倍）',36]], atkP:[], dmgP:[], em:[['真言の匣：嘘の秘密（80が1.5倍）',120],['固有天賦：偽りの帳3層',100]], react:[],
+   formula:'熟知 × (1＋基礎ボーナス) × (1＋6×熟知÷(熟知＋2000)＋反応ボーナス) × (1＋会心率×会心ダメ)',
+   extra:['基礎ボーナス：熟知1につき+0.0175%（上限14%＝熟知800）','虚ろな影の月開花は熟知だけで決まるので、攻撃力とダメージバフは効かない','本人の2段（月開花ではない普通のダメージ）は入れていない'],
+   gone:['天賦の倍率','敵の耐性・防御']}
+};
+const SETN={EM:['元素熟知',''],CR:['会心率','%'],dmgP:['ダメージバフ','%'],react:['反応ボーナス','%']};
+// 箱の値（積が M.dmg(t) と同じになることを確かめる）
+function boxes(c,t,s){ const atk=t.atk+(s.atk||0), cr=Math.min(1,t.CR/100), crit=1+cr*t.CD/100;
+  if(c==='マーヴィカ') return [['攻撃力',atk,atk.toFixed(0)],['ダメージバフ',1+t.dmgP/100,'×'+(1+t.dmgP/100).toFixed(3)],['溶解の熟知の項',1+2.78*t.EM/(t.EM+1400)+t.react,'×'+(1+2.78*t.EM/(t.EM+1400)+t.react).toFixed(3)],['会心',crit,'×'+crit.toFixed(3)]];
+  if(c==='スカーク') return [['攻撃力',atk,atk.toFixed(0)],['ダメージバフ',1+t.dmgP/100,'×'+(1+t.dmgP/100).toFixed(3)],['会心',crit,'×'+crit.toFixed(3)]];
+  if(c==='フリンズ'){ const em=t.EM+Math.min(0.08*atk,160), bb=1+Math.min(atk/100*0.007,0.14), rx=1+6*em/(em+2000)+t.react; return [['攻撃力',atk,atk.toFixed(0)],['基礎ボーナス',bb,'×'+bb.toFixed(3)],[`月反応の熟知の項（熟知 ${em.toFixed(0)}）`,rx,'×'+rx.toFixed(3)],['会心',crit,'×'+crit.toFixed(3)]]; }
+  const em=t.EM, bb=1+Math.min(em*0.000175,0.14), rx=1+6*em/(em+2000)+t.react; return [['熟知',em,em.toFixed(0)],['基礎ボーナス',bb,'×'+bb.toFixed(3)],['月反応の熟知の項',rx,'×'+rx.toFixed(3)],['会心',crit,'×'+crit.toFixed(3)]]; }
+// 装備の出どころ：標準の装備（1の前提の理想の配分）／いまの装備（GOOD）
+let FSRC='std';
+function gearOf(){ const M=DMG_MODELS[ch];
+  if(FSRC==='mine'&&MINE&&MINE[ch]&&SLOTS.every(s=>MINE[ch][s])){ const P=MINE[ch], pieces={}, sets={}; for(const s of SLOTS){ pieces[s]={main:P[s].main,subs:P[s].subs.map(q=>({s:q.s,v:String(q.v)}))}; sets[s]=P[s].set; } return {pieces,sets,lab:'いまの装備（GOODファイル）'}; }
+  const a=CUR?CUR.best.a:{CR:0,CD:0,ATK:0,EM:0}, pieces={flower:{main:'HP',subs:[]},plume:{main:'ATK',subs:[]},sands:{main:mains[0],subs:[]},goblet:{main:mains[1],subs:[]},circlet:{main:mains[2],subs:[]}}, sets={};
+  pieces.flower.subs=[['CR',a.CR],['CD',a.CD],['ATK%',a.ATK],['EM',a.EM]].filter(x=>x[1]>0).map(([k,n])=>({s:k,v:String(n*rollAvg(k))})); for(const s of SLOTS) sets[s]=M.set;
+  return {pieces,sets,lab:`標準の装備（${cname(mains)}・サブOP ${N}回を理想の配分：${allocTxt(a)}）`}; }
+function artSum(M,pieces){ const r={ATK:0,'ATK%':0,CR:0,CD:0,EM:0,DMG:0};
+  for(const s of SLOTS){ const p=pieces[s]; if(!p) continue; const mv=MAIN_NUM[p.main]!=null?MAIN_NUM[p.main]:(String(p.main).startsWith('DMG_')?46.6:0); const add=(k,v)=>{ if(k==='DMG_'+M.elem) r.DMG+=v; else if(r[k]!=null) r[k]+=v; }; add(p.main,mv); for(const q of p.subs||[]) add(q.s,parseFloat(q.v)||0); }
+  return r; }
+const nf=(v,u)=>(Math.round(v*10)/10).toLocaleString()+(u||'');
+function renderFormula(){ const box=$('fbox'); if(!box) return; const M=DMG_MODELS[ch], D=MD(), S=SRC[ch], g=gearOf(), t=dmgTotal(D,g.pieces,g.sets,ben), s=D.manual, art=artSum(M,g.pieces);
+  const nSet=SLOTS.filter(x=>g.sets[x]===M.set).length, setRows=k=>{ const r=[]; if(nSet>=2&&M.set2[k]!=null) r.push([`${M.set} 2セット`,M.set2[k]]); if(nSet>=4&&M.set4[k]!=null) r.push([`${M.set} 4セット`,M.set4[k]]); return r; };
+  const man=k=>buffsOf(ch).filter(b=>b.kind===k).map(b=>[`手入力：${b.name||BK[k][0]}`,+b.val]);
+  const sum=L=>L.reduce((x,y)=>x+y[1],0);
+  // 内訳（固定の部分の合計が DMG_MODELS と合っているか）
+  const chk=[[sum(S.base),M.baseAtk],[sum(S.cr),M.cr],[sum(S.cd),M.cd],[sum(S.atkP),M.atkP||0],[sum(S.dmgP),M.dmgP||0],[sum(S.em),M.em||0],[sum(S.react),M.react||0]].filter(([a,b])=>Math.abs(a-b)>1e-6);
+  const benR=ben?[['ベネットの元素爆発（天賦13・基礎攻撃力の119%）',BENNETT_ATK]]:[];
+  const rows=[
+    ['基礎攻撃力',S.base,''],
+    ['攻撃力%',S.atkP.concat(art['ATK%']?[['聖遺物（メインOP・サブOP）',art['ATK%']]]:[]).concat(man('atkP')),'%'],
+    ['攻撃力（実数）',[['聖遺物（羽のメインOP・サブOP）',art.ATK]].concat(benR).concat(man('atk')),''],
+    ['会心率',S.cr.concat(setRows('CR')).concat(art.CR?[['聖遺物',art.CR]]:[]).concat(man('CR')),'%'],
+    ['会心ダメ',S.cd.concat(art.CD?[['聖遺物',art.CD]]:[]).concat(man('CD')),'%'],
+    ['元素熟知',S.em.concat(setRows('EM')).concat(art.EM?[['聖遺物',art.EM]]:[]).concat(man('EM')),''],
+    ['ダメージバフ',S.dmgP.concat(setRows('dmgP')).concat(art.DMG?[[`聖遺物（${M.elem}元素の杯）`,art.DMG]]:[]).concat(man('dmgP')),'%'],
+    ['反応ボーナス',S.react.map(([n,v])=>[n,v*100]).concat(setRows('react').map(([n,v])=>[n,v*100])).concat(man('react')),'%']];
+  const ne=NOEFF[ch]||[], kindOfRow={'攻撃力%':'atkP','攻撃力（実数）':'atk','会心率':'CR','会心ダメ':'CD','元素熟知':'EM','ダメージバフ':'dmgP','反応ボーナス':'react','基礎攻撃力':'atk'};
+  const totalTxt={'基礎攻撃力':nf(M.baseAtk),'攻撃力%':nf(t.atkP,'%'),'攻撃力（実数）':nf(t.atk-M.baseAtk*(1+t.atkP/100)+(s.atk||0)),'会心率':nf(t.CR,'%')+(t.CR>100?'（100%で頭打ち）':''),'会心ダメ':nf(t.CD,'%'),'元素熟知':nf(t.EM),'ダメージバフ':nf(t.dmgP,'%'),'反応ボーナス':nf(t.react*100,'%')};
+  const B=boxes(ch,t,s), prod=B.reduce((x,y)=>x*y[1],1), Dm=D.dmg(t), okProd=Math.abs(prod/Dm-1)<1e-9, I=idx(Dm);
+  const atkLine=`攻撃力 ＝ 基礎攻撃力 ${nf(M.baseAtk)} × (1＋攻撃力% ${nf(t.atkP,'%')}) ＋ 実数 ${nf(t.atk-M.baseAtk*(1+t.atkP/100)+(s.atk||0))} ＝ <b>${nf(t.atk+(s.atk||0))}</b>`;
+  box.innerHTML=`
+    <div class="fx"><span class="note">基準の技</span><b>${esc(M.skill)}</b><span class="note">Lv90・無凸・モチーフ武器R1・${esc(M.set)}4セット</span></div>
+    <div class="fsrc"><span class="note">装備：</span><div class="seg" id="fSrc" role="group" aria-label="装備の出どころ"><button type="button" data-v="std" aria-pressed="${FSRC!=='mine'}">標準の装備（1の前提）</button><button type="button" data-v="mine" aria-pressed="${FSRC==='mine'}"${MINE&&MINE[ch]?'':' disabled title="3でGOODファイルを読み込むと選べます"'}>いまの装備（GOOD）</button></div></div>
+    <p class="note">${esc(g.lab)}${FSRC==='mine'&&nSet<4?`（${esc(M.set)}が${nSet}個なので、4セット効果なし）`:''}</p>
+    <div class="idx"><div><span class="note">指数</span><b>${fmtIdx(I)}</b></div><p class="note">100＝${esc(ch)}の「よく育った基準」（初期値の表のメインOP ${cname([M.std.sands,M.std.goblet,M.std.circlet])}・4セット・サブOP 30回を1行3回までで理想に配分・バフなし）。この装備${ben||buffsOf(ch).length?'とバフ':''}だと、基準より${I>=100?(I-100).toFixed(1)+'%強い':(100-I).toFixed(1)+'%弱い'}。キャラ同士では比べられません（基準の技が違うため）。</p></div>
+    <h3>式</h3>
+    <div class="fml">ダメージ ∝ ${esc(S.formula)}</div>
+    <div class="boxes">${B.map(([n,v,txt])=>`<div class="bx"><span class="note">${esc(n)}</span><b>${txt}</b></div>`).join('<span class="times">×</span>')}</div>
+    ${ch==='ネフェル'?'':`<p class="fml2">${atkLine}</p>`}
+    <ul class="fnotes">${S.extra.map(x=>`<li>${esc(x)}</li>`).join('')}<li>比べると消えるので入れていないもの：${S.gone.map(esc).join('・')}</li></ul>
+    ${okProd?'':'<p class="err">箱の積が計算と合いません（確認が必要です）</p>'}${chk.length?'<p class="err">内訳の合計が計算の数字と合いません（確認が必要です）</p>':''}
+    <h3>ステータスの内訳（何によるバフか）</h3>
+    <div class="ftw"><table class="ft">${rows.map(([nm,L,u])=>{ const k=kindOfRow[nm], off=ne.includes(k)&&nm!=='基礎攻撃力';
+      return `<tr class="${off?'off':''}"><th>${nm}${off?'<small>この技には効かない</small>':''}</th><td>${L.length?L.filter(x=>Math.abs(x[1])>1e-9).map(([n,v])=>`<span class="src">${esc(n)} <b>${nf(v,u)}</b></span>`).join(''):'<span class="note">なし</span>'}</td><td class="tot">${totalTxt[nm]}</td></tr>`; }).join('')}</table></div>
+    <h3>手入力のバフ</h3>
+    <p class="note">ほかのキャラのバフなどを足せます。ここで足したバフは、1の前提・2の答え・3の診断にも効きます。指数の基準（100）はバフなしのままです。</p>
+    <div class="blist">${(BUFF[ch]||[]).map((b,i)=>`<div class="brow${b.on?'':' dim'}"><label><input type="checkbox" data-bon="${i}" ${b.on?'checked':''}> ${esc(b.name||BK[b.kind][0])}</label><span>${BK[b.kind][0]} <b>${b.val>0?'+':''}${b.val}${BK[b.kind][1]}</b>${ne.includes(b.kind)?'<small>この技には効かない</small>':''}</span><button type="button" class="chipb" data-bdel="${i}">消す</button></div>`).join('')||'<p class="note">まだありません。</p>'}</div>
+    <form class="badd" id="badd"><label>名前<input type="text" id="bName" placeholder="例：シトラリの固有天賦" maxlength="30"></label><label>種類<select id="bKind">${Object.entries(BK).map(([k,[n]])=>`<option value="${k}">${n}${ne.includes(k)?'（効かない）':''}</option>`).join('')}</select></label><label>値<input type="number" id="bVal" step="0.1" inputmode="decimal" placeholder="例：20"></label><button type="submit" class="filebtn">足す</button></form>
+    <p class="note">ベネットのバフは、1の前提の「バフ」で切り替えます（いま：${ben?'あり（攻撃力の実数 +'+nf(BENNETT_ATK)+'）':'なし'}）。反応ボーナスは%で入れてください（例：月反応+10%なら 10）。</p>`;
+  box.querySelectorAll('#fSrc button').forEach(b=>b.addEventListener('click',()=>{ if(b.disabled) return; FSRC=b.dataset.v; renderFormula(); }));
+  box.querySelectorAll('[data-bon]').forEach(el=>el.addEventListener('change',()=>{ BUFF[ch][+el.dataset.bon].on=el.checked; saveBuff(); all(true); }));
+  box.querySelectorAll('[data-bdel]').forEach(el=>el.addEventListener('click',()=>{ BUFF[ch].splice(+el.dataset.bdel,1); saveBuff(); all(true); }));
+  $('badd').addEventListener('submit',e=>{ e.preventDefault(); const v=parseFloat($('bVal').value); if(!isFinite(v)||!v){ $('bVal').focus(); return; } (BUFF[ch]=BUFF[ch]||[]).push({name:$('bName').value.trim(),kind:$('bKind').value,val:v,on:true}); saveBuff(); all(true); }); }
+
+let VIEW='plan'; try{ if(location.hash==='#formula') VIEW='formula'; }catch(e){}
+function setView(v){ VIEW=v; $('vPlan').hidden=v!=='plan'; $('vFormula').hidden=v!=='formula'; $('vSel').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v))); try{ history.replaceState(null,'',v==='formula'?'#formula':'#plan'); }catch(e){} if(v==='formula') renderFormula(); }
+$('vSel').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
+window.addEventListener('hashchange',()=>{ const v=location.hash==='#formula'?'formula':'plan'; if(v!==VIEW) setView(v); });
+function upd(){ solveCur(); renderPick(); renderAnswer(); if($('more').open) renderMore(); renderDiag(); if(VIEW==='formula') renderFormula(); }
+function renderMore(){ renderPeak(); renderTri(); renderMarg(); renderRank(); }
+$('more').addEventListener('toggle',()=>{ if($('more').open) renderMore(); });
+function all(keep){ solveAll(); if(!R.length){ renderPick0(); return; } if(!keep||!mains||!R.find(r=>r.mains.join()===mains.join())) mains=R[0].mains.slice(); upd(); }
+let rsT=0, lastW=0; window.addEventListener('resize',()=>{ clearTimeout(rsT); rsT=setTimeout(()=>{ const w=$('path').clientWidth; if(Math.abs(w-lastW)>40){ lastW=w; renderPath(); if($('more').open) renderPeak(); } },150); });
+all(); setView(VIEW);
+})();
+</script>
