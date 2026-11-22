@@ -441,6 +441,14 @@ const ENKA_PROP={FIGHT_PROP_HP:'HP',FIGHT_PROP_ATTACK:'ATK',FIGHT_PROP_DEFENSE:'
 const ENKA_SLOT={EQUIP_BRACER:'flower',EQUIP_NECKLACE:'plume',EQUIP_SHOES:'sands',EQUIP_RING:'goblet',EQUIP_DRESS:'circlet'};
 function enkaParse(txt){ txt=String(txt||'').trim(); if(!txt) throw new Error('empty');
   try{ return JSON.parse(txt); }catch(e){ const a=txt.indexOf('{'), b=txt.lastIndexOf('}'); if(a>=0&&b>a) return JSON.parse(txt.slice(a,b+1)); throw e; } }
+/* キャラ全体の値（2.10）：Enka の fightPropMap＝ゲームのキャラ画面と同じ最終値（突破・武器・聖遺物・セットの常時効果込み）。％は小数第1位の％に、攻撃・HP・防御は合計の実数。
+   あわせて武器（id・Lv・精錬・★）・凸数・キャラのLvを残す（ダメージの式で、実際の武器・凸を使えるようにするため）。右下の段の「パラメータの実際の値」に使う */
+const ENKA_FP={2000:'HP',2001:'ATK',2002:'DEF',20:'CR',22:'CD',23:'ER',26:'HEAL',28:'EM',30:'PHYS',40:'DMG_炎',41:'DMG_雷',42:'DMG_水',43:'DMG_草',44:'DMG_風',45:'DMG_岩',46:'DMG_氷'};
+function enkaStat(av){ const m=av&&av.fightPropMap; if(!m) return {}; const fp={};
+  for(const [k,n] of Object.entries(ENKA_FP)){ const v=+m[k]; if(!isFinite(v)||(!v&&!['CR','CD','ER','EM'].includes(n))) continue; /* 0 の治療・物理・元素ダメは残さない */ fp[n]=['HP','ATK','DEF','EM'].includes(n)?Math.round(v):Math.round(v*1000)/10; }
+  const wq=(av.equipList||[]).find(e=>e&&e.flat&&e.flat.itemType==='ITEM_WEAPON'), w=wq?{id:wq.itemId,lv:+((wq.weapon||{}).level)||0,r:1+(+Object.values((wq.weapon||{}).affixMap||{})[0]||0),star:+wq.flat.rankLevel||0}:null;
+  const lv=+(((av.propMap||{})['4001']||{}).val)||0;
+  return {uidStat:Object.assign({fp,cons:(av.talentIdList||[]).length},lv?{lv}:{},w?{w}:{})}; }
 function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
   for(const av of (d&&d.avatarInfoList)||[]){ const pieces={}, cnt={}, low={};
     for(const e of av.equipList||[]){ const f=e.flat||{}, r=e.reliquary; if(f.itemType!=='ITEM_RELIQUARY'||!r) continue;
@@ -455,7 +463,7 @@ function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
     if(!Object.keys(pieces).length) continue;
     const nm=ENKA.avatar[String(av.avatarId)]; if(!nm) notes.unknown++;
     const set=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>=2).map(([k,n])=>(ENKA.set[k]||'セット'+k)+(n>=4?'4':'2')).join('＋');
-    out.push(Object.assign({id:'uid-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()},Object.keys(low).length?{low}:{})); } // low：★4の聖遺物（計算に入れず、カードで「★4」と表示するだけ）
+    out.push(Object.assign({id:'uid-'+av.avatarId,name:nm||`不明なキャラ（${av.avatarId}）`,set,pieces,date:today()},Object.keys(low).length?{low}:{},enkaStat(av))); } // low：★4の聖遺物（計算に入れず、カードで「★4」と表示するだけ）
   return {chars:out,notes}; }
 /* UIDで取得：Enka に問い合わせる（中継の設定があれば中継、なければ直接）。
    Enka の決まり：応答の ttl（秒）が切れるまでは同じUIDを取り直さない → この端末に応答を取っておき、ttl の間はそれを使う。
