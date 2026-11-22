@@ -921,7 +921,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'PX',ib:'tick',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'PX',ib:'tick',ie:'s',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -942,7 +942,8 @@ function cc2Samples(){ // 見本（実在のプレイヤーのデータではな
   /* UID で取り込んだ形の見本（キャラ全体の値 uidStat。実在のプレイヤーではなく、作った値） */
   const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.idealRoll={HP:22,CR:17.5,CD:26,'DMG_水':8}; /* 理想は仮の値（式のスレッドの結果が出たら差し替え） */ smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},base:{HP:15307,ATK:786,DEF:696},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
   const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.idealRoll={ATK:18,CR:20.5,CD:25.5,'DMG_雷':12.6}; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},base:{HP:12907,ATK:945,DEF:789},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
-  return [{c:sm,l:'見本：フリーナ（★5）'},{c:smP,l:'見本：フリーナ（砂・杯が+12）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'},{c:smU,l:'見本：フリーナ（UID）'},{c:s100U,l:'見本：雷電将軍（UID）'}]; }
+  const smN=JSON.parse(JSON.stringify(smU)); smN.id='cc2-uid3'; delete smN.idealRoll;
+  return [{c:sm,l:'見本：フリーナ（★5）'},{c:smP,l:'見本：フリーナ（砂・杯が+12）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'},{c:smU,l:'見本：フリーナ（UID）'},{c:s100U,l:'見本：雷電将軍（UID）'},{c:smN,l:'見本：フリーナ（UID・式なし）'}]; }
 // 新しいカード用の立ち絵の切り出し：fitCardArt と同じ切り出しで、減光（下へ薄く・外周を丸く薄く）を焼き込まない。端はカードの側で溶かす
 function fitCardArt2(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
   const k=Math.min(1,1600/Math.max(im.width,im.height)), w=Math.round(im.width*k), h=Math.round(im.height*k), cv=document.createElement('canvas'); cv.width=w; cv.height=h; const cx=cv.getContext('2d'); cx.drawImage(im,0,0,w,h);
@@ -987,7 +988,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
     if(CARD_IMG[cc.id]&&!(cc.id in CARD_FIT2)&&!CARD_FITTING['2'+cc.id]){ CARD_FITTING['2'+cc.id]=1; fitCardArt2(CARD_IMG[cc.id]).then(u=>{ delete CARD_FITTING['2'+cc.id]; CARD_FIT2[cc.id]=u||''; if($('cc2Proto')) draw(); }); }
     if(CARD_IMG[cc.id]&&!(CARD_IMG[cc.id] in CC2_BB)){ CC2_BB[CARD_IMG[cc.id]]=null; cc2BBox(CARD_IMG[cc.id]).then(b=>{ CC2_BB[CARD_IMG[cc.id]]=b; if($('cc2Proto')) draw(); }); }
     const aid=cc2Aid(cc), adj=cc2AdjOf(cc);
-    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl,up:CC2.up,gs:CC2.gs,fw:CC2.fw,mv:CC2.mv,un:CC2.un,yk:CC2.yk,pb:CC2.pb,ib:CC2.ib}; window.CC2_ADJ=adj; window.CC2_FIT2=CARD_FIT2[cc.id]||''; window.CC2_WHOLE=CARD_IMG[cc.id]||''; window.CC2_BB=CC2_BB[CARD_IMG[cc.id]]||null; return constellationCardSVG(cc,st,'v2'); };
+    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl,up:CC2.up,gs:CC2.gs,fw:CC2.fw,mv:CC2.mv,un:CC2.un,yk:CC2.yk,pb:CC2.pb,ib:CC2.ib,ie:CC2.ie}; window.CC2_ADJ=adj; window.CC2_FIT2=CARD_FIT2[cc.id]||''; window.CC2_WHOLE=CARD_IMG[cc.id]||''; window.CC2_BB=CC2_BB[CARD_IMG[cc.id]]||null; return constellationCardSVG(cc,st,'v2'); };
     box.innerHTML=`<div class="cc2-bar"><div class="row"><b>カードのデザインの見直し（試作）</b><span class="note">保存はしません</span><button class="btn" type="button" data-x style="margin-left:auto">閉じる</button></div>
       <div class="row">${[...CC2_VS,['NOW','今のカード'],['all','4案を並べる'],['SHEET','バッジ一覧']].map(([k,t])=>B('v',k,t,CC2.v===k)).join('')}</div>
       <div class="row">バッジ ${CC2_BS.map(([k,t])=>B('b',k,t,CC2.b===k)).join('')}　余白 ${B('tg',0,'標準',!CC2.tight)}${B('tg',1,'詰める',!!CC2.tight)}</div>
@@ -996,6 +997,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
       <div class="row">年月の表記（試作） ${[['mo','MONTHS（本番）'],['ym1','7年 + 4.0か月'],['ym2','7年4か月／12日'],['ym3','1年9か月／2か月／0.8か月'],['ym4','1年3か月／11か月／29日']].map(([k,t])=>B('un',k,t,CC2.un===k)).join('')}　ym3 の詰め ${[['now','前の形'],['R0','右寄せ'],['R1','詰め1 欄を11か月の幅に'],['R2','詰め2 ＋すき間ほぼ0'],['R3','詰め3 ＋2桁の月の字間'],['R4','詰め4 いちばん詰める']].map(([k,t])=>B('yk',k,t,CC2.yk===k)).join('')}</div>
       <div class="row">右下の段（試作） ${[['now','1か月で更新（本番）'],['U','パラメータの実際の値（UID）'],['B2','横棒・2色（聖遺物／それ以外）'],['B3','横棒・3色（サブを分ける）'],['P2','円：二重の輪（外＝今・内＝理想）'],['P1','円：今の輪＋理想の境目'],['PX','円（仕上げ）'],['BX','100%の帯（仕上げ）']].map(([k,t])=>B('pb',k,t,CC2.pb===k)).join('')}</div>
+      <div class="row">理想の目立たせ方（仕上げ） ${[['n','控えめ'],['s','星を大きく光らせる'],['r','＋理想の細い輪・帯']].map(([k,t])=>B('ie',k,t,CC2.ie===k)).join('')}</div>
       <div class="row">理想の描き方 ${[['tick','縦の目印'],['ghost','理想の長さの枠']].map(([k,t])=>B('ib',k,t,CC2.ib===k)).join('')}</div>
       <div class="row">部位の MONTHS ${[['plain','そのまま'],['type','A 見出しと同じ字面'],['next','B 次の狙い'],['both','A＋B']].map(([k,t])=>B('mv',k,t,CC2.mv===k)).join('')}</div>
       <div class="row">グラフ本体 ${[['bold','華やか'],['mid','中間'],['calm','控えめ（前の形）']].map(([k,t])=>B('gs',k,t,CC2.gs===k)).join('')}　これからの帯 ${[['0','なし'],['91','3か月'],['182','半年'],['365','1年']].map(([k,t])=>B('fw',k,t,CC2.fw===k)).join('')}</div>
@@ -1020,7 +1022,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       const rs=box.querySelector('[data-adjs]'); if(rs){ rs.oninput=()=>{ adj.s=+rs.value/100; box.querySelector('[data-adjv]').textContent=rs.value+'%'; place(); }; rs.onchange=()=>{ save(); draw(); }; }
       const rb=box.querySelector('[data-adjreset]'); if(rb) rb.onclick=()=>{ delete CC2.adj[aid]; try{ localStorage.setItem('lab:cc2Adj',JSON.stringify(CC2.adj)); }catch(e){} draw(); };
       const cb=box.querySelector('[data-adjcopy]'); if(cb) cb.onclick=async()=>{ const out={}; for(const [a,v] of Object.entries(CC2.adj)) out[a]=Object.assign({name:(PORTRAITS[a]||{}).name||''},v); const t=JSON.stringify(out); let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){} box.querySelector('[data-adjmsg]').textContent=ok?'コピーしました。Claude に貼って渡してください':'コピーできませんでした：'+t; }; }
-    ['ov','xs','pz','up','gs','fw','mv','un','yk','pb','ib'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
+    ['ov','xs','pz','up','gs','fw','mv','un','yk','pb','ib','ie'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
     box.querySelector('[data-ci]').onchange=e=>{ CC2.ci=+e.target.value; draw(); };
     box.querySelector('[data-x]').onclick=()=>box.remove(); };
   window.cc2Debug=()=>CC2.list.map(({c,l})=>{ const st=charStats(c); return l+'  全体 '+fmtAge(st.age)+' '+tierOf(st.age)[1]+' ｜ '+SLOTS.map(s=>fmtAge(st.slots[s].age)+' '+tierOf(st.slots[s].age)[1]).join(' ／ '); }); // 確認用
@@ -1647,39 +1649,45 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           /* 理想（式があるキャラ）：c.idealRoll＝無凸餅（モチーフ武器R1・無凸・メインとセットは本人と同じ）の理想を、同じ単位（サブOP何回分・全体）で。チャージはアタッカー・サブアタッカーでは考えない（目印なし）。
              いまは見本だけ（値は仮）。window.CC2_OPT.ib：tick＝棒に縦の目印／ghost＝理想の長さの枠 */
           const ID=c.idealRoll||null, IB=(window.CC2_OPT||{}).ib||'tick';
-          if((PB==='PX'||PB==='BX')&&ID){ /* 仕上げの試作（2.10）：PX＝円（今の輪＋外の軌道に理想の境目を星で）／BX＝100%の帯（今の帯＋上の細い線に理想の境目を星で、星から今の境目へ細い線）。割合だけを事実として */
-            const PR=rows.filter(r=>r.tot!=null&&ID[r.k]!=null), sum=PR.reduce((a,r)=>a+Math.max(0,r.tot),0)||1, isum=PR.reduce((a,r)=>a+ID[r.k],0)||1, GD='#e9d39a',
+          if(PB==='PX'||PB==='BX'){ /* 仕上げの試作（2.10）：PX＝円（今の輪＋外の軌道に理想の境目を星で）／BX＝100%の帯（今の帯＋上の細い線に理想の境目を星で、星から今の境目へ細い線）。割合だけを事実として。
+              理想（c.idealRoll）がないキャラは、今の輪／帯と今の割合だけ（チャージも入れる。役割が分からないため）。
+              window.CC2_OPT.ie＝理想の目立たせ方：n＝控えめ／s＝星を大きく光らせ、線と理想の数字を明るく／r＝s に加えて理想の割合を細い輪（帯）でも描く */
+            const IE=(window.CC2_OPT||{}).ie||'s', ST=ID&&IE!=='n', RG=ID&&IE==='r';
+            const PR=rows.filter(r=>r.tot!=null&&(!ID||ID[r.k]!=null)), sum=PR.reduce((a,r)=>a+Math.max(0,r.tot),0)||1, isum=ID?PR.reduce((a,r)=>a+ID[r.k],0)||1:1, GD='#e9d39a',
               COL={HP:'#7cc6a8',ATK:'#e0866a',DEF:'#c2b08a',CR:'#f2dfa0',CD:'#d39a4c',ER:'#9aa8e6',EM:'#a5cf7e'}, colOf=k=>COL[k]||(typeof SKY_EL!=='undefined'&&SKY_EL[k.slice(4)])||'#8a93a6',
               NM={HP:'HP',ATK:'攻撃',DEF:'防御',CR:'会心率',CD:'会心ダメ',ER:'チャージ',EM:'熟知'}, nm=k=>NM[k]||(k.startsWith('DMG_')?k.slice(4)+'ダメ':k), /* 狭いので元素ダメは「水ダメ」の形に */
-              STAR=(x,y,r,col,op)=>`<path d="M${f1r(x)},${f1r(y-r)} Q${f1r(x)},${f1r(y)} ${f1r(x+r)},${f1r(y)} Q${f1r(x)},${f1r(y)} ${f1r(x)},${f1r(y+r)} Q${f1r(x)},${f1r(y)} ${f1r(x-r)},${f1r(y)} Q${f1r(x)},${f1r(y)} ${f1r(x)},${f1r(y-r)} Z" fill="${col}" fill-opacity="${op==null?1:op}"/>`;
-            let a=0, ai=0; PR.forEach(r=>{ r.f=Math.max(0,r.tot)/sum; r.fi=ID[r.k]/isum; r.a0=a; r.i0=ai; a+=r.f; ai+=r.fi; });
-            g+=`<defs><filter id="c2PG" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>`;
+              STAR=(x,y,r,col,op)=>`<path d="M${f1r(x)},${f1r(y-r)} Q${f1r(x)},${f1r(y)} ${f1r(x+r)},${f1r(y)} Q${f1r(x)},${f1r(y)} ${f1r(x)},${f1r(y+r)} Q${f1r(x)},${f1r(y)} ${f1r(x-r)},${f1r(y)} Q${f1r(x)},${f1r(y)} ${f1r(x)},${f1r(y-r)} Z" fill="${col}" fill-opacity="${op==null?1:op}"/>`,
+              ISTAR=(x,y)=>ST?`<circle cx="${f1r(x)}" cy="${f1r(y)}" r="6.5" fill="${GD}" opacity=".45" filter="url(#c2PG)"/>`+STAR(x,y,6.4,'#05060d')+STAR(x,y,5.4,'#fff6d8'):STAR(x,y,4.6,'#05060d')+STAR(x,y,3.6,GD),
+              LOP=ST?.9:.5, LW=ST?1.1:.8, ICOL=ST?GD:GD, IOP=ST?1:.85, IFS=ST?11:10;
+            let a=0, ai=0; PR.forEach(r=>{ r.f=Math.max(0,r.tot)/sum; r.fi=ID?ID[r.k]/isum:0; r.a0=a; r.i0=ai; a+=r.f; ai+=r.fi; });
+            g+=`<defs><filter id="c2PG" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>`;
             const PCT=(v,fs,col)=>`${Math.round(v*100)}<tspan font-size="${(fs*.66).toFixed(1)}" font-weight="400" fill="${col||'#8a93a6'}" dx=".5">%</tspan>`;
             if(PB==='PX'){ const cx=LX+IN+40, cy=y0+90, R0=33, RW=9, RO=46, TAU=Math.PI*2, P=(r,t)=>[cx+r*Math.sin(t*TAU), cy-r*Math.cos(t*TAU)], gap=.012,
-                arc=(r,t0,t1,w,col,op,cap)=>{ if(t1-t0<=gap) return ''; const [x0,y0b]=P(r,t0+gap/2), [x1,y1b]=P(r,t1-gap/2); return `<path d="M${f1r(x0)},${f1r(y0b)} A${r},${r} 0 ${t1-t0>.5?1:0} 1 ${f1r(x1)},${f1r(y1b)}" fill="none" stroke="${col}" stroke-opacity="${op}" stroke-width="${w}"${cap?' stroke-linecap="butt"':''}/>`; };
+                arc=(r,t0,t1,w,col,op)=>{ if(t1-t0<=gap) return ''; const [x0,y0b]=P(r,t0+gap/2), [x1,y1b]=P(r,t1-gap/2); return `<path d="M${f1r(x0)},${f1r(y0b)} A${r},${r} 0 ${t1-t0>.5?1:0} 1 ${f1r(x1)},${f1r(y1b)}" fill="none" stroke="${col}" stroke-opacity="${op}" stroke-width="${w}"/>`; };
               /* 外の軌道（文字盤のような細い線と5%ごとの目盛り） */
-              g+=`<circle cx="${cx}" cy="${cy}" r="${RO}" fill="none" stroke="${GD}" stroke-opacity=".22" stroke-width=".8"/><circle cx="${cx}" cy="${cy}" r="${R0-RW/2-4}" fill="none" stroke="${GD}" stroke-opacity=".12" stroke-width=".6"/>`;
+              g+=`<circle cx="${cx}" cy="${cy}" r="${RO}" fill="none" stroke="${GD}" stroke-opacity="${ST?.38:.22}" stroke-width=".8"/>`+(RG?'':`<circle cx="${cx}" cy="${cy}" r="${R0-RW/2-4}" fill="none" stroke="${GD}" stroke-opacity=".12" stroke-width=".6"/>`);
               for(let i=0;i<20;i++){ const L=i%5===0?3.2:1.6, [xa,ya]=P(RO,i/20), [xb,yb2]=P(RO+L,i/20); g+=`<path d="M${f1r(xa)},${f1r(ya)} L${f1r(xb)},${f1r(yb2)}" stroke="${GD}" stroke-opacity="${i%5===0?.45:.25}" stroke-width=".8"/>`; }
               /* 今の輪：ぼかした光＋本体＋外側のつや */
               PR.forEach(r=>{ const col=colOf(r.k); g+=`<g filter="url(#c2PG)" opacity=".55">${arc(R0,r.a0,r.a0+r.f,RW,col,1)}</g>`+arc(R0,r.a0,r.a0+r.f,RW,col,.95)+arc(R0+RW/2-1,r.a0,r.a0+r.f,1.4,'#fff',.28); });
+              if(RG) PR.forEach(r=>{ g+=arc(R0-RW/2-5,r.i0,r.i0+r.fi,3,colOf(r.k),.8); }); /* 内側に理想の細い輪 */
               /* 理想の境目：軌道の上に星、輪の外側まで細い線 */
-              PR.forEach(r=>{ const t=r.i0, [xs,ys]=P(RO,t), [xa,ya]=P(R0+RW/2+1,t); g+=`<path d="M${f1r(xa)},${f1r(ya)} L${f1r(xs)},${f1r(ys)}" stroke="${GD}" stroke-opacity=".55" stroke-width=".8"/>`+STAR(xs,ys,4.6,'#05060d')+STAR(xs,ys,3.6,GD); });
-              g+=`<text x="${cx}" y="${cy-1}" text-anchor="middle" font-family='${sans}' font-size="7" font-weight="700" letter-spacing=".22em" fill="${GD}" fill-opacity=".8">BALANCE</text><text x="${cx}" y="${cy+10}" text-anchor="middle" font-family='${sans}' font-size="7.5" fill="#8a93a6">輪＝今</text>`;
-              const lx=LX+IN+94, ly0=y0+52, LRS=PR.length>4?16:19;
-              g+=`<text x="${LX1-36}" y="${y0+35}" text-anchor="end" font-family='${sans}' font-size="8" letter-spacing=".1em" fill="#6f7a8e">今</text>`+STAR(LX1-27,y0+32,3,GD,.8)+`<text x="${LX1-6}" y="${y0+35}" text-anchor="end" font-family='${sans}' font-size="8" fill="#6f7a8e">理想</text>`;
-              PR.forEach((r,ri)=>{ const y=ly0+ri*LRS; g+=`<rect x="${lx}" y="${y-8}" width="2.6" height="10" rx="1.3" fill="${colOf(r.k)}"/><text x="${lx+7}" y="${y}" font-family='${sans}' font-size="10" font-weight="700" fill="#e6dfcf">${nm(r.k)}</text><text x="${LX1-36}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12.5" font-weight="700" fill="#f3ead6">${PCT(r.f,12.5)}</text><text x="${LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="10" fill="${GD}" fill-opacity=".85">${PCT(r.fi,10,'#8a7d5c')}</text>`; }); }
+              if(ID) PR.forEach(r=>{ const t=r.i0, [xs,ys]=P(RO,t), [xa,ya]=P(R0+RW/2+1,t); g+=`<path d="M${f1r(xa)},${f1r(ya)} L${f1r(xs)},${f1r(ys)}" stroke="${GD}" stroke-opacity="${LOP}" stroke-width="${LW}"/>`+ISTAR(xs,ys); });
+              g+=`<text x="${cx}" y="${cy+(ID&&!RG?-1:3)}" text-anchor="middle" font-family='${sans}' font-size="${RG?6:7}" font-weight="700" letter-spacing="${RG?'.14em':'.22em'}" fill="${GD}" fill-opacity=".8">BALANCE</text>`+(ID&&!RG?`<text x="${cx}" y="${cy+10}" text-anchor="middle" font-family='${sans}' font-size="7.5" fill="#8a93a6">輪＝今</text>`:'');
+              const lx=LX+IN+94, ly0=y0+52, LRS=PR.length>5?14:PR.length>4?16:19, xn=ID?LX1-36:LX1-6;
+              if(ID) g+=`<text x="${xn}" y="${y0+35}" text-anchor="end" font-family='${sans}' font-size="8" letter-spacing=".1em" fill="#6f7a8e">今</text>`+STAR(LX1-27,y0+32,ST?3.6:3,GD,ST?1:.8)+`<text x="${LX1-6}" y="${y0+35}" text-anchor="end" font-family='${sans}' font-size="8" fill="${ST?GD:'#6f7a8e'}">理想</text>`;
+              PR.forEach((r,ri)=>{ const y=ly0+ri*LRS; g+=`<rect x="${lx}" y="${y-8}" width="2.6" height="10" rx="1.3" fill="${colOf(r.k)}"/><text x="${lx+7}" y="${y}" font-family='${sans}' font-size="10" font-weight="700" fill="#e6dfcf">${nm(r.k)}</text><text x="${xn}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12.5" font-weight="700" fill="#f3ead6">${PCT(r.f,12.5)}</text>`+(ID?`<text x="${LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="${IFS}" font-weight="${ST?700:400}" fill="${ICOL}" fill-opacity="${IOP}">${PCT(r.fi,IFS,'#8a7d5c')}</text>`:''); }); }
             else { const x0=LX+IN, x1=LX1-6, W=x1-x0, yh=y0+42, yb=y0+58, BH=11, X=t=>x0+t*W, gp=1.2;
-              g+=`<defs><clipPath id="c2BC"><rect x="${x0}" y="${yb}" width="${W}" height="${BH}" rx="${BH/2}"/></clipPath></defs>`;
-              /* 上の細い線（理想）：左右の端に小さな目盛り、境目に星。星から今の境目へ細い線 */
-              g+=LN(x0,yh,x1,yh,GD,.3,.8)+LN(x0,yh-2.5,x0,yh+2.5,GD,.4,.8)+LN(x1,yh-2.5,x1,yh+2.5,GD,.4,.8);
-              PR.slice(1).forEach(r=>{ const xi=X(r.i0), xa=X(r.a0); g+=`<path d="M${f1r(xi)},${yh+3} C${f1r(xi)},${yh+9} ${f1r(xa)},${yb-8} ${f1r(xa)},${yb-1.5}" fill="none" stroke="${GD}" stroke-opacity=".5" stroke-width=".8"/>`; });
+              g+=`<defs><clipPath id="c2BC"><rect x="${x0}" y="${yb}" width="${W}" height="${BH}" rx="${BH/2}"/></clipPath><clipPath id="c2BI"><rect x="${x0}" y="${yh-1.5}" width="${W}" height="3" rx="1.5"/></clipPath></defs>`;
+              if(ID){ /* 上の細い線（理想）：左右の端に小さな目盛り、境目に星。星から今の境目へ細い線。r は細い線の代わりに理想の割合の細い帯 */
+                g+=RG?`<g clip-path="url(#c2BI)">`+PR.map(r=>`<rect x="${f1r(X(r.i0)+(r.i0>0?.6:0))}" y="${yh-1.5}" width="${f1r(Math.max(0,X(r.i0+r.fi)-X(r.i0)-1.2))}" height="3" fill="${colOf(r.k)}" fill-opacity=".85"/>`).join('')+`</g>`:LN(x0,yh,x1,yh,GD,ST?.5:.3,.8)+LN(x0,yh-2.5,x0,yh+2.5,GD,.4,.8)+LN(x1,yh-2.5,x1,yh+2.5,GD,.4,.8);
+                PR.slice(1).forEach(r=>{ const xi=X(r.i0), xa=X(r.a0); g+=`<path d="M${f1r(xi)},${yh+3} C${f1r(xi)},${yh+9} ${f1r(xa)},${yb-8} ${f1r(xa)},${yb-1.5}" fill="none" stroke="${GD}" stroke-opacity="${LOP}" stroke-width="${LW}"/>`; }); }
+              g+=`<g filter="url(#c2PG)" opacity=".5">`+PR.map(r=>`<rect x="${f1r(X(r.a0))}" y="${yb+1}" width="${f1r(X(r.a0+r.f)-X(r.a0))}" height="${BH-2}" fill="${colOf(r.k)}"/>`).join('')+`</g>`; /* 帯の後ろのぼかした光 */
               g+=`<g clip-path="url(#c2BC)">`+PR.map(r=>{ const col=colOf(r.k), xa=X(r.a0)+(r.a0>0?gp/2:0), xb=X(r.a0+r.f)-(r.a0+r.f<.999?gp/2:0); return xb>xa?`<rect x="${f1r(xa)}" y="${yb}" width="${f1r(xb-xa)}" height="${BH}" fill="${col}" fill-opacity=".95"/><rect x="${f1r(xa)}" y="${yb}" width="${f1r(xb-xa)}" height="${(BH*.42).toFixed(1)}" fill="#fff" fill-opacity=".16"/>`:''; }).join('')+`</g>`;
-              g+=`<g filter="url(#c2PG)" opacity=".35"><rect x="${x0}" y="${yb+2}" width="${W}" height="${BH}" rx="${BH/2}" fill="${colOf(PR[0].k)}" fill-opacity="0"/></g>`;
-              PR.slice(1).forEach(r=>{ g+=STAR(X(r.i0),yh,4.6,'#05060d')+STAR(X(r.i0),yh,3.6,GD); });
-              g+=`<text x="${x0}" y="${yh-6}" font-family='${sans}' font-size="7" font-weight="700" letter-spacing=".22em" fill="${GD}" fill-opacity=".8">BALANCE</text>`+STAR(x1-52,yh-8.5,3,GD,.8)+`<text x="${x1-32}" y="${yh-6}" text-anchor="end" font-family='${sans}' font-size="8" fill="#6f7a8e">理想</text><text x="${x1}" y="${yh-6}" text-anchor="end" font-family='${sans}' font-size="8" fill="#6f7a8e">帯＝今</text>`;
+              if(ID) PR.slice(1).forEach(r=>{ g+=ISTAR(X(r.i0),yh); });
+              g+=`<text x="${x0}" y="${yh-(ST?9:6)}" font-family='${sans}' font-size="7" font-weight="700" letter-spacing=".22em" fill="${GD}" fill-opacity=".8">BALANCE</text>`+(ID?STAR(x1-52,yh-(ST?11.5:8.5),ST?3.6:3,GD,ST?1:.8)+`<text x="${x1-32}" y="${yh-(ST?9:6)}" text-anchor="end" font-family='${sans}' font-size="8" fill="${ST?GD:'#6f7a8e'}">理想</text><text x="${x1}" y="${yh-(ST?9:6)}" text-anchor="end" font-family='${sans}' font-size="8" fill="#6f7a8e">帯＝今</text>`:'');
               /* 帯の下：2列の凡例（色・名前・今・理想） */
-              const ly0=yb+BH+22, LRS=18;
-              PR.forEach((r,ri)=>{ const x=x0+(ri%2?112:0), y=ly0+Math.floor(ri/2)*LRS, xr=ri%2?x1:x0+102; g+=`<rect x="${x}" y="${y-8}" width="2.6" height="10" rx="1.3" fill="${colOf(r.k)}"/><text x="${x+7}" y="${y}" font-family='${sans}' font-size="10" font-weight="700" fill="#e6dfcf">${nm(r.k)}</text><text x="${xr-23}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="#f3ead6">${PCT(r.f,12)}</text><text x="${xr}" y="${y}" text-anchor="end" font-family='${mono}' font-size="9.5" fill="${GD}" fill-opacity=".85">${PCT(r.fi,9.5,'#8a7d5c')}</text>`; }); }
+              const ly0=yb+BH+22, LRS=PR.length>4?16:18;
+              PR.forEach((r,ri)=>{ const x=x0+(ri%2?112:0), y=ly0+Math.floor(ri/2)*LRS, xr=ri%2?x1:x0+102, xn=ID?xr-23:xr; g+=`<rect x="${x}" y="${y-8}" width="2.6" height="10" rx="1.3" fill="${colOf(r.k)}"/><text x="${x+7}" y="${y}" font-family='${sans}' font-size="10" font-weight="700" fill="#e6dfcf">${nm(r.k)}</text><text x="${xn}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="#f3ead6">${PCT(r.f,12)}</text>`+(ID?`<text x="${xr}" y="${y}" text-anchor="end" font-family='${mono}' font-size="${IFS-.5}" font-weight="${ST?700:400}" fill="${ICOL}" fill-opacity="${IOP}">${PCT(r.fi,IFS-.5,'#8a7d5c')}</text>`:''); }); }
           } else if(PB[0]==='P'){ /* 円グラフ（2.10 の試作）：振り分けの割合だけ（量や運は消える）。P2＝二重の輪（外＝今、内＝理想）／P1＝今の輪に理想の境目を金の刻みで。
               割合は「サブOP何回分（全体）」の合計に対する各パラメータの割合。理想があるときは理想に入っているパラメータだけ（チャージはアタッカーでは外す）。勧めの言葉は出さず、事実（今と理想の割合）だけ */
             const PR=rows.filter(r=>r.tot!=null&&(!ID||ID[r.k]!=null)), sum=PR.reduce((a,r)=>a+Math.max(0,r.tot),0)||1, isum=ID?PR.reduce((a,r)=>a+ID[r.k],0)||1:1,
