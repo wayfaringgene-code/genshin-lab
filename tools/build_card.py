@@ -447,8 +447,9 @@ const ENKA_FP={2000:'HP',2001:'ATK',2002:'DEF',20:'CR',22:'CD',23:'ER',26:'HEAL'
 function enkaStat(av){ const m=av&&av.fightPropMap; if(!m) return {}; const fp={};
   for(const [k,n] of Object.entries(ENKA_FP)){ const v=+m[k]; if(!isFinite(v)||(!v&&!['CR','CD','ER','EM'].includes(n))) continue; /* 0 の治療・物理・元素ダメは残さない */ fp[n]=['HP','ATK','DEF','EM'].includes(n)?Math.round(v):Math.round(v*1000)/10; }
   const wq=(av.equipList||[]).find(e=>e&&e.flat&&e.flat.itemType==='ITEM_WEAPON'), w=wq?{id:wq.itemId,lv:+((wq.weapon||{}).level)||0,r:1+(+Object.values((wq.weapon||{}).affixMap||{})[0]||0),star:+wq.flat.rankLevel||0}:null;
-  const lv=+(((av.propMap||{})['4001']||{}).val)||0;
-  return {uidStat:Object.assign({fp,cons:(av.talentIdList||[]).length},lv?{lv}:{},w?{w}:{})}; }
+  const lv=+(((av.propMap||{})['4001']||{}).val)||0, base={}; /* 基礎の値（キャラ＋武器の基礎。1＝HP・4＝攻撃・7＝防御）：HP・攻撃・防御の伸びを「基礎の何%」にするため */
+  [[1,'HP'],[4,'ATK'],[7,'DEF']].forEach(([k,n])=>{ const v=+m[k]; if(isFinite(v)&&v>0) base[n]=Math.round(v); });
+  return {uidStat:Object.assign({fp,cons:(av.talentIdList||[]).length},Object.keys(base).length?{base}:{},lv?{lv}:{},w?{w}:{})}; }
 function enkaToLab(d){ const out=[], notes={low:0,partial:0,unknown:0,odd:0};
   for(const av of (d&&d.avatarInfoList)||[]){ const pieces={}, cnt={}, low={};
     for(const e of av.equipList||[]){ const f=e.flat||{}, r=e.reliquary; if(f.itemType!=='ITEM_RELIQUARY'||!r) continue;
@@ -920,7 +921,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'U',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'B2',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -939,8 +940,8 @@ function cc2Samples(){ // 見本（実在のプレイヤーのデータではな
   PS2(s2,'絶縁の旗印','circlet','剣闘士のフィナーレ'); delete s2.pieces.circlet; s2.low={circlet:{main:'CR',r:4,lv:16,set:'教官'}}; PS2(s100,'絶縁の旗印','circlet','剣闘士のフィナーレ');
   const smP=JSON.parse(JSON.stringify(sm)); smP.id='cc2-partial'; smP.pieces.sands.lv=12; smP.pieces.goblet.lv=12;
   /* UID で取り込んだ形の見本（キャラ全体の値 uidStat。実在のプレイヤーではなく、作った値） */
-  const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
-  const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
+  const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},base:{HP:15307,ATK:786,DEF:696},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
+  const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},base:{HP:12907,ATK:945,DEF:789},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
   return [{c:sm,l:'見本：フリーナ（★5）'},{c:smP,l:'見本：フリーナ（砂・杯が+12）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'},{c:smU,l:'見本：フリーナ（UID）'},{c:s100U,l:'見本：雷電将軍（UID）'}]; }
 // 新しいカード用の立ち絵の切り出し：fitCardArt と同じ切り出しで、減光（下へ薄く・外周を丸く薄く）を焼き込まない。端はカードの側で溶かす
 function fitCardArt2(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
@@ -994,7 +995,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       ${CC2.adjOn?`<div class="row" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span>${esc(cc.name||'')}（${aid||'—'}）：カードの立ち絵を指でドラッグして位置、スライダーで大きさ</span><label class="row" style="gap:6px">大きさ<input type="range" data-adjs min="60" max="250" step="1" value="${Math.round(adj.s*100)}" style="width:160px"><span data-adjv>${Math.round(adj.s*100)}%</span></label><button class="btn" type="button" data-adjreset>この人を戻す</button><button class="btn" type="button" data-adjcopy>値をまとめてコピー（${Object.keys(CC2.adj).length}人）</button><span class="note" data-adjmsg></span></div>`:''}
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
       <div class="row">年月の表記（試作） ${[['mo','MONTHS（本番）'],['ym1','7年 + 4.0か月'],['ym2','7年4か月／12日'],['ym3','1年9か月／2か月／0.8か月'],['ym4','1年3か月／11か月／29日']].map(([k,t])=>B('un',k,t,CC2.un===k)).join('')}　ym3 の詰め ${[['now','前の形'],['R0','右寄せ'],['R1','詰め1 欄を11か月の幅に'],['R2','詰め2 ＋すき間ほぼ0'],['R3','詰め3 ＋2桁の月の字間'],['R4','詰め4 いちばん詰める']].map(([k,t])=>B('yk',k,t,CC2.yk===k)).join('')}</div>
-      <div class="row">右下の段（試作） ${[['now','1か月で更新（本番）'],['U','パラメータの実際の値（UID）']].map(([k,t])=>B('pb',k,t,CC2.pb===k)).join('')}</div>
+      <div class="row">右下の段（試作） ${[['now','1か月で更新（本番）'],['U','パラメータの実際の値（UID）'],['B2','横棒・2色（聖遺物／それ以外）'],['B3','横棒・3色（サブを分ける）']].map(([k,t])=>B('pb',k,t,CC2.pb===k)).join('')}</div>
       <div class="row">部位の MONTHS ${[['plain','そのまま'],['type','A 見出しと同じ字面'],['next','B 次の狙い'],['both','A＋B']].map(([k,t])=>B('mv',k,t,CC2.mv===k)).join('')}</div>
       <div class="row">グラフ本体 ${[['bold','華やか'],['mid','中間'],['calm','控えめ（前の形）']].map(([k,t])=>B('gs',k,t,CC2.gs===k)).join('')}　これからの帯 ${[['0','なし'],['91','3か月'],['182','半年'],['365','1年']].map(([k,t])=>B('fw',k,t,CC2.fw===k)).join('')}</div>
       <div class="row">横軸 ${[['band','段ごとに等幅'],['log','対数'],['lin','線形']].map(([k,t])=>B('xs',k,t,CC2.xs===k)).join('')}　立ち絵 ${[['none','そのまま'],['fade','溶かす'],['glass','すりガラス'],['side','右へずらす']].map(([k,t])=>B('pz',k,t,CC2.pz===k)).join('')}</div>
@@ -1631,7 +1632,30 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const PB=(window.CC2_OPT||{}).pb||'now';
       const y0=H-50-BRH+16, /* 5部位の行とのあいだに余白（区切りの線はやめ、見出しのチップで区切る） */ LX=rx, LX1=rx+226, TXa=RE-226, TXb=RE, /* 左右の段を同じ幅（226）に、真ん中の縦線は中央 */ SECr=(t,x,y)=>CHIP(t,x,y), BARr=(x0,x1,y,f)=>LN(x0,y,x1,y,'#fff',.12,2,' stroke-linecap="round"')+(f>0?LN(x0,y,x0+(x1-x0)*Math.min(1,f),y,CREAM,.8,2,' stroke-linecap="round"'):'');
       g+=LN((rx+RE)/2,y0+8,(rx+RE)/2,H-56,'#c9b98f',.12,1);
-      if(PB==='U'){ const IN=14, us=c.uidStat, fp=us&&us.fp;
+      if(PB==='B2'||PB==='B3'){ /* 横棒（2.10 の試作）：単位は「サブOP何回分」（伸びた量 ÷ サブOP 1回の最大の伸び）。会心率：会心ダメ＝1：2 が同じ長さになる。
+          全体＝UID のキャラ画面の値から最初からある分（会心率5%・会心ダメ50%・チャージ100%）を引く。HP・攻撃・防御は「基礎の何%増えたか」。元素ダメは攻撃%と同じ 5.83 で割る。
+          棒の内訳：聖遺物（5部位のメイン＋サブ。B3 はサブだけ色を変える＝右の表と同じ量）／それ以外（武器・突破・セット効果など＝全体−聖遺物） */
+        const IN=14, us=c.uidStat, fp=us&&us.fp, bs=(us&&us.base)||{}; g+=SECr('パラメータ（サブOP何回分）',LX+IN,y0+18);
+        if(!fp) g+=`<text x="${LX+IN}" y="${y0+62}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">UIDで取り込むと、ここに</text><text x="${LX+IN}" y="${y0+78}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">キャラ全体の釣り合い（武器・突破込み）</text>`;
+        else { const EL=typeof skyElem==='function'?skyElem(c):'?', MAP={'HP%':'HP',HP:'HP','ATK%':'ATK',ATK:'ATK','DEF%':'DEF',DEF:'DEF',CR:'CR',CD:'CD',ER:'ER',EM:'EM'}, ORD=['HP','ATK','DEF','CR','CD','ER','EM'],
+            U1={HP:5.83,ATK:5.83,DEF:7.29,CR:3.89,CD:7.77,ER:6.48,EM:23.31}, B0={CR:5,CD:50,ER:100,EM:0}, ks=ORD.filter(k=>(c.eff||[]).some(e=>MAP[e]===k)); if(fp['DMG_'+EL]!=null) ks.push('DMG_'+EL);
+          const art=k=>{ let m=0,u=0; SLOTS.forEach(s2=>{ const pc=c.pieces[s2]; if(!pc||!pc.main) return; const F3=['HP','ATK','DEF'].includes(k), add=(key,v,sub)=>{ const r=key===k+'%'?v:key===k?(F3?(bs[k]?v/bs[k]*100:0):v):null; /* HP・攻撃・防御の実数は基礎の%に直す */ if(r!=null){ if(sub) u+=r; else m+=r; } };
+              add(pc.main,MAIN_NUM[pc.main]!=null?MAIN_NUM[pc.main]:(String(pc.main).startsWith('DMG_')?46.6:0),0); (pc.subs||[]).forEach(q=>{ if(q.s&&!q.off) add(q.s,parseFloat(q.v)||0,1); }); }); return {m,u}; };
+          const rows=ks.map(k=>{ const dm=k.startsWith('DMG_'), u1=dm?5.83:U1[k], tot=dm?fp[k]:['HP','ATK','DEF'].includes(k)?(bs[k]?(fp[k]/bs[k]-1)*100:null):(fp[k]||0)-B0[k], a=art(k);
+            return {k,tot:tot==null?null:tot/u1,m:a.m/u1,u:a.u/u1}; });
+          const mx=Math.max(10,...rows.map(r=>r.tot||0)), top=Math.ceil(mx/5)*5, NM={HP:'HP',ATK:'攻撃',DEF:'防御',CR:'会心率',CD:'会心ダメ',ER:'チャージ',EM:'熟知'}, RS=rows.length>5?15:17, bx0c=LX+IN+58, bx1c=LX1-38, BXc=v=>bx0c+Math.min(1,Math.max(0,v)/top)*(bx1c-bx0c);
+          const CO='#5f6c86', CM='#b8a77c', CU=CREAM, y1r=y0+(rows.length>5?47:51);
+          for(let t=5;t<top;t+=5) g+=LN(BXc(t),y1r-9,BXc(t),y1r+(rows.length-1)*RS+3,'#fff',.08,1);
+          g+=`<text x="${bx1c}" y="${y0+33}" text-anchor="end" font-family='${mono}' font-size="8.5" fill="#6f7a8e">${top}回</text>`;
+          rows.forEach((r,ri)=>{ const y=y1r+ri*RS, yb=y-4; g+=`<text x="${LX+IN}" y="${y}" font-family='${sans}' font-size="11" font-weight="700" fill="#d9c48e">${NM[r.k]||(r.k.startsWith('DMG_')?r.k.slice(4)+'元素ダメ':r.k)}</text>`;
+            if(r.tot==null){ g+=`<text x="${LX1-6}" y="${y}" text-anchor="end" font-family='${sans}' font-size="9.5" fill="#6f7a8e">取り込み直すと出ます</text>`; return; }
+            const a=Math.min(r.tot,r.m+r.u), o=Math.max(0,r.tot-a), xa=BXc(o), BW=6, seg=(x0,x1,col,op)=>x1-x0>.3?`<rect x="${x0.toFixed(1)}" y="${(yb-BW/2).toFixed(1)}" width="${(x1-x0).toFixed(1)}" height="${BW}" fill="${col}" fill-opacity="${op}"/>`:'';
+            g+=LN(bx0c,yb,bx1c,yb,'#fff',.07,BW);
+            g+=seg(bx0c,xa,CO,.9); if(PB==='B3'){ const xm=BXc(o+Math.min(a,r.m)); g+=seg(xa,xm,CM,.85)+seg(xm,BXc(r.tot),CU,.95); } else g+=seg(xa,BXc(r.tot),CU,.9);
+            g+=`<text x="${LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="#f3ead6">${r.tot.toFixed(1)}</text>`; });
+          const ly=y1r+(rows.length-1)*RS+16, LG=(x,col,t)=>`<rect x="${x}" y="${ly-6}" width="8" height="5" fill="${col}"/><text x="${x+11}" y="${ly}" font-family='${sans}' font-size="8.5" fill="#8a93a6">${t}</text>`;
+          g+=LG(LX+IN,CO,'聖遺物以外')+(PB==='B3'?LG(LX+IN+62,CM,'メイン')+LG(LX+IN+104,CU,'サブ'):LG(LX+IN+62,CU,'聖遺物')); } }
+      else if(PB==='U'){ const IN=14, us=c.uidStat, fp=us&&us.fp;
         g+=SECr('パラメータ（実際の値）',LX+IN,y0+18);
         if(!fp) g+=`<text x="${LX+IN}" y="${y0+62}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">UIDで取り込むと、ここに</text><text x="${LX+IN}" y="${y0+78}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">キャラ全体の値（武器・突破込み）</text>`;
         else { const EL=typeof skyElem==='function'?skyElem(c):'?', MAP={'HP%':'HP',HP:'HP','ATK%':'ATK',ATK:'ATK','DEF%':'DEF',DEF:'DEF',CR:'CR',CD:'CD',ER:'ER',EM:'EM'}, ORD=['HP','ATK','DEF','CR','CD','ER','EM'];
