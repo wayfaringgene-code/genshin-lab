@@ -921,7 +921,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'B2',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'B3',ib:'tick',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -940,8 +940,8 @@ function cc2Samples(){ // 見本（実在のプレイヤーのデータではな
   PS2(s2,'絶縁の旗印','circlet','剣闘士のフィナーレ'); delete s2.pieces.circlet; s2.low={circlet:{main:'CR',r:4,lv:16,set:'教官'}}; PS2(s100,'絶縁の旗印','circlet','剣闘士のフィナーレ');
   const smP=JSON.parse(JSON.stringify(sm)); smP.id='cc2-partial'; smP.pieces.sands.lv=12; smP.pieces.goblet.lv=12;
   /* UID で取り込んだ形の見本（キャラ全体の値 uidStat。実在のプレイヤーではなく、作った値） */
-  const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},base:{HP:15307,ATK:786,DEF:696},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
-  const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},base:{HP:12907,ATK:945,DEF:789},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
+  const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.idealRoll={HP:22,CR:17.5,CD:26,'DMG_水':8}; /* 理想は仮の値（式のスレッドの結果が出たら差し替え） */ smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},base:{HP:15307,ATK:786,DEF:696},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
+  const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.idealRoll={ATK:18,CR:20.5,CD:25.5,'DMG_雷':12.6}; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},base:{HP:12907,ATK:945,DEF:789},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
   return [{c:sm,l:'見本：フリーナ（★5）'},{c:smP,l:'見本：フリーナ（砂・杯が+12）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'},{c:smU,l:'見本：フリーナ（UID）'},{c:s100U,l:'見本：雷電将軍（UID）'}]; }
 // 新しいカード用の立ち絵の切り出し：fitCardArt と同じ切り出しで、減光（下へ薄く・外周を丸く薄く）を焼き込まない。端はカードの側で溶かす
 function fitCardArt2(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
@@ -987,7 +987,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
     if(CARD_IMG[cc.id]&&!(cc.id in CARD_FIT2)&&!CARD_FITTING['2'+cc.id]){ CARD_FITTING['2'+cc.id]=1; fitCardArt2(CARD_IMG[cc.id]).then(u=>{ delete CARD_FITTING['2'+cc.id]; CARD_FIT2[cc.id]=u||''; if($('cc2Proto')) draw(); }); }
     if(CARD_IMG[cc.id]&&!(CARD_IMG[cc.id] in CC2_BB)){ CC2_BB[CARD_IMG[cc.id]]=null; cc2BBox(CARD_IMG[cc.id]).then(b=>{ CC2_BB[CARD_IMG[cc.id]]=b; if($('cc2Proto')) draw(); }); }
     const aid=cc2Aid(cc), adj=cc2AdjOf(cc);
-    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl,up:CC2.up,gs:CC2.gs,fw:CC2.fw,mv:CC2.mv,un:CC2.un,yk:CC2.yk,pb:CC2.pb}; window.CC2_ADJ=adj; window.CC2_FIT2=CARD_FIT2[cc.id]||''; window.CC2_WHOLE=CARD_IMG[cc.id]||''; window.CC2_BB=CC2_BB[CARD_IMG[cc.id]]||null; return constellationCardSVG(cc,st,'v2'); };
+    const svg=v=>{ if(v==='NOW') return cardSVG(cc,st,'SK'); window.CC2_LEFT=v; window.CC2_BADGE=CC2.b; window.CC2_TIGHT=CC2.tight; window.CC2_OPT={ov:CC2.ov,xs:CC2.xs,pz:CC2.pz,fl:CC2.fl,up:CC2.up,gs:CC2.gs,fw:CC2.fw,mv:CC2.mv,un:CC2.un,yk:CC2.yk,pb:CC2.pb,ib:CC2.ib}; window.CC2_ADJ=adj; window.CC2_FIT2=CARD_FIT2[cc.id]||''; window.CC2_WHOLE=CARD_IMG[cc.id]||''; window.CC2_BB=CC2_BB[CARD_IMG[cc.id]]||null; return constellationCardSVG(cc,st,'v2'); };
     box.innerHTML=`<div class="cc2-bar"><div class="row"><b>カードのデザインの見直し（試作）</b><span class="note">保存はしません</span><button class="btn" type="button" data-x style="margin-left:auto">閉じる</button></div>
       <div class="row">${[...CC2_VS,['NOW','今のカード'],['all','4案を並べる'],['SHEET','バッジ一覧']].map(([k,t])=>B('v',k,t,CC2.v===k)).join('')}</div>
       <div class="row">バッジ ${CC2_BS.map(([k,t])=>B('b',k,t,CC2.b===k)).join('')}　余白 ${B('tg',0,'標準',!CC2.tight)}${B('tg',1,'詰める',!!CC2.tight)}</div>
@@ -996,6 +996,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
       <div class="row">年月の表記（試作） ${[['mo','MONTHS（本番）'],['ym1','7年 + 4.0か月'],['ym2','7年4か月／12日'],['ym3','1年9か月／2か月／0.8か月'],['ym4','1年3か月／11か月／29日']].map(([k,t])=>B('un',k,t,CC2.un===k)).join('')}　ym3 の詰め ${[['now','前の形'],['R0','右寄せ'],['R1','詰め1 欄を11か月の幅に'],['R2','詰め2 ＋すき間ほぼ0'],['R3','詰め3 ＋2桁の月の字間'],['R4','詰め4 いちばん詰める']].map(([k,t])=>B('yk',k,t,CC2.yk===k)).join('')}</div>
       <div class="row">右下の段（試作） ${[['now','1か月で更新（本番）'],['U','パラメータの実際の値（UID）'],['B2','横棒・2色（聖遺物／それ以外）'],['B3','横棒・3色（サブを分ける）']].map(([k,t])=>B('pb',k,t,CC2.pb===k)).join('')}</div>
+      <div class="row">理想の描き方 ${[['tick','縦の目印'],['ghost','理想の長さの枠']].map(([k,t])=>B('ib',k,t,CC2.ib===k)).join('')}</div>
       <div class="row">部位の MONTHS ${[['plain','そのまま'],['type','A 見出しと同じ字面'],['next','B 次の狙い'],['both','A＋B']].map(([k,t])=>B('mv',k,t,CC2.mv===k)).join('')}</div>
       <div class="row">グラフ本体 ${[['bold','華やか'],['mid','中間'],['calm','控えめ（前の形）']].map(([k,t])=>B('gs',k,t,CC2.gs===k)).join('')}　これからの帯 ${[['0','なし'],['91','3か月'],['182','半年'],['365','1年']].map(([k,t])=>B('fw',k,t,CC2.fw===k)).join('')}</div>
       <div class="row">横軸 ${[['band','段ごとに等幅'],['log','対数'],['lin','線形']].map(([k,t])=>B('xs',k,t,CC2.xs===k)).join('')}　立ち絵 ${[['none','そのまま'],['fade','溶かす'],['glass','すりガラス'],['side','右へずらす']].map(([k,t])=>B('pz',k,t,CC2.pz===k)).join('')}</div>
@@ -1019,7 +1020,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       const rs=box.querySelector('[data-adjs]'); if(rs){ rs.oninput=()=>{ adj.s=+rs.value/100; box.querySelector('[data-adjv]').textContent=rs.value+'%'; place(); }; rs.onchange=()=>{ save(); draw(); }; }
       const rb=box.querySelector('[data-adjreset]'); if(rb) rb.onclick=()=>{ delete CC2.adj[aid]; try{ localStorage.setItem('lab:cc2Adj',JSON.stringify(CC2.adj)); }catch(e){} draw(); };
       const cb=box.querySelector('[data-adjcopy]'); if(cb) cb.onclick=async()=>{ const out={}; for(const [a,v] of Object.entries(CC2.adj)) out[a]=Object.assign({name:(PORTRAITS[a]||{}).name||''},v); const t=JSON.stringify(out); let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){} box.querySelector('[data-adjmsg]').textContent=ok?'コピーしました。Claude に貼って渡してください':'コピーできませんでした：'+t; }; }
-    ['ov','xs','pz','up','gs','fw','mv','un','yk','pb'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
+    ['ov','xs','pz','up','gs','fw','mv','un','yk','pb','ib'].forEach(k=>box.querySelectorAll(`[data-${k}]`).forEach(b=>b.onclick=()=>{ CC2[k]=b.dataset[k]; draw(); }));
     box.querySelector('[data-ci]').onchange=e=>{ CC2.ci=+e.target.value; draw(); };
     box.querySelector('[data-x]').onclick=()=>box.remove(); };
   window.cc2Debug=()=>CC2.list.map(({c,l})=>{ const st=charStats(c); return l+'  全体 '+fmtAge(st.age)+' '+tierOf(st.age)[1]+' ｜ '+SLOTS.map(s=>fmtAge(st.slots[s].age)+' '+tierOf(st.slots[s].age)[1]).join(' ／ '); }); // 確認用
@@ -1643,7 +1644,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
               add(pc.main,MAIN_NUM[pc.main]!=null?MAIN_NUM[pc.main]:(String(pc.main).startsWith('DMG_')?46.6:0),0); (pc.subs||[]).forEach(q=>{ if(q.s&&!q.off) add(q.s,parseFloat(q.v)||0,1); }); }); return {m,u}; };
           const rows=ks.map(k=>{ const dm=k.startsWith('DMG_'), u1=dm?5.83:U1[k], tot=dm?fp[k]:['HP','ATK','DEF'].includes(k)?(bs[k]?(fp[k]/bs[k]-1)*100:null):(fp[k]||0)-B0[k], a=art(k);
             return {k,tot:tot==null?null:tot/u1,m:a.m/u1,u:a.u/u1}; });
-          const mx=Math.max(10,...rows.map(r=>r.tot||0)), top=Math.ceil(mx/5)*5, NM={HP:'HP',ATK:'攻撃',DEF:'防御',CR:'会心率',CD:'会心ダメ',ER:'チャージ',EM:'熟知'}, RS=rows.length>5?15:17, bx0c=LX+IN+58, bx1c=LX1-38, BXc=v=>bx0c+Math.min(1,Math.max(0,v)/top)*(bx1c-bx0c);
+          /* 理想（式があるキャラ）：c.idealRoll＝無凸餅（モチーフ武器R1・無凸・メインとセットは本人と同じ）の理想を、同じ単位（サブOP何回分・全体）で。チャージはアタッカー・サブアタッカーでは考えない（目印なし）。
+             いまは見本だけ（値は仮）。window.CC2_OPT.ib：tick＝棒に縦の目印／ghost＝理想の長さの枠 */
+          const ID=c.idealRoll||null, IB=(window.CC2_OPT||{}).ib||'tick';
+          const mx=Math.max(10,...rows.map(r=>r.tot||0),...(ID?rows.map(r=>ID[r.k]||0):[])), top=Math.ceil(mx/5)*5, NM={HP:'HP',ATK:'攻撃',DEF:'防御',CR:'会心率',CD:'会心ダメ',ER:'チャージ',EM:'熟知'}, RS=rows.length>5?15:17, bx0c=LX+IN+58, bx1c=LX1-(ID?64:38), BXc=v=>bx0c+Math.min(1,Math.max(0,v)/top)*(bx1c-bx0c);
           const CO='#5f6c86', CM='#b8a77c', CU=CREAM, y1r=y0+(rows.length>5?47:51);
           for(let t=5;t<top;t+=5) g+=LN(BXc(t),y1r-9,BXc(t),y1r+(rows.length-1)*RS+3,'#fff',.08,1);
           g+=`<text x="${bx1c}" y="${y0+33}" text-anchor="end" font-family='${mono}' font-size="8.5" fill="#6f7a8e">${top}回</text>`;
@@ -1652,9 +1656,13 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
             const a=Math.min(r.tot,r.m+r.u), o=Math.max(0,r.tot-a), xa=BXc(o), BW=6, seg=(x0,x1,col,op)=>x1-x0>.3?`<rect x="${x0.toFixed(1)}" y="${(yb-BW/2).toFixed(1)}" width="${(x1-x0).toFixed(1)}" height="${BW}" fill="${col}" fill-opacity="${op}"/>`:'';
             g+=LN(bx0c,yb,bx1c,yb,'#fff',.07,BW);
             g+=seg(bx0c,xa,CO,.9); if(PB==='B3'){ const xm=BXc(o+Math.min(a,r.m)); g+=seg(xa,xm,CM,.85)+seg(xm,BXc(r.tot),CU,.95); } else g+=seg(xa,BXc(r.tot),CU,.9);
-            g+=`<text x="${LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="#f3ead6">${r.tot.toFixed(1)}</text>`; });
+            const iv=ID?ID[r.k]:null, GD='#e9d39a';
+            if(iv!=null){ const xi=BXc(iv); g+=IB==='ghost'?`<rect x="${bx0c-1.5}" y="${(yb-BW/2-2).toFixed(1)}" width="${(xi-bx0c+3).toFixed(1)}" height="${BW+4}" rx="1.5" fill="none" stroke="${GD}" stroke-opacity=".85" stroke-width="1"/>`:LN(xi,yb-6,xi,yb+6,'#05060d',1,3.6)+LN(xi,yb-6,xi,yb+6,GD,1,1.8); }
+            g+=`<text x="${ID?LX1-34:LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="${ID&&iv==null?'#8a93a6':'#f3ead6'}">${r.tot.toFixed(1)}</text>`;
+            if(iv!=null){ const df=r.tot-iv, ok=Math.abs(df)<.5; g+=`<text x="${LX1-4}" y="${y}" text-anchor="end" font-family='${mono}' font-size="10" font-weight="700" fill="${ok?GD:df<0?'#ff9b8a':'#8a93a6'}">${ok?'±0':(df>0?'+':'−')+Math.abs(df).toFixed(1)}</text>`; } });
           const ly=y1r+(rows.length-1)*RS+16, LG=(x,col,t)=>`<rect x="${x}" y="${ly-6}" width="8" height="5" fill="${col}"/><text x="${x+11}" y="${ly}" font-family='${sans}' font-size="8.5" fill="#8a93a6">${t}</text>`;
-          g+=LG(LX+IN,CO,'聖遺物以外')+(PB==='B3'?LG(LX+IN+62,CM,'メイン')+LG(LX+IN+104,CU,'サブ'):LG(LX+IN+62,CU,'聖遺物')); } }
+          g+=LG(LX+IN,CO,'聖遺物以外')+(PB==='B3'?LG(LX+IN+62,CM,'メイン')+LG(LX+IN+104,CU,'サブ'):LG(LX+IN+62,CU,'聖遺物'))
+            +(ID?(IB==='ghost'?`<rect x="${LX+IN+142}" y="${ly-7}" width="10" height="7" rx="1" fill="none" stroke="#e9d39a" stroke-width="1"/>`:LN(LX+IN+147,ly-8,LX+IN+147,ly+1,'#e9d39a',1,1.8))+`<text x="${LX+IN+156}" y="${ly}" font-family='${sans}' font-size="8.5" fill="#8a93a6">理想（無凸餅）</text>`:''); } }
       else if(PB==='U'){ const IN=14, us=c.uidStat, fp=us&&us.fp;
         g+=SECr('パラメータ（実際の値）',LX+IN,y0+18);
         if(!fp) g+=`<text x="${LX+IN}" y="${y0+62}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">UIDで取り込むと、ここに</text><text x="${LX+IN}" y="${y0+78}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">キャラ全体の値（武器・突破込み）</text>`;
