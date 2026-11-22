@@ -921,7 +921,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'B3',ib:'tick',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'R4',pb:'P2',ib:'tick',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -995,7 +995,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       ${CC2.adjOn?`<div class="row" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span>${esc(cc.name||'')}（${aid||'—'}）：カードの立ち絵を指でドラッグして位置、スライダーで大きさ</span><label class="row" style="gap:6px">大きさ<input type="range" data-adjs min="60" max="250" step="1" value="${Math.round(adj.s*100)}" style="width:160px"><span data-adjv>${Math.round(adj.s*100)}%</span></label><button class="btn" type="button" data-adjreset>この人を戻す</button><button class="btn" type="button" data-adjcopy>値をまとめてコピー（${Object.keys(CC2.adj).length}人）</button><span class="note" data-adjmsg></span></div>`:''}
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
       <div class="row">年月の表記（試作） ${[['mo','MONTHS（本番）'],['ym1','7年 + 4.0か月'],['ym2','7年4か月／12日'],['ym3','1年9か月／2か月／0.8か月'],['ym4','1年3か月／11か月／29日']].map(([k,t])=>B('un',k,t,CC2.un===k)).join('')}　ym3 の詰め ${[['now','前の形'],['R0','右寄せ'],['R1','詰め1 欄を11か月の幅に'],['R2','詰め2 ＋すき間ほぼ0'],['R3','詰め3 ＋2桁の月の字間'],['R4','詰め4 いちばん詰める']].map(([k,t])=>B('yk',k,t,CC2.yk===k)).join('')}</div>
-      <div class="row">右下の段（試作） ${[['now','1か月で更新（本番）'],['U','パラメータの実際の値（UID）'],['B2','横棒・2色（聖遺物／それ以外）'],['B3','横棒・3色（サブを分ける）']].map(([k,t])=>B('pb',k,t,CC2.pb===k)).join('')}</div>
+      <div class="row">右下の段（試作） ${[['now','1か月で更新（本番）'],['U','パラメータの実際の値（UID）'],['B2','横棒・2色（聖遺物／それ以外）'],['B3','横棒・3色（サブを分ける）'],['P2','円：二重の輪（外＝今・内＝理想）'],['P1','円：今の輪＋理想の境目']].map(([k,t])=>B('pb',k,t,CC2.pb===k)).join('')}</div>
       <div class="row">理想の描き方 ${[['tick','縦の目印'],['ghost','理想の長さの枠']].map(([k,t])=>B('ib',k,t,CC2.ib===k)).join('')}</div>
       <div class="row">部位の MONTHS ${[['plain','そのまま'],['type','A 見出しと同じ字面'],['next','B 次の狙い'],['both','A＋B']].map(([k,t])=>B('mv',k,t,CC2.mv===k)).join('')}</div>
       <div class="row">グラフ本体 ${[['bold','華やか'],['mid','中間'],['calm','控えめ（前の形）']].map(([k,t])=>B('gs',k,t,CC2.gs===k)).join('')}　これからの帯 ${[['0','なし'],['91','3か月'],['182','半年'],['365','1年']].map(([k,t])=>B('fw',k,t,CC2.fw===k)).join('')}</div>
@@ -1633,10 +1633,10 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       const PB=(window.CC2_OPT||{}).pb||'now';
       const y0=H-50-BRH+16, /* 5部位の行とのあいだに余白（区切りの線はやめ、見出しのチップで区切る） */ LX=rx, LX1=rx+226, TXa=RE-226, TXb=RE, /* 左右の段を同じ幅（226）に、真ん中の縦線は中央 */ SECr=(t,x,y)=>CHIP(t,x,y), BARr=(x0,x1,y,f)=>LN(x0,y,x1,y,'#fff',.12,2,' stroke-linecap="round"')+(f>0?LN(x0,y,x0+(x1-x0)*Math.min(1,f),y,CREAM,.8,2,' stroke-linecap="round"'):'');
       g+=LN((rx+RE)/2,y0+8,(rx+RE)/2,H-56,'#c9b98f',.12,1);
-      if(PB==='B2'||PB==='B3'){ /* 横棒（2.10 の試作）：単位は「サブOP何回分」（伸びた量 ÷ サブOP 1回の最大の伸び）。会心率：会心ダメ＝1：2 が同じ長さになる。
+      if(PB==='B2'||PB==='B3'||PB==='P2'||PB==='P1'){ /* 横棒（2.10 の試作）：単位は「サブOP何回分」（伸びた量 ÷ サブOP 1回の最大の伸び）。会心率：会心ダメ＝1：2 が同じ長さになる。
           全体＝UID のキャラ画面の値から最初からある分（会心率5%・会心ダメ50%・チャージ100%）を引く。HP・攻撃・防御は「基礎の何%増えたか」。元素ダメは攻撃%と同じ 5.83 で割る。
           棒の内訳：聖遺物（5部位のメイン＋サブ。B3 はサブだけ色を変える＝右の表と同じ量）／それ以外（武器・突破・セット効果など＝全体−聖遺物） */
-        const IN=14, us=c.uidStat, fp=us&&us.fp, bs=(us&&us.base)||{}; g+=SECr('パラメータ（サブOP何回分）',LX+IN,y0+18);
+        const IN=14, us=c.uidStat, fp=us&&us.fp, bs=(us&&us.base)||{}; g+=SECr(PB[0]==='P'?'パラメータの割合':'パラメータ（サブOP何回分）',LX+IN,y0+18);
         if(!fp) g+=`<text x="${LX+IN}" y="${y0+62}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">UIDで取り込むと、ここに</text><text x="${LX+IN}" y="${y0+78}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">キャラ全体の釣り合い（武器・突破込み）</text>`;
         else { const EL=typeof skyElem==='function'?skyElem(c):'?', MAP={'HP%':'HP',HP:'HP','ATK%':'ATK',ATK:'ATK','DEF%':'DEF',DEF:'DEF',CR:'CR',CD:'CD',ER:'ER',EM:'EM'}, ORD=['HP','ATK','DEF','CR','CD','ER','EM'],
             U1={HP:5.83,ATK:5.83,DEF:7.29,CR:3.89,CD:7.77,ER:6.48,EM:23.31}, B0={CR:5,CD:50,ER:100,EM:0}, ks=ORD.filter(k=>(c.eff||[]).some(e=>MAP[e]===k)); if(fp['DMG_'+EL]!=null) ks.push('DMG_'+EL);
@@ -1647,6 +1647,22 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           /* 理想（式があるキャラ）：c.idealRoll＝無凸餅（モチーフ武器R1・無凸・メインとセットは本人と同じ）の理想を、同じ単位（サブOP何回分・全体）で。チャージはアタッカー・サブアタッカーでは考えない（目印なし）。
              いまは見本だけ（値は仮）。window.CC2_OPT.ib：tick＝棒に縦の目印／ghost＝理想の長さの枠 */
           const ID=c.idealRoll||null, IB=(window.CC2_OPT||{}).ib||'tick';
+          if(PB[0]==='P'){ /* 円グラフ（2.10 の試作）：振り分けの割合だけ（量や運は消える）。P2＝二重の輪（外＝今、内＝理想）／P1＝今の輪に理想の境目を金の刻みで。
+              割合は「サブOP何回分（全体）」の合計に対する各パラメータの割合。理想があるときは理想に入っているパラメータだけ（チャージはアタッカーでは外す）。勧めの言葉は出さず、事実（今と理想の割合）だけ */
+            const PR=rows.filter(r=>r.tot!=null&&(!ID||ID[r.k]!=null)), sum=PR.reduce((a,r)=>a+Math.max(0,r.tot),0)||1, isum=ID?PR.reduce((a,r)=>a+ID[r.k],0)||1:1,
+              COL={HP:'#7ec4a4',ATK:'#d77a5f',DEF:'#b0a27a',CR:'#f3e2a8',CD:'#c98a3d',ER:'#8c9bd6',EM:'#9cc77a'}, colOf=k=>COL[k]||(typeof SKY_EL!=='undefined'&&SKY_EL[k.slice(4)])||'#8a93a6',
+              cx=LX+IN+36, cy=y0+88, TAU=Math.PI*2, gap=.035, arc=(r,a0,a1,w,col,op)=>{ if(a1-a0<=gap) return ''; const b0=a0+gap/2, b1=a1-gap/2, P=a=>`${(cx+r*Math.sin(a)).toFixed(1)},${(cy-r*Math.cos(a)).toFixed(1)}`; return `<path d="M${P(b0)} A${r},${r} 0 ${b1-b0>Math.PI?1:0} 1 ${P(b1)}" fill="none" stroke="${col}" stroke-opacity="${op}" stroke-width="${w}"/>`; };
+            let a=0, ai=0; const NM={HP:'HP',ATK:'攻撃',DEF:'防御',CR:'会心率',CD:'会心ダメ',ER:'チャージ',EM:'熟知'};
+            PR.forEach(r=>{ const f=Math.max(0,r.tot)/sum, fi=ID?ID[r.k]/isum:0, col=colOf(r.k);
+              if(PB==='P2'){ g+=arc(41,a*TAU,(a+f)*TAU,8,col,.95); if(ID) g+=arc(29,ai*TAU,(ai+fi)*TAU,5,col,.55); }
+              else g+=arc(37,a*TAU,(a+f)*TAU,11,col,.95);
+              r.f=f; r.fi=fi; a+=f; ai+=fi; });
+            if(PB==='P1'&&ID){ let t=0; PR.forEach(r=>{ t+=r.fi; const A=t*TAU, P=rr=>`${(cx+rr*Math.sin(A)).toFixed(1)},${(cy-rr*Math.cos(A)).toFixed(1)}`; g+=`<path d="M${P(28)} L${P(48)}" stroke="#05060d" stroke-width="3.2"/><path d="M${P(28)} L${P(48)}" stroke="#e9d39a" stroke-width="1.4"/>`; }); }
+            if(ID) g+=`<text x="${cx}" y="${cy+3}" text-anchor="middle" font-family='${sans}' font-size="8" fill="#8a93a6">${PB==='P2'?'外 今':'輪 今'}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-family='${sans}' font-size="8" fill="#8a93a6">${PB==='P2'?'内 理想':'刻み 理想'}</text>`;
+            const lx=cx+52, ly0=y0+51, LRS=PR.length>4?16:18;
+            if(ID) g+=`<text x="${LX1-34}" y="${y0+36}" text-anchor="end" font-family='${sans}' font-size="8.5" fill="#6f7a8e">今</text><text x="${LX1-6}" y="${y0+36}" text-anchor="end" font-family='${sans}' font-size="8.5" fill="#6f7a8e">理想</text>`;
+            PR.forEach((r,ri)=>{ const y=ly0+ri*LRS; g+=`<circle cx="${lx+3}" cy="${y-4}" r="3" fill="${colOf(r.k)}"/><text x="${lx+11}" y="${y}" font-family='${sans}' font-size="10" font-weight="700" fill="#d9c48e">${NM[r.k]||(r.k.startsWith('DMG_')?r.k.slice(4)+'元素ダメ':r.k)}</text><text x="${ID?LX1-34:LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="12" font-weight="700" fill="#f3ead6">${Math.round(r.f*100)}<tspan font-size="8.5" font-weight="400" fill="#8a93a6">%</tspan></text>`+(ID?`<text x="${LX1-6}" y="${y}" text-anchor="end" font-family='${mono}' font-size="10.5" fill="#9aa6bb">${Math.round(r.fi*100)}<tspan font-size="8" fill="#6f7a8e">%</tspan></text>`:''); });
+          } else {
           const mx=Math.max(10,...rows.map(r=>r.tot||0),...(ID?rows.map(r=>ID[r.k]||0):[])), top=Math.ceil(mx/5)*5, NM={HP:'HP',ATK:'攻撃',DEF:'防御',CR:'会心率',CD:'会心ダメ',ER:'チャージ',EM:'熟知'}, RS=rows.length>5?15:17, bx0c=LX+IN+58, bx1c=LX1-(ID?64:38), BXc=v=>bx0c+Math.min(1,Math.max(0,v)/top)*(bx1c-bx0c);
           const CO='#5f6c86', CM='#b8a77c', CU=CREAM, y1r=y0+(rows.length>5?47:51);
           for(let t=5;t<top;t+=5) g+=LN(BXc(t),y1r-9,BXc(t),y1r+(rows.length-1)*RS+3,'#fff',.08,1);
@@ -1662,7 +1678,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
             if(iv!=null){ const df=r.tot-iv, ok=Math.abs(df)<.5; g+=`<text x="${LX1-4}" y="${y}" text-anchor="end" font-family='${mono}' font-size="10" font-weight="700" fill="${ok?GD:df<0?'#ff9b8a':'#8a93a6'}">${ok?'±0':(df>0?'+':'−')+Math.abs(df).toFixed(1)}</text>`; } });
           const ly=y1r+(rows.length-1)*RS+16, LG=(x,col,t)=>`<rect x="${x}" y="${ly-6}" width="8" height="5" fill="${col}"/><text x="${x+11}" y="${ly}" font-family='${sans}' font-size="8.5" fill="#8a93a6">${t}</text>`;
           g+=LG(LX+IN,CO,'聖遺物以外')+(PB==='B3'?LG(LX+IN+62,CM,'メイン')+LG(LX+IN+104,CU,'サブ'):LG(LX+IN+62,CU,'聖遺物'))
-            +(ID?(IB==='ghost'?`<rect x="${LX+IN+142}" y="${ly-7}" width="10" height="7" rx="1" fill="none" stroke="#e9d39a" stroke-width="1"/>`:LN(LX+IN+147,ly-8,LX+IN+147,ly+1,'#e9d39a',1,1.8))+`<text x="${LX+IN+156}" y="${ly}" font-family='${sans}' font-size="8.5" fill="#8a93a6">理想（無凸餅）</text>`:''); } }
+            +(ID?(IB==='ghost'?`<rect x="${LX+IN+142}" y="${ly-7}" width="10" height="7" rx="1" fill="none" stroke="#e9d39a" stroke-width="1"/>`:LN(LX+IN+147,ly-8,LX+IN+147,ly+1,'#e9d39a',1,1.8))+`<text x="${LX+IN+156}" y="${ly}" font-family='${sans}' font-size="8.5" fill="#8a93a6">理想（無凸餅）</text>`:''); } } }
       else if(PB==='U'){ const IN=14, us=c.uidStat, fp=us&&us.fp;
         g+=SECr('パラメータ（実際の値）',LX+IN,y0+18);
         if(!fp) g+=`<text x="${LX+IN}" y="${y0+62}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">UIDで取り込むと、ここに</text><text x="${LX+IN}" y="${y0+78}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">キャラ全体の値（武器・突破込み）</text>`;
