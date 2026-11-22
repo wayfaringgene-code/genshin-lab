@@ -52,10 +52,12 @@ assert lab.count('/*__SET_BONUS__*/{}') == 1
 lab_built = lab.replace('/*__SET_BONUS__*/{}', SET_BONUS.strip())
 
 SITE = 'https://wayfaringgene-code.github.io/genshin-lab/'
+# 物差しの名前は build_card.py の RANK_NAME（1か所）から読む
+RANK_NAME = re.search(r"const RANK_NAME='([^']+)'", read(os.path.join(TOOLS, 'build_card.py'))).group(1)
 OGP = (f'<meta name="description" content="原神の聖遺物が「秘境を何日回った人のレベル」かを測って、カードにします。UIDを入れるだけ・ログイン不要。">\n'
        f'<meta property="og:type" content="website">\n<meta property="og:site_name" content="命ノ星座カード">\n'
        f'<meta property="og:title" content="命ノ星座カード｜あなたの聖遺物は、秘境を何日回った人のレベル？">\n'
-       f'<meta property="og:description" content="UIDを入れるだけで、キャラごとの聖遺物の「秘境レベル」をカードにします。ログイン不要。非公式のファンツールです。">\n'
+       f'<meta property="og:description" content="UIDを入れるだけで、キャラごとの聖遺物の「{RANK_NAME}」をカードにします。ログイン不要。非公式のファンツールです。">\n'
        f'<meta property="og:url" content="{SITE}">\n<meta property="og:image" content="{SITE}og.png">\n'
        f'<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
        f'<meta name="twitter:card" content="summary_large_image">\n')

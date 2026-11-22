@@ -18,7 +18,7 @@ def rep(old, new, count=1):
 rep('<title>聖遺物厳選ラボ</title>', '<title>命ノ星座カード</title>')
 rep("<script>\n(function(){", "<script>window.LAB_MODE='card';</script>\n<script>\n(function(){")
 rep("const $=id=>document.getElementById(id);",
-    "const $=id=>document.getElementById(id);\nconst CARD_APP=window.LAB_MODE==='card'; // 単品のカードアプリとして動かす")
+    "const $=id=>document.getElementById(id);\nconst CARD_APP=window.LAB_MODE==='card'; // 単品のカードアプリとして動かす\n/* 物差しの名前（v2.10）：「秘境レベル」から改めた。名前を変えるときはここだけ直す（カード・ホーム・設定・キャラ一覧・聖遺物のページが同じ名前を使う） */\nconst RANK_NAME='希少ランク';")
 
 # --- 単位：カードアプリでは英語（DAYS／MONTHS／YEARS）だけ ---
 rep("function fmtWait(d,L){ L=WAIT_UNITS[L]?L:'jp';",
@@ -154,6 +154,8 @@ rep("const r=await saveBlob(`命ノ星座_${nm}_${ds}.${ext}`,blob);", "const fn
 rep("＝このキャラ（メインOP・有効OP）の条件で、この有効RV（${Math.round(st.tot)}%）を秘境だけで揃えるのにかかる日数。強さではなく「聖遺物の珍しさ」の物差し<tspan fill=\"#6f7a8e\" font-size=\"10\" dx=\"12\">聖遺物ラボ ${c.date||''}</tspan></text>`;",
     "${CARD_APP?`＝この有効RV（${Math.round(st.tot)}%）を秘境だけで揃えるのにかかる日数。強さではなく「珍しさ」の物差し</text><text x=\"${W-40}\" y=\"${H-23}\" text-anchor=\"end\" font-family='${sans}' font-size=\"10.5\" fill=\"#8a93a6\" letter-spacing=\".02em\">${esc(c.date||'')}<tspan dx=\"10\" fill=\"#e9d39a\" font-weight=\"700\">命ノ星座カード</tspan><tspan dx=\"8\">wayfaringgene-code.github.io/genshin-lab</tspan></text>`:`＝このキャラ（メインOP・有効OP）の条件で、この有効RV（${Math.round(st.tot)}%）を秘境だけで揃えるのにかかる日数。強さではなく「聖遺物の珍しさ」の物差し<tspan fill=\"#6f7a8e\" font-size=\"10\" dx=\"12\">聖遺物ラボ ${c.date||''}</tspan></text>`}`;")
 
+# カードの下の一文の名前も、物差しの名前（RANK_NAME）から
+rep('font-weight="700">秘境レベル</tspan>${CARD_APP?`＝この有効RV', 'font-weight="700">${CARD_APP?RANK_NAME:\'秘境レベル\'}</tspan>${CARD_APP?`＝この有効RV')
 # --- 起動 ---
 rep("showTab(CHARS_ONLY?'chars':TABS.includes(h0)?h0:'sim');",
     "showTab((CHARS_ONLY||CARD_APP)?'chars':TABS.includes(h0)?h0:'sim');\nif(CARD_APP) cardAppInit();")
@@ -326,7 +328,7 @@ function cardAppInit(){
   const h=tl.querySelector('.row'); h.querySelector('h2').textContent='手持ちのキャラ';
   const ctrl=h.querySelector('.row'); ctrl.innerHTML=''; const shots=$('chShots').closest('label'); const so=cardEl('div',{class:'seg',role:'group','aria-label':'並び順'},Object.entries(LIST_SORTS).map(([k,v])=>`<button data-lsort="${k}">${v}</button>`).join('')); ctrl.appendChild(so); ctrl.appendChild(shots); ctrl.appendChild($('chAdd'));
   so.querySelectorAll('[data-lsort]').forEach(b=>b.addEventListener('click',()=>{ store.set('listSort',b.dataset.lsort); renderChars(); }));
-  const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラの<b>育成候補</b>（手持ちの聖遺物のうち、いまの部位を超えうるもの）が開きます。押した棒の部位が先に出ます。カードは行の右上の「カードを作成 ›」から。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの秘境レベル、右の数字＝5部位の合計の秘境レベル。色はランク（<span id="tierLegend"></span>）。';
+  const tln=tl.querySelector('p.note'); if(tln) tln.innerHTML='行を押すと、そのキャラの<b>育成候補</b>（手持ちの聖遺物のうち、いまの部位を超えうるもの）が開きます。押した棒の部位が先に出ます。カードは行の右上の「カードを作成 ›」から。並び順は右上で切り替えられます（カードのページの ◀ ▶ も同じ順）。スクショは端末の中で読み取り、どこにも送りません（このページへのドラッグや貼り付けでも取り込めます）。棒の長さ＝部位ごとの'+RANK_NAME+'、右の数字＝5部位の合計の'+RANK_NAME+'。色はランク（<span id="tierLegend"></span>）。';
   // カード
   pCard.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ctool"><div class="grp2"><button class="btn" id="cEdit">編集</button><span id="cDelBox"><button class="btn" id="cDel">削除</button></span></div>
     <div class="grp2"><label class="btn" style="cursor:pointer">立ち絵を選ぶ<input type="file" id="cArt" accept="image/*" hidden></label><label id="cZoomWrap" class="row" style="gap:6px;font-size:12px;color:var(--muted)" hidden>大きさ<input type="range" id="cZoom" min="60" max="170" step="5" value="100" style="width:110px"></label><button class="btn" id="cArtDel" hidden>立ち絵を外す</button><button class="btn primary" id="cShare">共有</button><button class="btn" id="cPng">PNGで保存</button><button class="btn" id="cWebp">WebP</button></div></div>
@@ -370,7 +372,7 @@ function cardAppInit(){
   const mv=$('mvOut').closest('.panel'); const det=mv.querySelector('details'); if(det){ det.open=true; const sm=det.querySelector('summary'); if(sm) sm.remove(); }
   pSet.innerHTML=`<div class="panel" style="margin-top:14px"><h2>計算の前提 <span class="clock">固定</span></h2><dl class="ckv">
     <dt>1日の周回数</dt><dd>${S.runsPerDay}周（樹脂${S.runsPerDay*20}）</dd><dt>初期4OPの確率</dt><dd>${Math.round(S.p4*100)}%（秘境）</dd><dt>1周の★5ドロップ</dt><dd>平均${DROP5}個</dd><dt>狙いのセット</dt><dd>2択の片方（${Math.round(SET_SHARE*100)}%）</dd>
-    <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの有効RVを秘境だけで揃えるのにかかる、平均的な人の日数</dd><dt>ランクの境目</dt><dd>★1 〜0.2 MONTHS／★2 〜1.0 MONTHS／★3 〜3.0 MONTHS／★4 〜12.0 MONTHS／★5 〜36.0 MONTHS／★5+ 36.0 MONTHS〜（1,200 MONTHS 以上は ONCE IN A CENTURY、60,000 MONTHS 以上は SINCE THE DAWN OF TIME）。期間はすべて MONTHS（30.4日＝1か月）で表します</dd>
+    <dt>${RANK_NAME}</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの有効RVを秘境だけで揃えるのにかかる、平均的な人の日数</dd><dt>ランクの境目</dt><dd>★1 〜0.2 MONTHS／★2 〜1.0 MONTHS／★3 〜3.0 MONTHS／★4 〜12.0 MONTHS／★5 〜36.0 MONTHS／★5+ 36.0 MONTHS〜（1,200 MONTHS 以上は ONCE IN A CENTURY、60,000 MONTHS 以上は SINCE THE DAWN OF TIME）。期間はすべて MONTHS（30.4日＝1か月）で表します</dd>
     <dt>確率の出典</dt><dd>KQM「Genshin Impact Artifacts Guide」、Genshin Impact Wiki（Fandom）「Artifact/Distribution」（草元素追加後の値）</dd></dl></div>
     <div class="panel" style="margin-top:14px"><h2>保存した立ち絵</h2><p class="note" style="margin-bottom:8px">この端末（このブラウザ）にだけ保存されています。ほかの人には見えません。大きい画像は、長い辺1600pxに縮めて保存します（カードの見た目は変わりません）。</p><div id="cPortraits"></div></div>
     <div class="panel" style="margin-top:14px"><h2>カードの登場の演出</h2><label class="row" style="gap:8px;align-items:center"><input type="checkbox" id="cRevealOn">UIDで取り込んだあと、カードが机に落ちてくる演出を出す</label><p class="note" style="margin-top:6px">演出の途中で画面を押す（Enter・スペースでも）と次のカードへ進み、右上の「スキップ」で最後まで飛べます。</p></div>
@@ -510,17 +512,17 @@ function homeInit(box){
   box.innerHTML=`<div id="homeShow"></div><section class="chero">
     <div class="chero-copy"><p class="ceyebrow">原神・聖遺物の「珍しさ」を測る</p>
       <h2 class="chero-q"><span class="nw">あなたの聖遺物は、</span><span class="nw">秘境を何日回った</span><span class="nw">人のレベル？</span></h2>
-      <p class="chero-lead">UIDを入れるだけで、ショーケースに並べたキャラの聖遺物を「秘境レベル」で測って、カードにします。</p>
+      <p class="chero-lead">UIDを入れるだけで、ショーケースに並べたキャラの聖遺物を「${RANK_NAME}」で測って、カードにします。</p>
       <form id="homeForm" class="chero-form" novalidate><label class="sr" for="homeUid">UID</label><input type="text" id="homeUid" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="UID（9〜10けた）"><button class="btn primary big" id="homeGo" type="submit">カードを作る</button></form>
       <div class="note" id="homeMsg" aria-live="polite"></div>
       <p class="ctrust">ログイン不要・入れるのはUIDだけ・データはこの端末の中だけに保存</p></div>
     <figure class="chero-card"><div id="homeSample" aria-label="カードの見本"></div><figcaption>見本：こんなカードができます</figcaption></figure></section>
     <div id="homeBack"></div>
-    <div class="panel" style="margin-top:14px"><details class="more"><summary>「秘境レベル」って？</summary><dl class="ckv" style="margin-top:6px">
-      <dt>秘境レベル</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの聖遺物と同じだけの有効RVを、秘境だけで揃えるのにかかる平均の日数です（1日9周＝樹脂180）。強さではなく「どれだけ珍しいか」の物差しです。</dd>
+    <div class="panel" style="margin-top:14px"><details class="more"><summary>「${RANK_NAME}」って？</summary><dl class="ckv" style="margin-top:6px">
+      <dt>${RANK_NAME}</dt><dd>そのキャラ（メインOP・有効OP）の条件で、いまの聖遺物と同じだけの有効RVを、秘境だけで揃えるのにかかる平均の日数です（1日9周＝樹脂180）。強さではなく「どれだけ珍しいか」の物差しです。</dd>
       <dt>ランク</dt><dd>★1 〜0.2 MONTHS／★2 〜1.0 MONTHS／★3 〜3.0 MONTHS／★4 〜12.0 MONTHS／★5 〜36.0 MONTHS／★5+ 36.0 MONTHS〜。1,200 MONTHS 以上は ONCE IN A CENTURY、60,000 MONTHS 以上は SINCE THE DAWN OF TIME。</dd>
       <dt>有効RV</dt><dd>有効なサブOP（そのキャラに役立つもの）が伸びた量の合計です。1回でいちばん大きく伸びたときを100%として数えます。</dd>
-      <dt>使い方のヒント</dt><dd>部位ごとの秘境レベルが、これから秘境を回るつもりの日数より長ければ、その期間にその部位を更新できる見込みは五分以下です。</dd></dl></details></div>
+      <dt>使い方のヒント</dt><dd>部位ごとの${RANK_NAME}が、これから秘境を回るつもりの日数より長ければ、その期間にその部位を更新できる見込みは五分以下です。</dd></dl></details></div>
     <p class="note chome-links">ほかの取り込み方：<a href="#" data-hgo="scan">動画・スクショから取り込む</a>　／　くわしく分析：<a href="${LAB_URL}"${ON_SITE?'':' target="_blank" rel="noopener"'}>聖遺物ラボ</a>　／　非公式のファンツールです（HoYoverse とは関係ありません）</p>`;
   box.querySelector('#homeForm').addEventListener('submit',homeGo);
   box.querySelectorAll('[data-hgo]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); cardShowPage(a.dataset.hgo); }));
@@ -819,7 +821,7 @@ async function revealPlay(cs,opt){ opt=opt||{}; if(window.RV) rvClose(); if(!cs.
   ov.addEventListener('pointerdown',e=>{ if(R.list||!R.P||(e.target.closest&&e.target.closest('button'))) return; if(R.ended) rvList(R); else rvNext(R); });
   // 準備：机を出して、カードの絵と書体を用意する
   const A=rvAssets(); x.drawImage(A.desk,0,0); x.textAlign='center'; x.font=`400 24px ${RV_SANS}`; x.fillStyle='rgba(185,178,163,.6)'; x.fillText('カードを用意しています…',RV_CX,RV_CY);
-  const fonts=Promise.all([document.fonts.load(`700 68px ${RV_MINCHO}`,list.map(c=>c.name||'').join('')+'命ノ星座カード（名前なし）'),document.fonts.load(`400 70px ${RV_SANS}`,'0123456789.,秘境レベルDAYSWEKMONTHYRAX'),document.fonts.load(`700 30px ${RV_SANS}`,'#命ノ星座カード')]).catch(()=>{});
+  const fonts=Promise.all([document.fonts.load(`700 68px ${RV_MINCHO}`,list.map(c=>c.name||'').join('')+'命ノ星座カード（名前なし）'),document.fonts.load(`400 70px ${RV_SANS}`,'0123456789.,秘境レベルDAYSWEKMONTHYRAX'+RANK_NAME),document.fonts.load(`700 30px ${RV_SANS}`,'#命ノ星座カード')]).catch(()=>{});
   // カードの絵は、出てくる順に用意する（2枚ずつ並行）。最初の1枚ができたら流し始め、残りは流しながら用意する（間に合わないカードがあれば、そのカードの手前で時計を止めて待つ）
   const items=list.map(c=>{ const st=charStats(c); return {c,st,rk:rvRank(st.age||0),img:null,ready:false}; });
   const P=rvPlan(items,mode); R.P=P;
@@ -1307,7 +1309,7 @@ const dmgPct=x=>(x>=0?'+':'')+(x*100).toFixed(1)+'%';
 const dmgNote=d=>`<span class="pb">ダメージ＝${esc(d.skill)}（${d.ben?'ベネットのバフあり':'バフなし'}・試作）が何%変わるか。上がる確率 ${pctTxt(d.pUp)}</span>`;
 const pRare=p=>p>=0.995?'ほぼ確実':p>=0.1?Math.round(p*100)+'%':p>=0.001?(p*100).toFixed(1)+'%':'約1/'+Math.round(1/p).toLocaleString();
 function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=>x==null?'—':x.toFixed(1), ag=x=>x>0?fmtAge(x):'なし', cl=(x,y,k)=>{ const r=v=>Math.round((v||0)/(k||1)); return r(y)>r(x)?'up':r(y)<r(x)?'dn':''; }; // 見えている桁（MONTHS・スコアとも小数第1位）で比べる
-  if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">秘境Lv</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
+  if(u.own) return `<span class="tip" role="tooltip"><b>${esc(u.c.name)}がいま付けている1個</b><span class="tt t2"><i></i><i class="h">いま</i><i class="k">${RANK_NAME}</i><i>${ag(u.slotAge)}</i><i class="k">スコア</i><i>${sc(u.scNow)}</i></span></span>`;
   const cur=u.c.pieces&&u.c.pieces[a.slot], E=new Set(u.c.eff||[]), A=a.p.subs.filter(q=>q.s), B=cur&&cur.subs?cur.subs.filter(q=>q.s):[];
   const ks=[...new Set([...B.map(q=>q.s),...A.map(q=>q.s)])].sort((x,y)=>(E.has(y)?1:0)-(E.has(x)?1:0));
   // この1個は+20まで上げたときの平均（残りの強化が4行に等しく入るとして、1回あたり平均の伸び＝4段階の平均）
@@ -1327,8 +1329,8 @@ function invTip(u,a){ const lv=a.p.lv==null?20:a.p.lv, sl=SLOT_JP[a.slot], sc=x=
   const notes=(u.sw&&u.sw.alt?`<span class="pb">いまは${esc(a.set)}の4セットではないので、「更新」には数えていません。下の表は、いまの${sl}との比べです</span>`:'')+(u.sw&&u.sw.mk?`<span class="mk">${esc(u.sw.mk)}が4セットになります</span>`:'')
     +(mc?`<span class="pb">メインOPが変わります（有効RVの比べ方はサブOPだけ）</span>`:'')+(u.fs&&!(u.sw&&u.sw.alt)?`<span class="pb">${sl}はいま自由枠（${esc(u.fs.set||'★5なし')}）。${esc(u.fs.four)}の4セットのまま、どのセットにも替えられます</span>`:'');
   const head=(u.sw&&u.sw.alt?`<b>${esc(u.c.name)}はいま${esc(u.sw.desc)}。${esc(a.set)}の4セットにするなら、${sl}はこの1個で</b>`:`<b>${esc(u.c.name)}の${sl}を、この1個に替えると</b>`)+cmp+notes, rvr=x=>x==null?'—':Math.round(x)+'%', now=u.slotAge||0, sn=u.scNow;
-  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
-  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="${cl(u.now||0,u.rvMax,10)}">${rvr(u.rvMax)}</i><i class="k">秘境Lv</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">${u.sw&&u.sw.alt?'いまの'+sl+'を上回る確率':'更新できる確率'} ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
+  if(lv>=20) return `<span class="tip" role="tooltip">${head}<span class="tt t3"><i></i><i class="h">いま</i><i class="h">替えたら</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="k">${RANK_NAME}</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.now,0.1)}">${sc(u.sr.now)}</i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i>`:''}</span>${u.dm?dmgNote(u.dm):''}</span>`;
+  return `<span class="tip" role="tooltip">${head}<span class="tt"><i></i><i class="h">いま</i><i class="h">平均</i><i class="h">最大</i><i class="k">有効RV</i><i>${rvr(u.now)}</i><i class="${cl(u.now||0,u.ex,10)}">${rvr(u.ex)}</i><i class="${cl(u.now||0,u.rvMax,10)}">${rvr(u.rvMax)}</i><i class="k">${RANK_NAME}</i><i>${ag(now)}</i><i class="${cl(now,u.days,3.04)}">${ag(u.days)}</i><i class="${cl(now,u.daysMax,3.04)}">${ag(u.daysMax)}<small>${pRare(u.pMx)}</small></i><i class="k">スコア</i><i>${sc(sn)}</i><i class="${cl(sn||0,u.sr.mean,0.1)}">${sc(u.sr.mean)}</i><i class="${cl(sn||0,u.sr.max,0.1)}">${sc(u.sr.max)}<small>${pRare(u.sr.pMax)}</small></i>${u.dm?`<i class="k">ダメージ</i><i>±0%</i><i class="${cl(0,u.dm.mean,0.001)}">${dmgPct(u.dm.mean)}</i><i class="${cl(0,u.dm.max,0.001)}">${dmgPct(u.dm.max)}<small>${pRare(u.dm.pMax)}</small></i>`:''}</span>${u.dm?dmgNote(u.dm):''}<span class="pb">${u.sw&&u.sw.alt?'いまの'+sl+'を上回る確率':'更新できる確率'} ${pctTxt(u.pb)}。平均・最大は+20まで上げたとき（いま+${lv}）。最大の下の小さな数字は、最大になる確率</span></span>`; }
 /* ---- 1個の表示 ---- */
 // ロールの棒：伸びた回数だけ「箱4つの組」を並べ、伸び幅の合計（70%＝箱1つ … 100%＝箱4つ）だけ塗る。合計は見積もり（RV÷10−6×回数）
 function rollBar(n,u){ if(!n) return ''; const fill=Math.max(n,Math.min(4*n,Math.round(u-6*n))); let k=fill, g='';
@@ -1416,7 +1418,7 @@ function invRenderList(box,inv,idx,ms){ const V=INV_VIEW, arts=inv.arts, I=idx.i
       <label>使うキャラ<select data-iv="cand">${opt(V.cand,[['','すべて'],['go','更新できる見込みが高い（緑の枠）'],['yes','いる'],['no','いない（餌の候補）']])}</select></label>
       <label>並び<select data-iv="sort">${opt(V.sort,Object.entries(INV_SORTS))}</select></label>
       <label title="ダメージの見積もりは、いまはフリンズ（雷霆のシンフォニー）だけの試作です"><input type="checkbox" id="invBen" ${dmgBennett()?'checked':''}>ダメージの見積もりにベネットのバフを入れる（試作・フリンズのみ）</label></div>
-    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の秘境レベルとスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
+    <p class="note" style="margin-top:8px">${L.length.toLocaleString()}個${ms>800?`（計算 ${(ms/1000).toFixed(1)}秒）`:''}。<b>右の大きな数字</b>＝その1個の素質（+20まで上げたら、秘境で何日分の1個になるか）。<b>キャラの札</b>＝このセットを4セットで使うキャラ（初期値の表）と、いまの部位を<b>更新</b>できる確率。札にマウスを載せると、付け替えたときに部位の${RANK_NAME}とスコアがどうなるか（いま・+20で平均・最大）が出ます。押すと、そのキャラの育成候補が開きます。</p><div class="ia-list">`;
   h+=L.slice(0,V.n).map(a=>{ const x=I.get(a), p=x.pot, t=p?tierOf(p.days):null;
     const est=x.lv<20, right=p?`<span class="cap">${est?'+20で平均的に伸びたら':'いまの実力'}${invQm(x,p)}</span><span class="big${est?' est':''}">${t?rankBadge(t,est):''}<b title="${est?'+20で平均の有効RV':'有効RV'} ${Math.round(p.ex)}%" style="color:${t?t[2]:'inherit'}">${fmtAge(p.days)}</b></span>${t?(est?`<span class="prk">${esc(t[1])}${TIERS.indexOf(t)<TIERS.length-1?'以上':''}になる確率 <b>${pctTxt(potRankP(p,t))}</b></span>`:`<span class="prk dn">+20まで強化済み</span>`):''}<span class="scl">スコア ${est?'平均 ':''}${(est?p.sr.mean:p.sr.now).toFixed(1)}</span>`:'<span>使うキャラなし</span>';
     const who=(a.loc&&!x.us.some(u=>u.own)?`<span class="tag2">${esc(a.loc)}が装備中</span>`:'')+(x.us.length?x.us.map((u,i)=>{ const st=u.own?['own',u.fs?'装備中（自由枠）':'装備中']:u.sw&&u.sw.alt?['alt',esc(u.sw.label)]:u.now==null?['hi','空き部位']:u.pb<0.01?['ex','いまが上']:[u.pb>=0.5?'hi':'',`更新 <b>${pctTxt(u.pb)}</b>`];
@@ -1574,7 +1576,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
     // ---- 右上：部位の見出し（全体の★と値は左の物差しへ移した） ----
     const CHIP=(t,x,y,fs)=>{ fs=fs||9.5; let w; try{ const cx=(window.CC2_MCTX=window.CC2_MCTX||document.createElement('canvas').getContext('2d')); cx.font=`700 ${fs}px ${sans}`; w=cx.measureText(t).width+t.length*fs*.12; }catch(e){ w=[...t].length*fs*1.1; } /* 見出しのチップ：細い金の枠とごく淡い面だけ */
       return `<rect x="${x}" y="${(y-fs*1.17).toFixed(1)}" width="${(w+fs*1.68).toFixed(1)}" height="${(fs*1.6).toFixed(1)}" rx="${(fs*.38).toFixed(1)}" fill="#e9d39a" fill-opacity=".05" stroke="#e9d39a" stroke-opacity=".38" stroke-width=".8"/><text x="${(x+fs*.9).toFixed(1)}" y="${y}" font-family='${sans}' font-size="${fs}" font-weight="700" letter-spacing=".12em" fill="#cfd4e6">${t}</text>`; };
-    if(LV==='G') g+=CHIP('秘境レベル',rx,58,11); else g+=TX(rx,58,(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)?'秘境レベル':'部位ごとの秘境レベル',{fs:12,c:'#9aa6bb'}).replace('<text ','<text letter-spacing=".15em" ');
+    if(LV==='G') g+=CHIP(RANK_NAME,rx,58,11); else g+=TX(rx,58,(window.CC2_OPT||{}).ov==='hdr'&&/^[EF]$/.test(LV)?RANK_NAME:'部位ごとの'+RANK_NAME,{fs:12,c:'#9aa6bb'}).replace('<text ','<text letter-spacing=".15em" ');
     g+=`<text x="${RE}" y="58" text-anchor="end" font-family='${sans}' font-size="12" fill="#9aa6bb">${UPM==='row'?`1か月で更新 <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${FPc(PA)}</tspan>　`:''}有効RV <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${Math.round(st.tot)}%</tspan>　スコア <tspan font-family='${mono}' fill="#f3ead6" font-size="14">${st.score.toFixed(1)}</tspan></text>`;
     // ---- 右：5部位の行（2秒目＝部位の★の札、3秒目＝値と棒、最後＝サブOP） ----
     const NEXTD=Math.min(...SLOTS.map(s=>{ const x=st.slots[s]; return x.rv!=null&&x.age>0&&isFinite(x.age)?x.age:Infinity; }));
@@ -1590,7 +1592,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
           tw=MW(SLOT_JP[s],`400 11px ${sans}`,[...SLOT_JP[s]].length*11)+8+MW(mt,`700 15px ${sans}`,[...mt].reduce((a2,ch)=>a2+(/[ -~]/.test(ch)?9:15),0)), wx=SX+tw+10, LVc='#ff6b5e';
         if(eq&&p.lv!=null&&+p.lv<20){ const ty=y1-4.5; g+=`<path d="M${f1r(wx+5)},${f1r(ty-5)} L${f1r(wx+10.4)},${f1r(ty+4.6)} L${f1r(wx-.4)},${f1r(ty+4.6)} Z" fill="${LVc}" stroke="${LVc}" stroke-width=".9" stroke-linejoin="round"/><text x="${f1r(wx+5)}" y="${f1r(ty+3.7)}" text-anchor="middle" font-family='${sans}' font-size="7.2" font-weight="900" fill="#14110a">!</text><text x="${f1r(wx+14.5)}" y="${y1}" font-family='${sans}' font-size="10" font-weight="700" fill="${LVc}">Lv.${+p.lv}${EST.has(s)?'（Lv.20の見込み）':''}</text>`; } /* +20未満の注意：赤い三角に「!」（書体に頼らず図形で）＋Lv.○（Lv.20の見込み） */
         if(lo) g+=`<text x="${f1r(wx)}" y="${y1}" font-family='${sans}' font-size="11" font-weight="700" fill="#8a93a6">★4<tspan dx="4" font-weight="400" font-size="10" fill="#6f7a8e">Lv.${lo.lv!=null?lo.lv:16}</tspan></text>`; }
-      const BH0=22, b=lo?{s:`<text x="${RE}" y="${y1}" text-anchor="end" font-family='${sans}' font-size="10.5" fill="#6f7a8e">★4の聖遺物（秘境レベルの対象外）</text>`,w:-1}:BADGE(RE,y1-5,BH0,d,{est:EST.has(s)}); g+=b.s; /* バッジの大きさ：全体と5部位で同じ。★4は対象外の一文だけ */
+      const BH0=22, b=lo?{s:`<text x="${RE}" y="${y1}" text-anchor="end" font-family='${sans}' font-size="10.5" fill="#6f7a8e">★4の聖遺物（${RANK_NAME}の対象外）</text>`,w:-1}:BADGE(RE,y1-5,BH0,d,{est:EST.has(s)}); g+=b.s; /* バッジの大きさ：全体と5部位で同じ。★4は対象外の一文だけ */
       { // 部位の秘境レベル（MONTHS）。window.CC2_OPT.mv：plain＝そのまま／type＝見出しの MONTHS と同じ字面に／next＝いちばん短い部位（次の狙い）に金の下線と札／both＝両方
         if(lo){} else { const MV=(window.CC2_OPT||{}).mv||'plain', TY=MV==='type'||MV==='both', NX=(MV==='next'||MV==='both')&&d>0&&d===NEXTD, fsV=TY?16.5:14, vx=RE-(b.w?b.w+10:0), vt=d>0?fmtAge(d):'—';
         g+=`<text x="${vx}" y="${y1}" text-anchor="end" font-family='${mono}' font-size="${fsV}" font-weight="${TY?700:600}" fill="${NX?'#f6e2a8':TY?'#f3ead6':'#d8d2c2'}">${d>0?VAL(d,fsV,vx):'—'}</text>`;
@@ -1683,7 +1685,7 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       for(let i=1;i<ENg;i++) if(BX[i]<GX1-1) g+=LN(BX[i],GY0,BX[i],GY1,'#fff',i>TIERS.length-1?.1:.07,1,i>TIERS.length-1?' stroke-dasharray="2 3"':'');
       const nearY=y=>false;
       const stp=BG?2000:([100,200,500,1000,2000,5000].find(v=>ymax/v<=5)||10000); for(let r=stp;r<ymax*.999;r+=stp) g+=LN(GX0,GYp(r),GX1,GYp(r),'#fff',.05,1)+(nearY(GYp(r))||(!BG&&GYp(r)-GY0<12)?'':TX(GX0-6,GYp(r)+3.5,r.toLocaleString('en-US'),{a:'end',fs:FA,c:'#7d869a',m:1}));
-      g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(BG?CHIP('秘境レベルの物差し',GX0-12,GY0-26)+TX(GX0,GY0-6,`<tspan fill="#9aa6bb">有効RV %</tspan><tspan dx="14">上限</tspan> <tspan font-family='${mono}' font-weight="700" fill="#cfd4e6">${Math.round(ymax).toLocaleString('en-US')}</tspan>`,{fs:FLb,c:'#9aa6bb'}):(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'}));
+      g+=LN(GX0,GY0,GX1,GY0,'#fff',.35,1,' stroke-dasharray="3 3"')+(BG?CHIP(RANK_NAME+'の物差し',GX0-12,GY0-26)+TX(GX0,GY0-6,`<tspan fill="#9aa6bb">有効RV %</tspan><tspan dx="14">上限</tspan> <tspan font-family='${mono}' font-weight="700" fill="#cfd4e6">${Math.round(ymax).toLocaleString('en-US')}</tspan>`,{fs:FLb,c:'#9aa6bb'}):(nearY(GY0)?'':TX(GX0-6,GY0+3.5,Math.round(ymax).toLocaleString('en-US'),{a:'end',fs:FA,c:'#9aa6bb',m:1}))+TX(GX0+4,GY0-6,'上限（この装備で届く有効RVの最大）',{fs:FLb,c:'#9aa6bb'}));
       g+=LN(GX0,GY1,GX1,GY1,'#fff',.3,1)+LN(GX0,GY0,GX0,GY1,'#fff',.2,1)+(BG?'':TX(GX0-6,GY0-16,'有効RV %',{a:'end',fs:FLb,c:'#9aa6bb'})); /* G：有効RV % は上限の行にまとめる */
       // 横軸の文字：読みのかたまり（axis）・読み取りの札と重なるものは出さない
       const px=age>0?GXp(age):null, o0=OVR(0,0), axL=OV==='axis'&&px!=null?Math.max(GX0-20,Math.min(GX1+20-o0.w,px-o0.w/2)):null, xc=BG&&px!=null?{w:UTW(fmtAge(age),10.5*.6,10.5)+18}:null, xcL=xc?Math.max(GX0-30,Math.min(GX1+24-xc.w,px-xc.w/2)):null,
