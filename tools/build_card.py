@@ -912,7 +912,7 @@ function revealDemoPanel(){ if($('rvDemo')) return; const box=cardEl('div',{clas
    左＝全体の★が物差しのどこにいるか（百年級・有史以来の上限と、原神のリリースの日からの線つき）
    A 左端に縦の物差し／B 立ち絵の下に横の物差し。全体の★と値は物差しの印の横（2回目。C 外周の弧・D 縦の棒は1回目でやめた） ---- */
 window.CC2_ELEM=/*__ELEM_ICONS__*/{};
-const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'b',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
+const CC2={v:'G',ci:0,b:'card',tight:0,ov:'pt',xs:'log',pz:'none',fl:2,up:'br',gs:'mid',fw:'365',mv:'type',un:'ym3',yk:'L',adjOn:0,adj:(()=>{ try{ return JSON.parse(localStorage.getItem('lab:cc2Adj')||'{}')||{}; }catch(e){ return {}; } })(),list:[]}, CARD_FIT2={}, CC2_VS=[['G','G 立ち絵＋分析＋グラフ'],['E','E グラフ（5部位を積み上げ）'],['F','F グラフ（全体だけ）'],['A','A 縦の物差し'],['B','B 横の物差し']], CC2_BS=[['card','カード'],['p','平行四辺形'],['g','金の文字'],['e','星の紋章'],['f','箔押し'],['medal','メダル'],['hex','六角形'],['pill','小さな札'],['split','二分割'],['under','下線'],['glass','すりガラス'],['shield','盾'],['diamond','ひし形']];
 function cc2Samples(){ // 見本（実在のプレイヤーのデータではなく、伸び方を決めて作った例）。フリーナはホームの見本と同じ
   const P=(main,lines)=>{ const rolls={}, subs=lines.map(([k,t])=>{ rolls[k]=t; const v=t.reduce((a,x)=>a+ROLL[k][x],0); return {s:k,v:FLAT.has(k)?String(Math.round(v+1e-9)):(Math.round((v+1e-9)*10)/10).toFixed(1)}; }); return {main,subs,rolls}; };
   const sm=HOME_SAMPLE||(HOME_SAMPLE=homeSampleChar()), PS2=(c,set,off,offSet)=>{ for(const k of SLOTS) if(c.pieces[k]) c.pieces[k].set=k===off?offSet:set; return c; }; PS2(sm,'黄金の劇団','goblet','千岩牢固');
@@ -982,7 +982,7 @@ function cc2Proto(){ if($('cc2Proto')) return;
       <div class="row">G の立ち絵 ${B('fl',0,'枠',CC2.fl===0)}${B('fl',1,'枠なし',CC2.fl===1)}${B('fl',2,'丸ごと（横長）',CC2.fl===2)}　分析の表 ${[['br','右下へ全部（新）'],['left','左（今のまま）']].map(([k,t])=>B('up',k,t,CC2.up===k)).join('')}　${B('adjOn',CC2.adjOn?0:1,'立ち絵の位置合わせ',!!CC2.adjOn)}</div>
       ${CC2.adjOn?`<div class="row" style="border:1px solid var(--line);border-radius:8px;padding:6px 8px"><span>${esc(cc.name||'')}（${aid||'—'}）：カードの立ち絵を指でドラッグして位置、スライダーで大きさ</span><label class="row" style="gap:6px">大きさ<input type="range" data-adjs min="60" max="250" step="1" value="${Math.round(adj.s*100)}" style="width:160px"><span data-adjv>${Math.round(adj.s*100)}%</span></label><button class="btn" type="button" data-adjreset>この人を戻す</button><button class="btn" type="button" data-adjcopy>値をまとめてコピー（${Object.keys(CC2.adj).length}人）</button><span class="note" data-adjmsg></span></div>`:''}
       <div class="row">グラフ（E・F）：全体の★と値 ${[['pt','点のそば'],['hdr','右上'],['ttl','グラフの見出し'],['axis','横軸の読み']].map(([k,t])=>B('ov',k,t,CC2.ov===k)).join('')}</div>
-      <div class="row">年月の表記（試作） ${[['mo','MONTHS（本番）'],['ym1','7年 + 4.0か月'],['ym2','7年4か月／12日'],['ym3','1年9か月／2か月／0.8か月'],['ym4','1年3か月／11か月／29日']].map(([k,t])=>B('un',k,t,CC2.un===k)).join('')}　ym3 の詰め ${[['now','前の形（年も月もそろえる）'],['b','詰める（月だけそろえ、年を寄せる）']].map(([k,t])=>B('yk',k,t,CC2.yk===k)).join('')}</div>
+      <div class="row">年月の表記（試作） ${[['mo','MONTHS（本番）'],['ym1','7年 + 4.0か月'],['ym2','7年4か月／12日'],['ym3','1年9か月／2か月／0.8か月'],['ym4','1年3か月／11か月／29日']].map(([k,t])=>B('un',k,t,CC2.un===k)).join('')}　ym3 の詰め ${[['now','前の形'],['L','年を固定・月は左寄せ'],['C','年を固定・月は中央'],['R','年を固定・月は右寄せ']].map(([k,t])=>B('yk',k,t,CC2.yk===k)).join('')}</div>
       <div class="row">部位の MONTHS ${[['plain','そのまま'],['type','A 見出しと同じ字面'],['next','B 次の狙い'],['both','A＋B']].map(([k,t])=>B('mv',k,t,CC2.mv===k)).join('')}</div>
       <div class="row">グラフ本体 ${[['bold','華やか'],['mid','中間'],['calm','控えめ（前の形）']].map(([k,t])=>B('gs',k,t,CC2.gs===k)).join('')}　これからの帯 ${[['0','なし'],['91','3か月'],['182','半年'],['365','1年']].map(([k,t])=>B('fw',k,t,CC2.fw===k)).join('')}</div>
       <div class="row">横軸 ${[['band','段ごとに等幅'],['log','対数'],['lin','線形']].map(([k,t])=>B('xs',k,t,CC2.xs===k)).join('')}　立ち絵 ${[['none','そのまま'],['fade','溶かす'],['glass','すりガラス'],['side','右へずらす']].map(([k,t])=>B('pz',k,t,CC2.pz===k)).join('')}</div>
@@ -1559,13 +1559,14 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       return UN==='ym1'?`${yp}<tspan font-size="${(fs*.62).toFixed(1)}" fill="#8a93a6" dx="3">+</tspan><tspan dx="3">${r.toFixed(1)}</tspan>${u('か月')}`:`${yp}<tspan dx="3">${Math.floor(r)}</tspan>${u('か月')}`; },
       /* ym3（持ち主の案）：1か月未満は「0.8か月」、1か月以上は「2か月」、1年以上は「1年9か月」（小数なし）。x を渡すと、月の部分を x に右寄せ、年の部分を月の欄（「00か月」ぶん）の左に右寄せ＝「年」の縦の位置もそろう */
       YM3=(d,fs,x)=>{ const u=f=>`<tspan font-size="${(fs*.62).toFixed(1)}" font-family='${sans}' dx="1.5">${f}</tspan>`; if(!isFinite(d)) return '上限'; const m=d/30.4;
-        if(m<1) return `${m.toFixed(1)}${u('か月')}`; const y=Math.floor(Math.round(m)/12), r=Math.round(m)-y*12; if(!y) return `${r}${u('か月')}`;
-        const yp=`<tspan fill="#f6e2a8">${y.toLocaleString('en-US')}${u('年')}</tspan>`, YK=(window.CC2_OPT||{}).yk||'b';
-        if(x==null) return `${yp}<tspan dx="3">${r}</tspan>${u('か月')}`;
-        /* 行の組み方（window.CC2_OPT.yk。2.10 の詰め）：now＝前の形（「年」も「か月」もそろえる。月が1桁だと1字ぶん空く。実際の幅で詰めても変わらなかった）／b＝「か月」だけそろえ、「年」は月のすぐ左に詰める（すき間は0.15字で一定。「年」の位置は月が10・11のときだけ1字ぶん左へ） */
-        if(YK==='now'){ const colW=fs*.6*2+fs*.62*2+1.5+fs*.3; return `<tspan x="${(x-colW).toFixed(1)}">${yp}</tspan><tspan x="${x}">${r}${u('か月')}</tspan>`; }
-        const fm=`600 ${fs}px ${mono}`, fu=`600 ${(fs*.62).toFixed(1)}px ${sans}`, wMo=t=>MW4(t,fm)+1.5+MW4('か月',fu), gap=fs*.15, yEnd=x-wMo(String(r))-gap;
-        return `<tspan x="${yEnd.toFixed(1)}">${yp}</tspan><tspan x="${x}">${r}${u('か月')}</tspan>`; },
+        /* 1か月未満は「0.9か月」、1か月以上は「3か月」、1年以上は「1年0か月」（月が0でも書く）。0.95か月以上は「1か月」（「1.0か月」にしない） */
+        const M=Math.round(m), y=m<.95?0:Math.floor(M/12), ms=m<.95?m.toFixed(1):String(M-y*12), yp=y?`<tspan fill="#f6e2a8">${y.toLocaleString('en-US')}${u('年')}</tspan>`:'', YK=(window.CC2_OPT||{}).yk||'L';
+        if(x==null) return y?`${yp}<tspan dx="3">${ms}</tspan>${u('か月')}`:`${ms}${u('か月')}`;
+        /* 行の組み方（window.CC2_OPT.yk。2.10 の詰め）：「年」の右端は、どの行でも同じ位置（年のない行も、月は同じ欄に入る）。月の欄は「0.9か月」「11か月」の広いほうの幅で、「年」のすぐ右（すき間0.15字）。欄の中の月を L＝左寄せ（年のすぐ右。「か月」の位置は桁数でずれる）／C＝中央／R＝右寄せ（「か月」もそろうが、1桁の月は年から離れる）。now＝前の形 */
+        if(YK==='now'){ const colW=fs*.6*2+fs*.62*2+1.5+fs*.3; return y?`<tspan x="${(x-colW).toFixed(1)}">${yp}</tspan><tspan x="${x}">${ms}${u('か月')}</tspan>`:`${ms}${u('か月')}`; }
+        const fm=`600 ${fs}px ${mono}`, fu=`600 ${(fs*.62).toFixed(1)}px ${sans}`, wMo=t=>MW4(t,fm)+1.5+MW4('か月',fu), colW=Math.max(wMo('0.9'),wMo('11')), c0=x-colW, w=wMo(ms),
+          me=YK==='R'?x:YK==='C'?c0+(colW+w)/2:c0+w;
+        return (y?`<tspan x="${(c0-fs*.15).toFixed(1)}">${yp}</tspan>`:'')+`<tspan x="${me.toFixed(1)}">${ms}${u('か月')}</tspan>`; },
       /* ym4（持ち主の案2）：1か月未満は「29日」、1か月以上は「11か月」、1年以上は「1年3か月」（すべて整数）。行では「年」の右端の位置をそろえ、月は「年」のすぐ右に詰める（「11か月」がちょうど右端に来る位置） */
       MW4=(t,f)=>{ try{ const cx=(window.CC2_MCTX=window.CC2_MCTX||document.createElement('canvas').getContext('2d')); cx.font=f; return cx.measureText(t).width; }catch(e){ return t.length*10; } },
       YM4=(d,fs,x)=>{ const u=f=>`<tspan font-size="${(fs*.62).toFixed(1)}" font-family='${sans}' dx="1.5">${f}</tspan>`; if(!isFinite(d)) return '上限'; const m=d/30.4;
