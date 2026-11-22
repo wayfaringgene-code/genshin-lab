@@ -180,7 +180,7 @@ v2.3 でフリンズだけの試作を入れた（2.7 の「ダメージの見�
 - 試作の artifact（自分だけが見られる版）：https://claude.ai/artifact/MttoqVoit8ckTYS69tmsJM 。`python3 tools/build_card.py src/lab.html <出力>` で組み立て、`<title>` を「命ノ星座カード 試作版」にして同じ URL に公開し直す（アイコンは icons/ を一緒に公開。同梱の立ち絵は GitHub Pages でしか出ない）
 
 ## 2.9 型くらべと「箱」（試作、次のスレッドの本題は感度の表）
-2.8 から広がったもの。試作のページは `proto/`（`proto/README.md`）。
+2.8 から広がったもの。試作のページは `proto/`（`proto/README.md`）。**キャラ別の型・型別の式と有効OP・図の作り方・感度の表に要ることは [docs/TYPES.md](TYPES.md) にまとめた（次のスレッドはまずここを読む）**。
 
 ### やりたいこと（持ち主のまとめ、2026-11-17）
 1. キャラごとに採用するダメージ計算式をもとに「育てる順番」の図を作る

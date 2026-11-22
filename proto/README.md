@@ -9,4 +9,4 @@
 
 - どちらも1つのHTMLで完結している（計算のコードも中に入っている）。`subop-guide.html` の計算は `tools/build_card.py` の `DMG_MODELS` から写したもの
 - GOODファイルの中身は入れていない（ページで読み込むだけ）
-- 考え方と経緯は `docs/ROADMAP.md` の 2.8・2.9
+- 型・式・有効OPの一覧と、図の作り方・感度の表の準備は `docs/TYPES.md`。経緯は `docs/ROADMAP.md` の 2.8・2.9

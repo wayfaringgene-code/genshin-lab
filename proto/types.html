@@ -172,7 +172,7 @@ const CHARS={
  'ウェンティ':{elem:'風', atk:263.10, cr:5, cd:50, em:0, er:32, cost:60, refund:15, burstCD:15, skill:{name:'一回押しE', particles:3, cd:6},
    types:[
     {id:'v-arrow', name:'暴風の矢（魔導秘儀あり）', role:'アタッカー', measure:'暴風の矢（元素爆発中の通常攻撃。倍率は比べると消える）', weapon:'daybreak', set:'vv', burst:true,
-     add:{dmgP:50}, addNote:'魔導秘儀：拡散を起こしたあと与えるダメージ+50%（ウェンティが場にいて拡散するとみなす）。暴風の目の135%は比べると消える', parts:{kind:'na', react:'none'}},
+     add:{dmgP:50}, dmgLabel:'魔導秘儀', addNote:'魔導秘儀：拡散を起こしたあと与えるダメージ+50%（ウェンティが場にいて拡散するとみなす）。暴風の目の135%は比べると消える', parts:{kind:'na', react:'none'}},
     {id:'v-swirl', name:'拡散サポート', role:'サポーター', measure:'ウェンティが起こす拡散（会心しない固定の反応）', weapon:'favW', set:'vv', burst:true, parts:{kind:'reaction', react:'swirl'}}
    ]},
  '雷電将軍':{elem:'雷', atk:337.24, cr:5, cd:50, em:0, er:32, erDmg:0.4, cost:90, burstCD:18, skill:{name:'神変・悪曜開眼（連携攻撃。粒子は目安）', particles:4, cd:10},
@@ -186,9 +186,9 @@ const CHARS={
    cand:{sands:['HP%','ATK%','EM'],goblet:['DMG','HP%','ATK%','EM'],circlet:['CR','CD','HP%','ATK%','EM']},
    types:[
     {id:'h-vape', name:'重撃・蒸発', role:'アタッカー', measure:'冥蝶の舞の重撃（全部が蒸発）', weapon:'homa', set:'cw', burst:false,
-     add:{dmgP:33}, addNote:'冥蝶の舞：HP上限の5.96%が攻撃力（胡桃の基礎攻撃力の400%まで）。固有天賦：HP50%以下で炎元素+33%', parts:{kind:'ca', react:'amp', ampMult:1.5, share:1}},
+     add:{dmgP:33}, dmgLabel:'固有天賦（HP50%以下）', addNote:'冥蝶の舞：HP上限の5.96%が攻撃力（胡桃の基礎攻撃力の400%まで）。固有天賦：HP50%以下で炎元素+33%', parts:{kind:'ca', react:'amp', ampMult:1.5, share:1}},
     {id:'h-none', name:'重撃・反応なし', role:'アタッカー', measure:'冥蝶の舞の重撃', weapon:'homa', set:'cw', burst:false,
-     add:{dmgP:33}, addNote:'冥蝶の舞：HP上限の5.96%が攻撃力（基礎攻撃力の400%まで）。固有天賦：HP50%以下で炎元素+33%', parts:{kind:'ca', react:'none'}}
+     add:{dmgP:33}, dmgLabel:'固有天賦（HP50%以下）', addNote:'冥蝶の舞：HP上限の5.96%が攻撃力（基礎攻撃力の400%まで）。固有天賦：HP50%以下で炎元素+33%', parts:{kind:'ca', react:'none'}}
    ]},
  'フリンズ':{elem:'雷', atk:351.59, cr:5, cd:50+38.4, em:0, cost:0, burstCD:20, skill:{name:'—', particles:0, cd:1},
    types:[
@@ -198,7 +198,7 @@ const CHARS={
  'マーヴィカ':{elem:'炎', atk:358.77, cr:5, cd:50+38.4, em:0, cost:0, burstCD:18, skill:{name:'—', particles:0, cd:1},
    types:[
     {id:'m-melt', name:'墜陽斬・溶解', role:'アタッカー', measure:'墜陽斬（戦意200。戦意の上乗せは攻撃力に比例するので消える）', weapon:'suns', set:'codex', burst:false,
-     add:{atkP:30, dmgP:40}, addNote:'固有天賦1：攻撃力+30%・固有天賦2：ダメージ+40%（戦意200）。元素爆発は戦意で撃つのでチャージ効率は考えない', parts:{kind:'burst', react:'amp', ampMult:2, share:1}}
+     add:{atkP:30, dmgP:40}, dmgLabel:'固有天賦2（戦意200）', addNote:'固有天賦1：攻撃力+30%・固有天賦2：ダメージ+40%（戦意200）。元素爆発は戦意で撃つのでチャージ効率は考えない', parts:{kind:'burst', react:'amp', ampMult:2, share:1}}
    ]},
  'スカーク':{elem:'氷', atk:358.77, cr:5, cd:50+38.4, em:0, cost:0, burstCD:15, skill:{name:'—', particles:0, cd:1},
    types:[
@@ -254,7 +254,7 @@ function fmlOf(T){ const p=T.parts, isB=p.kind==='burst', s=SET[T.set], w=WEAPON
   if(p.react==='lunar') return `3×1446.85×(1＋6×熟知÷(熟知＋2000)＋反応ボーナス) × (1＋会心率×会心ダメ)　※攻撃力とダメージバフは効かない`;
   const c=C(), w2=WEAPON[T.weapon], atkTxt=c.hpAtk?'攻撃力（＋HP上限×5.96%・基礎攻撃力の400%まで＋護摩のHP×1.8%）':w2.erAtk?'攻撃力（＋チャージ効率の超えた分×28%・上限80%）':'攻撃力';
   const core=p.react==='agg'?`(攻撃力×${p.talent}${p.share<1?` ＋ ${p.share===0.4?'5回に2回':p.share}`:' ＋ '}× 超激化の上乗せ 1.15×1446.85×(1＋5×熟知÷(熟知＋1200)＋反応ボーナス))`:atkTxt;
-  const dm=`(1＋${C().elem}元素ダメージ${c.erDmg?'＋チャージ効率の超えた分×0.4%':''}${T.add&&T.add.dmgP?'＋魔導秘儀':''}${p.kind==='na'&&w.add.naDmg?'＋通常攻撃ダメージ':''}${isB&&(w.add.burstDmg||s.add.burstDmg)?'＋元素爆発ダメージ':''}${isB&&s.emblem?'＋チャージ効率×25%（上限75%）':''})`;
+  const dm=`(1＋${C().elem}元素ダメージ${c.erDmg?'＋チャージ効率の超えた分×0.4%':''}${T.add&&T.add.dmgP?'＋'+(T.dmgLabel||'天賦のダメージバフ'):''}${p.kind==='na'&&(w.add.naDmg||s.add.naDmg||(T.add&&T.add.naDmg))?'＋通常攻撃ダメージ':''}${isB&&(w.add.burstDmg||s.add.burstDmg)?'＋元素爆発ダメージ':''}${isB&&s.emblem?'＋チャージ効率×25%（上限75%）':''})`;
   const amp=p.react==='amp'?` × ${p.ampMult}×(1＋2.78×熟知÷(熟知＋1400))`:'';
   return `${core} × ${dm}${amp} × (1＋会心率${isB&&w.add.burstCR?'（＋元素爆発の会心率）':''}×会心ダメ)`; }
 const capOf=(mains,k)=>lc*(5-mains.filter(m=>MK(m)===k).length);
@@ -362,9 +362,9 @@ function renderBoxes(){ const sv=ch; let h=`<tr><th>キャラ</th><th>型</th><t
   for(const k of Object.keys(CHARS)){ ch=k; const c=C(); for(const T of c.types){ const w=WEAPON[T.weapon];
     h+=`<tr><td class="t">${k}</td><td>${T.name}</td><td>${T.role}</td><td>${KIND_JP[T.parts.kind]}</td><td class="note">${partsTxt(T)}</td><td>${!c.cost?'—（考えない）':T.burst?`必須 ${needER(T).toFixed(0)}%`:'使わない'}</td><td>${w.name}${w.fav?'（西風）':''}</td><td>${SET[T.set].name}</td></tr>`; } }
   ch=sv; $('boxes').innerHTML=h; }
-function renderSum(){ $('sum').innerHTML=`<tr><th>型</th><th>メインOP（砂／杯／冠）</th><th>有効OP</th><th>効かない／入らない</th></tr>`+C().types.map(T=>{ const res=compute(T), vars=varsOf(T); if(!res.best) return `<tr><td class="t">${T.name}</td><td colspan="3" class="note">入りきらない</td></tr>`;
-    const a=res.best.r.a, eff=ORD.filter(k=>a[k]>0), ne=ORD.filter(k=>a[k]===0);
-    return `<tr><td class="t">${T.name}</td><td>${cname(res.best.mains)}</td><td><div class="eff">${eff.map(k=>`<span class="chip${k==='ER'&&!vars.includes('ER')?' req':''}"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}<small>${a[k]}回</small></span>`).join('')}</div></td><td class="note">${ne.map(k=>ST[k][0]).join('・')||'—'}</td></tr>`; }).join(''); }
+function renderSum(){ $('sum').innerHTML=`<tr><th>型</th><th>メインOP（砂／杯／冠）</th><th>有効OP</th><th>効くが入らない</th><th>この型には効かない</th></tr>`+C().types.map(T=>{ const res=compute(T), vars=varsOf(T); if(!res.best) return `<tr><td class="t">${T.name}</td><td colspan="4" class="note">入りきらない</td></tr>`;
+    const a=res.best.r.a, eff=ORD.filter(k=>a[k]>0), zero=vars.filter(k=>a[k]===0), ne=ORD.filter(k=>!vars.includes(k)&&!(k==='ER'&&a.ER>0));
+    return `<tr><td class="t">${T.name}</td><td>${cname(res.best.mains)}</td><td><div class="eff">${eff.map(k=>`<span class="chip${k==='ER'&&!vars.includes('ER')?' req':''}"><i class="dot" style="--c:var(${ST[k][1]})"></i>${ST[k][0]}<small>${a[k]}回</small></span>`).join('')}</div></td><td class="note">${zero.map(k=>ST[k][0]).join('・')||'—'}</td><td class="note">${ne.map(k=>ST[k][0]).join('・')||'—'}</td></tr>`; }).join(''); }
 $('e0').addEventListener('input',()=>{ $('e0v').textContent=$('e0').value; });
 $('e0').addEventListener('change',()=>{ e0=+$('e0').value; save(); render(); });
 // #check：効くサブOPが4種類までの型で、全部数える方法と入れ替えの方法の答えを照らし合わせる（開発用）
