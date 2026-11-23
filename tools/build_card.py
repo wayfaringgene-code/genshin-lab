@@ -940,8 +940,8 @@ function cc2Samples(){ // 見本（実在のプレイヤーのデータではな
   PS2(s2,'絶縁の旗印','circlet','剣闘士のフィナーレ'); delete s2.pieces.circlet; s2.low={circlet:{main:'CR',r:4,lv:16,set:'教官'}}; PS2(s100,'絶縁の旗印','circlet','剣闘士のフィナーレ');
   const smP=JSON.parse(JSON.stringify(sm)); smP.id='cc2-partial'; smP.pieces.sands.lv=12; smP.pieces.goblet.lv=12;
   /* UID で取り込んだ形の見本（キャラ全体の値 uidStat。実在のプレイヤーではなく、作った値） */
-  const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.idealRoll={HP:22,CR:17.5,CD:26,'DMG_水':8}; /* 理想は仮の値（式のスレッドの結果が出たら差し替え） */ smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},base:{HP:15307,ATK:786,DEF:696},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
-  const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.idealRoll={ATK:18,CR:20.5,CD:25.5,'DMG_雷':12.6}; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},base:{HP:12907,ATK:945,DEF:789},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
+  const smU=JSON.parse(JSON.stringify(sm)); smU.id='cc2-uid'; smU.idealRoll={HP:9,CR:10.5,CD:10,'DMG_水':8}; /* 理想は仮の値（聖遺物の分・サブOP何回分。割合にして使うので比だけが効く）。式のスレッドの結果か、ユーザーの登録で差し替え */ smU.uidStat={fp:{HP:38123,ATK:1021,DEF:802,CR:65.4,CD:211.2,ER:165.6,EM:40,'DMG_水':46.6},base:{HP:15307,ATK:786,DEF:696},cons:2,lv:90,w:{id:11426,lv:90,r:2,star:5}};
+  const s100U=JSON.parse(JSON.stringify(s100)); s100U.id='cc2-uid2'; s100U.idealRoll={ATK:7,CR:17,CD:19,'DMG_雷':8}; s100U.uidStat={fp:{HP:21530,ATK:2104,DEF:1012,CR:78.6,CD:224.3,ER:271.4,EM:0,'DMG_雷':73.2},base:{HP:12907,ATK:945,DEF:789},cons:0,lv:90,w:{id:13509,lv:90,r:1,star:5}};
   const smN=JSON.parse(JSON.stringify(smU)); smN.id='cc2-uid3'; delete smN.idealRoll;
   return [{c:sm,l:'見本：フリーナ（★5）'},{c:smP,l:'見本：フリーナ（砂・杯が+12）'},{c:s2,l:'見本：行秋（★2）'},{c:s100,l:'見本：雷電将軍（百年級）'},{c:smU,l:'見本：フリーナ（UID）'},{c:s100U,l:'見本：雷電将軍（UID）'},{c:smN,l:'見本：フリーナ（UID・式なし）'}]; }
 // 新しいカード用の立ち絵の切り出し：fitCardArt と同じ切り出しで、減光（下へ薄く・外周を丸く薄く）を焼き込まない。端はカードの側で溶かす
@@ -1638,15 +1638,18 @@ rep("  // 下の一文：秘境レベルの定義", "  }\n" + r"""  if(V2){
       if(['B2','B3','P2','P1','PX','BX'].includes(PB)){ /* 横棒（2.10 の試作）：単位は「サブOP何回分」（伸びた量 ÷ サブOP 1回の最大の伸び）。会心率：会心ダメ＝1：2 が同じ長さになる。
           全体＝UID のキャラ画面の値から最初からある分（会心率5%・会心ダメ50%・チャージ100%）を引く。HP・攻撃・防御は「基礎の何%増えたか」。元素ダメは攻撃%と同じ 5.83 で割る。
           棒の内訳：聖遺物（5部位のメイン＋サブ。B3 はサブだけ色を変える＝右の表と同じ量）／それ以外（武器・突破・セット効果など＝全体−聖遺物） */
-        const IN=14, us=c.uidStat, fp=us&&us.fp, bs=(us&&us.base)||{}; g+=SECr(PB[0]==='P'||PB==='BX'?'パラメータの割合':'パラメータ（サブOP何回分）',LX+IN,y0+18);
+        /* 2026-11-23：仕上げ（PX・BX）は**聖遺物の分だけ**（5部位のメインOP＋サブOP。UID は要らない）。8種類（HP%・攻撃%・防御%・熟知・チャージ・元素ダメ・会心率・会心ダメ）を
+           サブOP 1回の最大の伸びで割って回数に直し、割合にする（メインOP +20 はどれもちょうど8回分。元素ダメのメイン 46.6 は攻撃%と同じなので 5.83 で割る）。実数（HP・攻撃・防御）は入れない。
+           出すのは有効OPに入っている%のパラメータ＋そのキャラの元素ダメ。武器・突破・セット効果は、理想（c.idealRoll）の計算の側で吸収する（docs/HANDOFF_BALANCE.md） */
+        const ART=PB==='PX'||PB==='BX', IN=14, us=c.uidStat, fp=(us&&us.fp)||(ART?{}:null), bs=(us&&us.base)||{}; g+=SECr(ART?'聖遺物のパラメータの割合':PB[0]==='P'?'パラメータの割合':'パラメータ（サブOP何回分）',LX+IN,y0+18);
         if(!fp) g+=`<text x="${LX+IN}" y="${y0+62}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">UIDで取り込むと、ここに</text><text x="${LX+IN}" y="${y0+78}" font-family='${sans}' font-size="10.5" fill="#6f7a8e">キャラ全体の釣り合い（武器・突破込み）</text>`;
         else { const EL=typeof skyElem==='function'?skyElem(c):'?', MAP={'HP%':'HP',HP:'HP','ATK%':'ATK',ATK:'ATK','DEF%':'DEF',DEF:'DEF',CR:'CR',CD:'CD',ER:'ER',EM:'EM'}, ORD=['HP','ATK','DEF','CR','CD','ER','EM'],
-            U1={HP:5.83,ATK:5.83,DEF:7.29,CR:3.89,CD:7.77,ER:6.48,EM:23.31}, B0={CR:5,CD:50,ER:100,EM:0}, ks=ORD.filter(k=>(c.eff||[]).some(e=>MAP[e]===k)); if(fp['DMG_'+EL]!=null) ks.push('DMG_'+EL);
-          const art=k=>{ let m=0,u=0; SLOTS.forEach(s2=>{ const pc=c.pieces[s2]; if(!pc||!pc.main) return; const F3=['HP','ATK','DEF'].includes(k), add=(key,v,sub)=>{ const r=key===k+'%'?v:key===k?(F3?(bs[k]?v/bs[k]*100:0):v):null; /* HP・攻撃・防御の実数は基礎の%に直す */ if(r!=null){ if(sub) u+=r; else m+=r; } };
+            U1={HP:5.83,ATK:5.83,DEF:7.29,CR:3.89,CD:7.77,ER:6.48,EM:23.31}, B0={CR:5,CD:50,ER:100,EM:0}, ks=ART?ORD.filter(k=>(c.eff||[]).includes(['HP','ATK','DEF'].includes(k)?k+'%':k)):ORD.filter(k=>(c.eff||[]).some(e=>MAP[e]===k)); if(ART||fp['DMG_'+EL]!=null) ks.push('DMG_'+EL);
+          const art=k=>{ let m=0,u=0; SLOTS.forEach(s2=>{ const pc=c.pieces[s2]; if(!pc||!pc.main) return; const F3=['HP','ATK','DEF'].includes(k), add=(key,v,sub)=>{ const r=key===k+'%'?v:key===k?(F3?(ART?null:bs[k]?v/bs[k]*100:0):v):null; /* HP・攻撃・防御の実数は基礎の%に直す */ if(r!=null){ if(sub) u+=r; else m+=r; } };
               add(pc.main,MAIN_NUM[pc.main]!=null?MAIN_NUM[pc.main]:(String(pc.main).startsWith('DMG_')?46.6:0),0); (pc.subs||[]).forEach(q=>{ if(q.s&&!q.off) add(q.s,parseFloat(q.v)||0,1); }); }); return {m,u}; };
-          const rows=ks.map(k=>{ const dm=k.startsWith('DMG_'), u1=dm?5.83:U1[k], tot=dm?fp[k]:['HP','ATK','DEF'].includes(k)?(bs[k]?(fp[k]/bs[k]-1)*100:null):(fp[k]||0)-B0[k], a=art(k);
+          const rows=ks.map(k=>{ const dm=k.startsWith('DMG_'), u1=dm?5.83:U1[k], a=art(k), tot=ART?a.m+a.u:dm?fp[k]:['HP','ATK','DEF'].includes(k)?(bs[k]?(fp[k]/bs[k]-1)*100:null):(fp[k]||0)-B0[k];
             return {k,tot:tot==null?null:tot/u1,m:a.m/u1,u:a.u/u1}; });
-          /* 理想（式があるキャラ）：c.idealRoll＝無凸餅（モチーフ武器R1・無凸・メインとセットは本人と同じ）の理想を、同じ単位（サブOP何回分・全体）で。チャージはアタッカー・サブアタッカーでは考えない（目印なし）。
+          /* 理想：c.idealRoll＝理想の配分を同じ単位（サブOP何回分）で。仕上げ（PX・BX）では聖遺物の分だけの理想（武器・突破・セット効果は理想の計算の側で吸収）。B2・B3 はキャラ全体の理想。キーがないパラメータ（アタッカーのチャージなど）は図から外す。
              いまは見本だけ（値は仮）。window.CC2_OPT.ib：tick＝棒に縦の目印／ghost＝理想の長さの枠 */
           const ID=c.idealRoll||null, IB=(window.CC2_OPT||{}).ib||'tick';
           if(PB==='PX'||PB==='BX'){ /* 仕上げの試作（2.10）：PX＝円（今の輪＋外の軌道に理想の境目を星で）／BX＝100%の帯（今の帯＋上の細い線に理想の境目を星で、星から今の境目へ細い線）。割合だけを事実として。
